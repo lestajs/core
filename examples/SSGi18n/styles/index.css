@@ -1,0 +1,47 @@
+body, h1, h2, h3, h4, h5, h6, p, ul, li  {
+    margin: 0;
+    padding: 0;
+}
+
+*, :before, :after {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 14px;
+    line-height: 1.4;
+}
+body {
+    font-family: Arial, sans-serif;
+    color: #121212;
+    min-height: 100vh;
+}
+
+a {
+    text-decoration: none;
+    display: inline-block;
+    color: inherit;
+    cursor: pointer;
+}
+
+#root {
+    min-height: 100vh;
+    flex-direction: column;
+    display: flex;
+}
+.wrapper {
+    flex: 1;
+    padding: 20px;
+}
+
+.i404 {
+    height: 100vh;
+    position: relative;
+}
+.i404 svg {
+    width: 400px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform:translate(-50%, -50%);
+}

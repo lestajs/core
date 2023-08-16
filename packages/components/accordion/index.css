@@ -1,0 +1,32 @@
+.LstTrigger {
+    padding: .8em 0;
+    display: block;
+    border-bottom: 1px solid var(--gray100);
+    cursor: pointer;
+    position: relative;
+}
+.LstTriggerIcon {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    top: 1.2em;
+    right: 2px;
+}
+.LstTrigger.up .LstTriggerIcon{
+    transform: rotate(180deg);
+}
+
+.LstTriggerIcon:before {
+    transform: rotate(-90deg);
+}
+.LstTriggerIcon:after {
+    transform: rotate(90deg);
+}
+.LstPanel {
+    transition: height 1s;
+    overflow: hidden;
+    margin-top: .6em;
+}
+.hide {
+    height: 0 !important;
+}

@@ -1,0 +1,11 @@
+.LstList {
+    padding: 6px 0;
+}
+.LstLi {
+    cursor: pointer;
+    padding-top: 0.4em;
+    padding-bottom: 0.4em;
+}
+.LstLi:hover {
+    background-color: var(--gray100);
+}

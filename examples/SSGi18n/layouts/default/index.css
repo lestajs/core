@@ -1,0 +1,14 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background-color: #eee;
+}
+.header a {
+    padding: 10px;
+}
+.footer {
+    padding: 20px;
+    background-color: #eee;
+    text-align: right;
+}

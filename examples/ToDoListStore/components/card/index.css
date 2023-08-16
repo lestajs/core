@@ -1,0 +1,39 @@
+.cards {
+    width: auto;
+    display: grid;
+    grid-auto-rows: minmax(160px, auto);
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-gap: 20px;
+    padding: 40px 0;
+}
+.card {
+    border-radius: 6px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.line {
+    padding: 10px 15px;
+    background-color: #eee;
+}
+
+.card .name {
+    display: inline-block;
+}
+.card .date {
+    float: right;
+}
+
+.card .description {
+    flex: 1 1 0;
+    padding: 15px;
+}
+.buttons {
+    padding: 15px;
+    display: flex;
+    gap: 8px;
+}
+.completed {
+    margin-right: auto;
+}

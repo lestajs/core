@@ -1,0 +1,6 @@
+.LstButtons {
+    gap: 3px;
+}
+.LstButtons > button {
+    background-color: transparent;
+}

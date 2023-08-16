@@ -1,0 +1,48 @@
+{
+  "name": "lesta",
+  "version": "0.0.2-alpha",
+  "description": "Simple and lightweight JavaScript with all the features of a framework.",
+  "keywords": [
+    "lesta",
+    "lesta.js",
+    "lestajs"
+  ],
+  "files": [
+    "dist/lesta.esm.js",
+    "dist/lesta.cjs.js",
+    "dist/lesta.global.js",
+    "dist/lesta.global.prod.js",
+    "dist/lesta.createWidget.js",
+    "dist/lesta.createWidget.prod.js"
+  ],
+  "jsdelivr": "dist/lesta.global.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lestajs/lesta.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lestajs/lesta/issues"
+  },
+  "main": "dist/lesta.esm.js",
+  "module": "dist/lesta.esm.js",
+  "exports": {
+    ".": {
+      "import": "./dist/lesta.esm.js",
+      "require": "./dist/lesta.cjs.js"
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.js --define:process.env.NODE_ENV='production'",
+    "test": "cypress run",
+    "cypress": "cypress open"
+  },
+  "author": "Sasha Kosyak",
+  "license": "MIT",
+  "devDependencies": {
+    "cypress": "^7.0.0",
+    "esbuild": "~0.16.17",
+    "path": "^0.12.7",
+    "zlib": "^1.0.5"
+  },
+  "type": "module"
+}

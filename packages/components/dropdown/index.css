@@ -1,0 +1,16 @@
+.LtsDropdown {
+  position: absolute;
+  z-index: 99;
+  inset: auto 0 auto auto;
+  margin-top: 1em;
+  border-radius: 8px;
+  width: max-content;
+  min-width: 100%;
+  background-color: white;
+  transform: translate3d(0, 0, 0);
+  border: 1px solid var(--gray200);
+  box-shadow: 0 3px 5px #00000014;
+  max-height: 13em;
+  overflow: hidden;
+  overflow-y: auto;
+}

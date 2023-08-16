@@ -1,0 +1,9 @@
+{
+  "ignoreTestFiles": "*.html",
+  "screenshotOnRunFailure": false,
+  "video": false,
+  "fixturesFolder": false,
+  "integrationFolder": "tests/cypress/integration",
+  "pluginsFile": false,
+  "supportFile": false
+}

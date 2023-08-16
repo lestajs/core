@@ -1,0 +1,30 @@
+.spinner {
+  display: inline-block;
+  position: relative;
+  height: 1.3em;
+  width: 1.3em;
+  top: -.1em;
+}
+
+.spinner:before {
+  position: absolute;
+  content: '';
+  display: block;
+  height: calc(100%);
+  width: calc(100%);
+  background-image: url(./preload.svg);
+  background-size: cover;
+  animation-name: spin;
+  animation-duration: 800ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+@keyframes spin {
+  from {
+    transform:rotate(0deg);
+  }
+  to {
+    transform:rotate(360deg);
+  }
+}

@@ -1,0 +1,82 @@
+body, h1, h2, h3, h4, h5, h6, p, ul, li  {
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+
+}
+
+h2 {
+
+}
+
+h3 {
+  font-size: 18px;
+}
+
+fieldset {
+    border: 0;
+}
+
+*, :before, :after {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 14px;
+    line-height: 1.4;
+}
+body {
+    font-family: Arial, sans-serif;
+    color: #121212;
+    min-height: 100vh;
+}
+
+a {
+    text-decoration: none;
+    display: inline-block;
+    color: inherit;
+    cursor: pointer;
+}
+
+li {
+    list-style-type: none;
+}
+
+input, button {
+    font-family: inherit;
+    line-height: 1;
+    font-size: 14px;
+    color: inherit;
+    background-color: #ebebeb;
+    border: 0;
+    padding: 10px;
+    border-radius: 5px;
+}
+button {
+    cursor: pointer;
+}
+#root {
+    height: 100vh;
+}
+.wrapper {
+    min-height: 100%;
+    background: #f8f8f8;
+}
+main {
+    padding: 20px 3vmax;
+}
+
+div > .blue {
+    background-color: #b0f3ff;
+}
+div > .green {
+    background-color: #d6ffb0;
+}
+div > .red {
+    background-color: #ffc8c8;
+}
+div > .yellow {
+    background-color: #fff7a7;
+}

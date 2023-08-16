@@ -1,0 +1,48 @@
+.LstButton {
+  display: flex;
+  line-height: 1;
+  font-size: var(--fs-xs);
+  box-sizing: border-box;
+  background-color: var(--gray100);
+  color: inherit;
+  overflow: hidden;
+  align-items: center;
+  cursor: pointer;
+  font-family: inherit;
+}
+.LstButton.active {
+  background-color: var(--gray300);
+}
+.LstButtonText {
+  min-height: 1em;
+  min-width: 1em;
+  padding: 0 0 0 0.5em;
+  font-weight: 400;
+}
+.LstButtonText:empty {
+  padding: 0;
+  min-width: 0;
+}
+.LstButtonIcon {
+  display: contents;
+}
+.LstButtonIcon:empty{
+  width: 0;
+  height: 0;
+}
+.LstButtonIcon:empty ~ .LstButtonText {
+  padding: 0;
+}
+
+.LstButton.filled {
+  background-color: var(--black);
+  color: white;
+}
+
+.LstButton.filled svg {
+  fill: white;
+  stroke: white;
+}
+.LstButton[type="text"] {
+  background-color: transparent;
+}

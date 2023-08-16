@@ -1,0 +1,18 @@
+.LstPagination {
+    margin-top: var(--xs);
+}
+.LstPagination button {
+    background-color: transparent;
+}
+
+.LstNumber:active {
+    background-color: var(--gray300);
+}
+
+.LstPagination .first, .LstPagination .last {
+    display: flex;
+}
+
+.LstPagination .active{
+    background-color: var(--gray100);
+}

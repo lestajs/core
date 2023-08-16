@@ -1,0 +1,53 @@
+.LstCheckbox {
+  display: block;
+  position: relative;
+  padding-left: 2em;
+  margin: .8em 0;
+  height: 1.5em;
+  cursor: pointer;
+  user-select: none;
+  font-family: inherit;
+}
+.LstCheckbox input {
+  position: absolute;
+  opacity: 0;
+  height: 0;
+  width: 0;
+}
+
+.LstCheckboxText {
+}
+.LstCheckmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 1.4em;
+  width: 1.4em;
+  border-radius: 2px;
+  background-color: var(--gray100);
+}
+.LstCheckbox:hover input ~ .LstCheckmark {
+  background-color: var(--gray200);
+}
+
+.LstCheckbox input:checked ~ .LstCheckmark {
+  background-color: var(--black);
+}
+
+.LstCheckmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+.LstCheckbox input:checked ~ .LstCheckmark:after {
+  display: block;
+}
+.LstCheckbox .LstCheckmark:after {
+  left: 0.5em;
+  top: 0.2em;
+  width: 8px;
+  height: 13px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}

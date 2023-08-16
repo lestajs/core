@@ -1,0 +1,16 @@
+input.search ~ svg {
+    height: 20px;
+    position: absolute;
+    right: 10px;
+    z-index: 1;
+}
+div:has(> input.search) {
+    position: relative;
+    width: min-content;
+    display: flex;
+    align-items: center;
+}
+
+input.search {
+    padding-right: 30px;
+}

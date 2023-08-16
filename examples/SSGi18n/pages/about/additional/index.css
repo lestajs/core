@@ -1,0 +1,6 @@
+.addition .more {
+    border-bottom: 1px dotted;
+    display: inline-block;
+    margin: 10px 0 30px;
+    cursor: pointer;
+}
