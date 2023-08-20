@@ -9,13 +9,13 @@ export default {
   props: {
     proxies: {
       isPreview: {},
-      locale: { store: 'i18n' }
+      locale: { store: 'lang' }
     }
   },
   nodes() {
     return {
       more: {
-        _text: (node) => this.proxy.locale && this.common.translation(node),
+        _text: (node) => this.i18n.translation(node, this.proxy.locale),
         onclick: () => {
           if (this.proxy.isPreview) {
             this.router.push({})
@@ -26,7 +26,7 @@ export default {
       },
       content: {
         hidden: () => !this.proxy.isPreview,
-        _text: (node) => this.proxy.locale && this.common.translation(node)
+        _text: (node) => this.i18n.translation(node, this.proxy.locale)
       }
     }
   }

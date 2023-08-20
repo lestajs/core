@@ -52,6 +52,9 @@ export default [
       layout: 'default',
       component: () => import('../pages/profile/index.js'),
       type: 'dynamic',
+      async beforeEnter(to, from) {
+        if (!to.extras.auth) return '/'
+      }
     }
   ]
 }]

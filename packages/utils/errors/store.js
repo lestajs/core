@@ -2,7 +2,8 @@ const messages = {
   401: 'store not found.',
   402: 'loading error from sources.',
   403: 'store methods can take only one argument of type object.',
-  404: 'middleware "%s" can take only one argument of type object.'
+  404: 'middleware "%s" can take only one argument of type object.',
+  405: 'store must be initialized before router is initialized.'
 }
 
 const errorStore = (name, code, param = '') => {

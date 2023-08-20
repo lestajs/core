@@ -12,7 +12,10 @@ export default {
     </nav>`,
   props: {
     proxies: {
-      locale: { store: 'i18n' }
+      locale: { store: 'lang' }
+    },
+    methods: {
+      switcher: { store: 'lang' }
     }
   },
   proxies: {
@@ -21,14 +24,14 @@ export default {
   nodes() {
     return {
       back: {
-        _text: (node) => this.proxy.locale && this.common.translation(node),
+        _text: (node) => this.method.check() && this.i18n.translation(node, this.proxy.locale),
         onclick: () => this.router.go(-1)
       },
       links: {
-        _html: (node) => this.method.links(node)
+        _html: (node) => this.method.check() && this.method.links(node)
       },
       profile: {
-        _text: (node) => this.proxy.locale && this.common.translation(node),
+        _text: (node) => this.method.check() && this.i18n.translation(node),
         href: () => this.router.link({ name: 'profile', params: { locale: this.proxy.locale }  }),
         style: () =>{
           return {
@@ -37,22 +40,31 @@ export default {
         }
       },
       en: {
-        onclick: () => this.router.push({ params: {locale: 'en' }, replace: true, query: true, hash: true })
+        onclick: () => {
+          this.router.push({ params: { locale: 'en' }, replace: true })
+          this.method.switcher({ locale: 'en' })
+        }
       },
       ru: {
-        onclick: () => this.router.push({ params: {locale: 'ru' }, replace: true})
+        onclick: () => {
+          this.router.push({ params: { locale: 'ru' }, replace: true })
+          this.method.switcher({ locale: 'ru' })
+        }
       },
       auth: {
         onclick: () => this.method.auth(),
-        textContent: ({ nodepath }) => this.proxy.locale && this.common.translation({ nodepath, key: this.proxy.auth ? 'logout' : 'login'}),
+        textContent: ({ nodepath }) => this.i18n.translation({ nodepath, key: this.proxy.auth ? 'logout' : 'login'}, this.proxy.locale),
       }
     }
   },
   methods: {
+    check() {
+      return !this.router.to.route.static
+    },
     links() {
       return ['home', 'about'].reduce((html, name) => {
-        const link = this.router.link({name: name, params: {locale: this.proxy.locale}})
-        const translation = this.common.translation({ nodepath: 'header', key: name })
+        const link = this.router.link({ name: name, params: { locale: this.proxy.locale }})
+        const translation = this.i18n.translation({ nodepath: 'header', key: name })
         return html + `<a href="${link}" link>${translation}</a>`
       }, '')
     },
@@ -63,7 +75,6 @@ export default {
       } else {
         localStorage.setItem('auth', 'true')
         this.proxy.auth = true
-        this.proxy.locale = 'ru'
       }
     }
   },

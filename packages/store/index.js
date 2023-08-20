@@ -13,7 +13,6 @@ class Store {
       param: {},
       method: {},
       source: this.store.sources,
-      common: app.common
     }
     this.context.param = this.store.params
     Object.preventExtensions(this.context.param)
@@ -67,41 +66,28 @@ class Store {
 
 function createStore(options = {}) {
   return {
-    name: 'store',
     app: {},
     stores: {},
     create(module, key) {
       const store = new Store(module, this.app, key)
       this.stores[key] = store
     },
-    async getByName(key) {
+    async get(key) {
       if (!this.stores.hasOwnProperty(key)) {
         if (!options.stores?.hasOwnProperty(key)) return errorStore(key, 401)
         const module = await loadModule(options.stores[key])
         this.create(module, key)
-      }
-      if (!this.stores[key].isCreated) {
-        await this.stores[key].created()
-        this.stores[key].isCreated = true
       }
       return this.stores[key]
     },
     destroy() {
       delete this.stores
     },
-    getAll() {
-      return this.stores
-    },
     init(app) {
       this.app = app
-      if (options.stores) {
-        for (const [key, module] of Object.entries(options.stores)) {
-          if (typeof module !== 'function') this.create(module, key)
-        }
-      }
+      if (app.plugins.router) return errorStore('', 405)
       app.plugins.store = {
-        getByName: this.getByName.bind(this),
-        getAll: this.getAll.bind(this),
+        get: this.get.bind(this),
         destroy: this.destroy.bind(this)
       }
     }

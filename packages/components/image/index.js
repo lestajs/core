@@ -1,5 +1,5 @@
 import './index.css'
-import '../preload/index.css'
+import '../skeleton/index.css'
 
 export default {
   template: `

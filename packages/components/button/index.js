@@ -1,4 +1,3 @@
-import './index.css'
 import { _attr } from '../directives'
 
 export default {
@@ -7,6 +6,9 @@ export default {
     <span class="LstButtonIcon"></span>
     <span class="LstButtonText"></span>
   </button>`,
+  sources: {
+    stylesheet: () => import('./index.css')
+  },
   directives: { _attr },
   props: {
     proxies: {
@@ -46,7 +48,7 @@ export default {
         onclick: () => this.method.change(this.param)
       },
       LstButtonIcon: {
-        innerHTML: () => this.param.icon
+        _html: () => this.param.icon
       },
       LstButtonText: {
         textContent: () => this.param.text || this.proxy.text

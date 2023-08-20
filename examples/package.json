@@ -7,23 +7,25 @@
     "ToDoListSimple": "parcel ToDoListSimple/index.html",
     "ToDoListStore": "parcel ToDoListStore/index.html",
     "SSGi18n": "parcel SSGi18n/index.html",
-    "ssg": "parcel build SSGi18n/index.html && NODE_ENV = 'development' && nodemon SSGi18n/server/ssg.js",
+    "ssg": "parcel build SSGi18n/index.html && SET NODE_ENV='development' && nodemon SSGi18n/server/ssg.js",
     "ssr": "parcel build SSGi18n/index.html && nodemon SSGi18n/server/ssr.js",
     "build": "parcel build --target SSGi18n"
   },
   "author": "",
   "license": "ISC",
+  "alias": {
+    "lesta": "../scripts/lesta.js"
+  },
   "devDependencies": {
     "marked": "^5.0.2",
     "mustache": "^4.2.0",
     "parcel": "^2.8.0",
-    "path-browserify": "^1.0.1",
-    "process": "^0.11.10"
+    "process": "^0.11.10",
+    "util": "^0.12.5"
   },
   "dependencies": {
     "axios": "^1.4.0",
-    "express": "^4.18.2",
-    "lesta": "^0.0.0-alpha"
+    "express": "^4.18.2"
   },
   "type": "module"
 }

@@ -2,13 +2,13 @@ export default {
   template: `<h1 class="profile"></h1>`,
   props: {
     proxies: {
-      locale: { store: 'i18n' }
+      locale: { store: 'lang' }
     }
   },
   nodes() {
     return {
       profile: {
-        textContent: (node) => this.proxy.locale && this.common.translation(node)
+        textContent: (node) => this.i18n.translation(node, this.proxy.locale)
       }
     }
   }

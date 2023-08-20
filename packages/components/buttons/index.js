@@ -4,19 +4,19 @@ export default {
   props: {
     params: {
       buttons: {
-        type: 'Array',
+        type: 'array',
         default: []
       },
       size: { default: 'small' },
       lock: {},
       actives: {
-        type: 'Array',
+        type: 'array',
         default: null
       }
     },
     proxies: {
       active: {
-        type: 'Number',
+        type: 'number',
         default: null
       }
     },
@@ -42,7 +42,7 @@ export default {
   nodes() {
     return {
       LstButtons: {
-        innerHTML: this.method.render(),
+        _html: this.method.render(),
         onclick: (event) => {
           if (!this.param.lock && event.target.closest('.LstButtons > button')) {
             const index = +event.target.dataset.index

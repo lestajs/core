@@ -1,35 +1,31 @@
-import main from '../default/index.js'
+import def from '../default/index.js'
 
 export default {
-  ...main,
-  template: main.template + `
+  ...def,
+  template: def.template + `
     <div class="footer">
         <a class="link" href="https://lesta.dev">
             <!--text:link-->
         </a>
     </div>`,
   props: {
+    ...def.props,
     proxies: {
-      locale: { store: 'i18n' }
+      locale: { store: 'lang' }
     }
   },
   nodes() {
     return {
-      ...main.nodes(),
+      ...def.nodes.bind(this)(),
       link: {
         _text: (node) => this.method.t(node)
       }
     }
   },
-  created() {
-    this.proxy.locale = this.router.to?.params.locale || this.common.defaultLocal
-  },
   methods: {
     t(node, key) {
-      if (this.proxy.locale) { // for reactivity
-        const { nodepath } = node
-        return this.common.translation({nodepath, key})
-      }
+      const { nodepath } = node
+      return this.i18n.translation({nodepath, key}, this.proxy.locale)
     }
   }
 }

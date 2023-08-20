@@ -1,11 +1,11 @@
 import { errorComponent } from '../../../utils/errors/component'
 import { stringToHTML } from '../../../utils'
 
-export default function createComponent(options, nodeElement, component, section, isStatic) {
+export default function renderComponent(options, nodeElement, component, section, hasHTML) {
   if (section) {
     const sectionNode = nodeElement.section[section]
     if (!sectionNode) return errorComponent(nodeElement.nodename, 202, section)
-    if (!isStatic) sectionNode.innerHTML = options.template
+    if (!hasHTML) sectionNode.innerHTML = options.template
     sectionNode.nodepath = nodeElement.nodepath + '.' + section
     sectionNode.nodename = section
     if (!sectionNode.unmount) sectionNode.unmount = async () => {
@@ -23,7 +23,7 @@ export default function createComponent(options, nodeElement, component, section
         nodeElement.iterableElement = template.children[0]
         nodeElement.innerHTML = ''
       }
-      if (!isStatic) nodeElement.insertAdjacentElement('beforeEnd', nodeElement.iterableElement.cloneNode(true))
+      if (!hasHTML) nodeElement.insertAdjacentElement('beforeEnd', nodeElement.iterableElement.cloneNode(true))
       const iterableElement = nodeElement.children[nodeElement.children.length - 1]
       iterableElement.nodepath = nodeElement.nodepath
       if (!nodeElement.unmount) nodeElement.unmount = async () => {
@@ -39,7 +39,7 @@ export default function createComponent(options, nodeElement, component, section
         await component.unmount()
       }
       return iterableElement
-    } else if (options.template && !isStatic) {
+    } else if (options.template && !hasHTML) {
       nodeElement.innerHTML = options.template
     }
     if (!nodeElement.unmount) nodeElement.unmount = async () => {

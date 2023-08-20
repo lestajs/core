@@ -1,16 +1,22 @@
-import createComponent from './createComponent'
+import renderComponent from './renderComponent'
 import { lifecycle } from '../lifecycle'
 import { Init } from '../../init'
 import Nodes from '../../nodes'
 
 function createApp(entry) {
-  entry.plugins = entry.plugins || {}
+  entry.plugins = {
+    ...entry.plugins,
+    get isBrowser() {
+      return typeof window !== 'undefined' && typeof document !== 'undefined'
+    }
+  }
   const app = {
     ...entry,
     async mount(options, nodeElement, props = {}) {
       if (options) {
         const component = new Init(options, app, Nodes)
-        const container = createComponent({...options}, nodeElement || app.root, component, props.section, app.plugins.router?.static)
+        const hasHTML = app.plugins.router?.to.route.static
+        const container = renderComponent({...options}, nodeElement || app.root, component, props.section, hasHTML)
         await lifecycle(component, container, props)
         return { options, context: component.context, container }
       }

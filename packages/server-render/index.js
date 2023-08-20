@@ -81,8 +81,9 @@ class Render {
   }
 }
 
-function createServerRender(options) {
+function createServerApp(options) {
   const render = new Render(options)
   return render.app
 }
-export { createServerRender, getStaticFile }
+
+export { createServerApp }

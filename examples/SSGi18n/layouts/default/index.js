@@ -8,6 +8,11 @@ export default {
     <div class="wrapper" section="router">
         <!--section:router-->
     </div>`,
+  props: {
+    methods: {
+      switcher: { store: 'lang' }
+    }
+  },
   nodes() {
     return {
       header: {
@@ -16,5 +21,8 @@ export default {
         }
       }
     }
+  },
+  async created() {
+    await this.method.switcher({ locale: this.router.to.params.locale })
   }
 }

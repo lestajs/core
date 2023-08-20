@@ -35,18 +35,32 @@ async function getStaticFile(path) {
   return ''
 }
 
+function insertStaticAttr(attr, res) {
+    return attr ? res.replace(/<html(?:\s.*?)?>/i, '$& static>') : res
+}
+
+function insertHeaders(headers, res) {
+  return headers ? res.replace('<head>', '<head>\n' + generateHeaders(headers)) : res
+}
+function insertViews(view, res) {
+  for (const v in view) {
+    res = res.replace('view:' + v, view[v])
+  }
+  return res
+}
+function insertRoot(html, res) {
+  return res.replace('<!--section:root-->', html)
+}
+
 async function generateStaticPage(app, to, html) {
   const minify = app.minify === true ? minifyHTML : app.minify
   const view = {...app.view || {}, ...(to.route.view ? await to.route.view(to) : {}) }
   const headers = [...app.meta || [], ...(to.route.meta ? await to.route.meta(to) : [])]
   let res = await getStaticFile(app.source)
-  if (headers) {
-    res = res.replace('<head>', '<head>\n' + generateHeaders(headers))
-  }
-  for (const v in view) {
-    res = res.replace('view:' + v, view[v])
-  }
-  res = res.replace('<!--section:root-->', html)
+  res = insertStaticAttr(to.type === 'static', res)
+  res = insertHeaders(headers, res)
+  res = insertViews(view, res)
+  res = insertRoot(html, res)
   if (minify) res = await minify(res)
   return res
 }

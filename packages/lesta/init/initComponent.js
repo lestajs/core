@@ -15,8 +15,7 @@ export default class InitComponent {
       param: {},
       method: {},
       proxy: {},
-      source: component.sources || {},
-      common: app.common || {}
+      source: component.sources || {}
     }
     Object.preventExtensions(this.context.source)
   }

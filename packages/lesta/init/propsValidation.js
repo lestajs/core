@@ -30,7 +30,7 @@ class Props {
         const validation = (v) => {
           if (prop.required && (v === null || v === undefined)) return errorProps(this.container.nodepath, 'proxies', key, 303)
           const value = v ?? prop.default ?? null
-          if (prop.type && typeof value !== prop.type) return errorProps(this.container.nodepath, 'proxies', key, 304, prop.type)
+          if (prop.type && (prop.type === 'array' && !Array.isArray(value)) && typeof value !== prop.type) return errorProps(this.container.nodepath, 'proxies', key, 304, prop.type)
           return value
         }
         const context = this.context
@@ -46,7 +46,7 @@ class Props {
         if (this.props.proxies && key in this.props.proxies) {
           v = this.props.proxies[key]
         } else if (store) {
-          const storeModule = await this.context.store.getByName(store)
+          const storeModule = await this.context.store.get(store)
           v = storeModule.proxies(key, this.container)
         }
         proxiesData[key] = replicate(validation(v))
@@ -61,7 +61,7 @@ class Props {
       const paramValue = async () => {
         const { store } = prop
         if (store) {
-          const storeModule = await this.context.store.getByName(store)
+          const storeModule = await this.context.store.get(store)
           const storeParams = storeModule.params(key)
           return replicate(storeParams)
         } else {
@@ -78,7 +78,7 @@ class Props {
       this.context.param[key] = await paramValue() ??
         ((prop.required && errorProps(this.container.nodepath, 'params', key, 303)) ||
           prop.default)
-      if (prop.type && typeof this.context.param[key] !== prop.type)
+      if (prop.type && (prop.type === 'array' && !Array.isArray(this.context.param[key])) && typeof this.context.param[key] !== prop.type)
         errorProps(this.container.nodepath, 'params', key, 304, prop.type)
       if (prop.readonly)
         Object.defineProperty(this.context.param, key, { writable: false })
@@ -90,7 +90,7 @@ class Props {
       if (typeof prop !== 'object') return errorProps(this.container.nodepath, 'methods', key, 302)
       const { store } = prop
       if (store) {
-        const storeModule = await this.context.store.getByName(store)
+        const storeModule = await this.context.store.get(store)
         const method = storeModule.methods(key)
         if (!method) return errorProps(this.container.nodepath, 'methods', key, 305, store)
         this.context.method[key] = (...args) => method(...replicate(args))

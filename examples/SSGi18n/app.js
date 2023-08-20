@@ -1,34 +1,32 @@
 import routes from "./routes/index.js"
 import layouts from "./layouts/index.js"
-import common from "./common/index.js"
-import i18n from "./stores/i18n/index.js"
-import { createRouter } from '../lesta/packages/router/index.js'
-import { createStore } from '../lesta/packages/store/index.js'
-
-const stores = { i18n }
+import api from './plugins/api.js'
+import i18n from './plugins/i18n.js'
+import lang from "./stores/lang/index.js"
+import { createRouter } from 'lesta'
+import { createStore } from 'lesta'
 
 const router = createRouter({
-  base: '/app',
   routes,
   layouts,
   beforeEach(to, from) {},
-  async beforeEnter(to, from) {
+  beforeEnter(to, from, plugins) {
     to.extras.auth = !!(typeof window !== 'undefined' && localStorage.getItem('auth'))
+    const locale = to.params.locale
+    if (!locale && plugins.i18n.persisted() !== plugins.i18n.defaultLocal) {
+      return { params: { locale: plugins.i18n.guess() }, replace: true }
+    }
   },
   afterEnter(to, from) {},
   afterEach(to, from) {}
 })
+const stores = { lang }
 const store = createStore({ stores })
 
-const plugins = {
-  get isBrowser() {
-    return typeof window !== 'undefined'
-  }
-}
 export {
   router,
   store,
-  common,
-  plugins
+  api,
+  i18n
 }
 

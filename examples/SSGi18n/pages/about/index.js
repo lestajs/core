@@ -10,7 +10,7 @@ export default {
     </div>`,
   props: {
     proxies: {
-      locale: { store: 'i18n' }
+      locale: { store: 'lang' }
     }
   },
   proxies: {
@@ -19,7 +19,7 @@ export default {
   nodes() {
     return {
       content: {
-        _html: (node) => { if (!this.router.to.route.staticFile) return this.method.getContent(node) }
+        _html: (node) => { if (!this.router.to.route.static) return this.method.getContent(node) }
       },
       addition: {
         component: {
@@ -33,13 +33,13 @@ export default {
   },
   methods: {
     async getContent() {
-      return await this.common.api.getContent(this.proxy.locale)
+      return await this.api.getContent(this.proxy.locale || this.i18n.defaultLocal)
     }
   },
   created() {
     this.proxy.isPreview = !!this.router.to.query.q
   },
-  async routeUpdate(to, from) {
+  routeUpdate(to, from) {
     this.proxy.isPreview = !!to.query.q
   }
 }

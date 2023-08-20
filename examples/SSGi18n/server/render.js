@@ -1,10 +1,11 @@
-import { createServerRender } from '../../lesta/packages/server-render/index.js'
-import { router, store, common, plugins } from '../app.js'
+import { createServerApp } from '../../../scripts/createServerApp.cjs'
+import { router, store, common } from '../app.js'
 import config from './config.js'
 
-const app = createServerRender({
-  common,
-  plugins,
+const app = createServerApp({
+  plugins: {
+    common
+  },
   ...config
 })
 

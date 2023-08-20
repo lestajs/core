@@ -9,7 +9,6 @@ export default class RouterBasic {
     this.beforeEach = options.beforeEach
     this.beforeEnter = options.beforeEnter
     this.afterEnter = options.afterEnter
-    this.stores = null
     this.router = {
       layouts: options.layouts || {},
       collection: [],
@@ -23,7 +22,7 @@ export default class RouterBasic {
   }
   initBasic(app) {
     this.origin = app.origin
-    if (app.plugins.store) this.stores = app.plugins.store.getAll()
+    this.plugins = app.plugins
     app.plugins.router = this.router
   }
   link(v)  {
@@ -38,7 +37,7 @@ export default class RouterBasic {
   }
   async beforeHooks(hook, to, from) {
     if (hook) {
-      const res = await hook(to, from)
+      const res = await hook(to, from, this.plugins)
       if (res) {
         this.push(res)
         return true
@@ -57,14 +56,9 @@ export default class RouterBasic {
     if (target) {
       this.router.from = from
       this.router.to = to
-      this.router.to.route.staticFile = this.router.to.route.type === 'static' && !this.router.from
+      this.router.to.route.static = this.router.type === 'static' && document.querySelector('html').getAttribute('static')
       if (await this.beforeHooks(this.beforeEnter, to, from)) return
       if (await this.beforeHooks(target.beforeEnter, to, from)) return
-      if (this.stores) {
-        for await (const module of Object.values(this.stores)) {
-          if (await this.beforeHooks(module.store.beforeEnter?.bind(module.context), to, from)) return
-        }
-      }
       if (target.redirect) {
         let v = target.redirect
         typeof v === 'function' ? await this.push(await v(to, from)) : await this.push(v)
@@ -73,11 +67,6 @@ export default class RouterBasic {
       res = await this.router.render(to, from)
       await this.afterHooks(this.afterEnter, to, from)
       await this.afterHooks(target.afterEnter, to, from)
-      if (this.stores) {
-        for await (const module of Object.values(this.stores)) {
-          await this.afterHooks(module.store.afterEnter?.bind(module.context), to, from)
-        }
-      }
     }
     await this.afterHooks(this.afterEach, to, from)
     return res
