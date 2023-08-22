@@ -21,7 +21,7 @@ class Props {
   async proxies(proxies) {
     if (proxies) {
       for (const key in this.props.proxies) {
-        if (!(key in proxies)) return errorProps(this.container.nodepath, 'proxies', key, 301)
+        if (!(proxies.hasOwnProperty(key))) return errorProps(this.container.nodepath, 'proxies', key, 301)
       }
       const proxiesData = {}
       for (const key in proxies) {
@@ -30,7 +30,7 @@ class Props {
         const validation = (v) => {
           if (prop.required && (v === null || v === undefined)) return errorProps(this.container.nodepath, 'proxies', key, 303)
           const value = v ?? prop.default ?? null
-          if (prop.type && (prop.type === 'array' && !Array.isArray(value)) && typeof value !== prop.type) return errorProps(this.container.nodepath, 'proxies', key, 304, prop.type)
+          if (value && prop.type && (prop.type === 'array' && !Array.isArray(value)) && typeof value !== prop.type) return errorProps(this.container.nodepath, 'proxies', key, 304, prop.type)
           return value
         }
         const context = this.context
@@ -47,6 +47,7 @@ class Props {
           v = this.props.proxies[key]
         } else if (store) {
           const storeModule = await this.context.store.get(store)
+          if (!storeModule) return errorProps(this.container.nodepath, 'proxies', key, 307, store)
           v = storeModule.proxies(key, this.container)
         }
         proxiesData[key] = replicate(validation(v))
@@ -62,6 +63,7 @@ class Props {
         const { store } = prop
         if (store) {
           const storeModule = await this.context.store.get(store)
+          if (!storeModule) return errorProps(this.container.nodepath, 'params', key, 307, store)
           const storeParams = storeModule.params(key)
           return replicate(storeParams)
         } else {
@@ -75,10 +77,10 @@ class Props {
           return isDataValid ? data : replicate(data)
         }
       }
-      this.context.param[key] = await paramValue() ??
+      const value = this.context.param[key] = await paramValue() ??
         ((prop.required && errorProps(this.container.nodepath, 'params', key, 303)) ||
           prop.default)
-      if (prop.type && (prop.type === 'array' && !Array.isArray(this.context.param[key])) && typeof this.context.param[key] !== prop.type)
+      if (value && prop.type && (prop.type === 'array' && !Array.isArray(value)) && typeof value !== prop.type)
         errorProps(this.container.nodepath, 'params', key, 304, prop.type)
       if (prop.readonly)
         Object.defineProperty(this.context.param, key, { writable: false })
@@ -91,6 +93,7 @@ class Props {
       const { store } = prop
       if (store) {
         const storeModule = await this.context.store.get(store)
+        if (!storeModule) return errorProps(this.container.nodepath, 'methods', key, 307, store)
         const method = storeModule.methods(key)
         if (!method) return errorProps(this.container.nodepath, 'methods', key, 305, store)
         this.context.method[key] = (...args) => method(...replicate(args))

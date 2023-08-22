@@ -1,3 +1,8 @@
+.LstSelect {
+    width: max-content;
+    position: relative;
+}
+
 .LstSelectWr {
     position: relative;
     display: flex;
@@ -21,4 +26,8 @@
 }
 .LstSelect .arrowTop {
     transform: rotate(135deg);
+}
+.LstSelect .LtsDropdown {
+    margin-top: -1px;
+    border-radius: 2px;
 }

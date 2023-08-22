@@ -42,28 +42,7 @@ function buildGlobal(name) {
     outputSize(name)
   })
 }
-// createWidget
-function buildCreateWidget(name) {
-  build({
-    entryPoints: [resolve(`scripts/${name}.js`)],
-    outfile: `dist/${name}.js`,
-    bundle: true,
-    platform: 'browser',
-    define: { CDN: 'true' }
-  })
-  // minified version
-  build({
-    entryPoints: [resolve(`scripts/${name}.js`)],
-    outfile: `dist/${name}.prod.js`,
-    bundle: true,
-    platform: 'browser',
-    define: { CDN: 'true' },
-    minify: true
-  }).then(() => {
-    outputSize(name)
-  })
-}
-// esm
+
 function buildEsm(name) {
   build({
     entryPoints: [resolve(`scripts/${name}.js`)],
@@ -83,7 +62,8 @@ function buildCjs(name) {
   })
 }
 
-buildCreateWidget('lesta.createWidget')
-buildGlobal('lesta.global')
+buildGlobal('lesta.createWidget.global')
+buildGlobal('lesta.createApp.global')
+
 buildEsm('lesta')
 buildCjs('lesta')

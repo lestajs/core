@@ -1,3 +1,11 @@
+.LstAccordionWr {
+    width: max-content;
+}
+
+.LstTriggerHeader {
+    font-weight: 600;
+}
+
 .LstTrigger {
     padding: .8em 0;
     display: block;

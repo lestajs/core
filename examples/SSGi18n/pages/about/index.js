@@ -39,7 +39,7 @@ export default {
   created() {
     this.proxy.isPreview = !!this.router.to.query.q
   },
-  routeUpdate(to, from) {
+  updated({ to, from }) {
     this.proxy.isPreview = !!to.query.q
   }
 }

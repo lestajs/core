@@ -2,13 +2,11 @@
   display: flex;
   line-height: 1;
   font-size: var(--fs-xs);
-  box-sizing: border-box;
   background-color: var(--gray100);
   color: inherit;
   overflow: hidden;
   align-items: center;
   cursor: pointer;
-  font-family: inherit;
 }
 .LstButton.active {
   background-color: var(--gray300);

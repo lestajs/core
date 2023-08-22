@@ -1,5 +1,6 @@
-import { createWidget } from '../lesta/scripts/lesta'
+import { createWidget } from 'lesta'
 const root = document.querySelector('#root')
+// return Promise
 const widget = createWidget({
     template: `
     <button class="prev">-</button>
@@ -22,7 +23,11 @@ const widget = createWidget({
                 disabled: () => this.proxy.count === 5
             }
         }
+    },
+    updated({ value }) {
+        this.proxy.count = value
     }
 }, root)
 
+// widget.update({ value: 3 })
 // widget.unmount()

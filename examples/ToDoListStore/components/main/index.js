@@ -26,7 +26,7 @@ export default {
       test: { store: 'tasks' }
     },
     methods: {
-      ...mapProps(['add', 'edit', 'remove', 'complete', 'search', 'filter', 'delayFilterStop'], { store: 'tasks' })
+      ...mapProps(['create', 'add', 'edit', 'remove', 'complete', 'search', 'filter', 'delayFilterStop'], { store: 'tasks' })
     }
   },
   handlers: {
@@ -131,5 +131,8 @@ export default {
       })
       this.param.popup.method.open()
     }
+  },
+  async created() {
+    this.method.create()
   }
 }

@@ -7,12 +7,12 @@ export default {
   props: {
     proxies: {
       list: {
-        type: 'Array'
+        type: 'array'
       }
     },
     params: {
       list: {
-        type: 'Array'
+        type: 'array'
       },
       size: {}
     },

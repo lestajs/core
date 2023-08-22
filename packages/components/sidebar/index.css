@@ -1,23 +1,11 @@
-/*.LstSidebar {
-  position: fixed;
-  z-index: 5;
-  left: 0;
-  height: 100%;
-  width: var(--sidebar-width);
-
-  transform: translateX(-100%);
-  transition: transform .3s .2s, width .3s .2s;
-  overflow-x: hidden;
-}
-*/
 .LstSidebar {
   width: var(--sidebar-width);
-  position: -webkit-sticky;
   position: sticky;
   top: var(--sidebar-top);
   overflow-y: auto;
   background-color: white;
   display: none;
+  border-right: 1px solid var(--gray100);
 }
 
 .wr-sidebar {
@@ -74,7 +62,7 @@
   transform: rotate(-45deg);
 }
 
-@media (max-width: 959px) {
+@media (max-width: 559px) {
   .LstSidebar {
     position: fixed;
     width: 100vw;

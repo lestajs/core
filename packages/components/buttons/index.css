@@ -4,3 +4,7 @@
 .LstButtons > button {
     background-color: transparent;
 }
+
+.LstButtons > button.active {
+    font-weight: 600;
+}

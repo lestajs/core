@@ -22,7 +22,7 @@ export default {
       name: { default: '' },
       text: {},
       type: { default: '' },
-      size: { default: '' },
+      size: { default: 'small' },
       autofocus: {},
       icon: {
         default: ''

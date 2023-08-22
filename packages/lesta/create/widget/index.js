@@ -8,6 +8,9 @@ async function createWidget(options, root) {
   root.innerHTML = options.template
   await lifecycle(component, root)
   return {
+    update(args) {
+      component.context.options.updated.bind(component.context)(args)
+    },
     destroy() {
       if (root.reactivity) root.reactivity.node.clear()
       root.method = {}

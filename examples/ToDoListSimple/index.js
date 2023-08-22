@@ -1,4 +1,4 @@
-import { createApp } from '../lesta/scripts/lesta'
+import { createApp } from 'lesta'
 
 import component from './todoList'
 

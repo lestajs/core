@@ -4,8 +4,8 @@ import { _attr } from '../directives'
 
 export default {
   template: `
+    <div class="LstLabel"></div>
     <div class="LstInputWr">
-      <div class="LstLabel"></div>
       <input type="text" class="LstInput b0 br pn">
       <div class="LstMessage"></div>
     </div>`,
@@ -24,7 +24,7 @@ export default {
       type: {
         default: 'text'
       },
-      size: {},
+      size: { default: 'small' },
       validate: {},
       placeholder: {
         default: ''

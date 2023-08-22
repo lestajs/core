@@ -44,5 +44,8 @@
     "path": "^0.12.7",
     "zlib": "^1.0.5"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "esbuild-plugin-brotli": "^0.2.0"
+  }
 }

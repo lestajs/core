@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Display:wght@200;300;400;700&family=Noto+Sans:wght@300;400;700&family=Nunito+Sans:wght@200;300;400;700&display=swap');
 :root {
     --transition: .75s cubic-bezier(.2, .6,0, 1);
-    --ss: 2vw;
+    --ss: max(20px, 2vw);
     --sm: 4vw;
     --sl: 6vw;
     --vs: 5vmin;
@@ -11,9 +11,9 @@
     --max-width: 1920px;
     --fs-xxs: 14px;
     --fs-xs: 16px;
-    --fs-s: 1rem;
+    --fs-s: 1.1rem;
     --fs-m: 1.4rem;
-    --fs-l: 2.8rem;
+    --fs-l: 2.6rem;
     --fs-xl: 3.2rem;
     --xxs: .6rem;
     --xs: 1.2rem;
@@ -25,13 +25,14 @@
     --light-gray: #ddd;
     --w-col: 500px;
     --w-min-content: 120rem;
-    --gray: #f1f1f1;
+    --gray: #f3f3f3;
     --gray100: #e8e8e8;
     --gray200: #dbdbdb;
     --gray300: #a6a6a6;
     --gray400: #777;
-    --gray500: #3a3a3a;
-    --gray900: #151515;
+    --gray500: #434343;
+    --gray600: #3a3a3a;
+    --gray700: #2e2e2e;
     --black: #1f1f1f;
     --dark: #10080a;
     --red: #ED515A;
@@ -65,7 +66,7 @@ html {
 }
 body {
     font-family: 'Nunito Sans', sans-serif;
-    color: var(--gray500);
+    color: var(--gray600);
     font-size: var(--fs-xs);
     height: 100vh;
 }
@@ -80,14 +81,20 @@ a {
     cursor: pointer;
 }
 h1, h2, h3 {
-    color: var(--gray900);
     font-weight: 400;
     letter-spacing: -0.005em;
-    margin-bottom: .5em;
+    margin-bottom: 1em;
+}
+h1 {
+    font-size: var(--fs-l);
+}
+h2 {
+    font-size: var(--fs-m);
 }
 li {
     list-style-type: none;
 }
+
 button {
     display: flex;
     line-height: 1;

@@ -30,11 +30,12 @@ class Router extends RouterBasic {
     v.replace ? history.replaceState(null, null, url) : history.pushState(null, null, url)
   }
   async routeUpdate(component) {
-    await component.options.routeUpdate?.bind(component.context)(this.router.to, this.router.from)
+    await component.options.updated?.bind(component.context)({ to: this.router.to, from: this.router.from })
   }
-  async render(to, from) {
-    const target = to.route
-    if (this.current && from?.route === to.route) {
+  async render() {
+    const target = this.router.to.route
+    const from = this.router.from
+    if (this.current && from?.route === target) {
       if (this.currentLayout) await this.routeUpdate(this.currentLayout)
       await this.routeUpdate(this.current)
     } else if (target.component) {

@@ -10,7 +10,7 @@ export default {
                   <div class="LstSelectInput"></div>
                   <div class="arrow"></div>
                 </div>
-                <div class="LstSelectOptions relative"></div>
+                <div class="LstSelectOptions"></div>
              </div>`,
   props: {
     proxies: {

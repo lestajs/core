@@ -27,4 +27,4 @@ jobs:
           git push origin v${{ github.event.inputs.version }}
       - run: npm publish
     env:
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_LESTA }}

@@ -9,6 +9,7 @@ export default class RouterBasic {
     this.beforeEach = options.beforeEach
     this.beforeEnter = options.beforeEnter
     this.afterEnter = options.afterEnter
+    this.form = null
     this.router = {
       layouts: options.layouts || {},
       collection: [],
@@ -35,40 +36,40 @@ export default class RouterBasic {
     await this.update(url)
     return path
   }
-  async beforeHooks(hook, to, from) {
+  async beforeHooks(hook) {
     if (hook) {
-      const res = await hook(to, from, this.plugins)
+      const res = await hook(this.router.to, this.router.from, this.plugins)
       if (res) {
         this.push(res)
         return true
       }
     }
   }
-  async afterHooks(hook, to, from) {
-    if (hook) await hook(to, from)
+  async afterHooks(hook) {
+    if (hook) await hook(this.router.to, this.router.from, this.plugins)
   }
   async update(url) {
     let res = null
-    if (await this.beforeHooks(this.beforeEach, this.router.to, this.router.from)) return
+    if (await this.beforeHooks(this.beforeEach)) return
     const to = route.init(this.router.collection, url)
-    const from = this.router.to || null
     const target = to.route
     if (target) {
-      this.router.from = from
+      this.router.from = this.form
       this.router.to = to
       this.router.to.route.static = this.router.type === 'static' && document.querySelector('html').getAttribute('static')
-      if (await this.beforeHooks(this.beforeEnter, to, from)) return
-      if (await this.beforeHooks(target.beforeEnter, to, from)) return
+      if (await this.beforeHooks(this.beforeEnter)) return
+      if (await this.beforeHooks(target.beforeEnter)) return
       if (target.redirect) {
         let v = target.redirect
         typeof v === 'function' ? await this.push(await v(to, from)) : await this.push(v)
         return
       }
-      res = await this.router.render(to, from)
-      await this.afterHooks(this.afterEnter, to, from)
-      await this.afterHooks(target.afterEnter, to, from)
+      res = await this.router.render()
+      this.form = this.router.to
+      await this.afterHooks(this.afterEnter)
+      await this.afterHooks(target.afterEnter)
     }
-    await this.afterHooks(this.afterEach, to, from)
+    await this.afterHooks(this.afterEach)
     return res
   }
 }

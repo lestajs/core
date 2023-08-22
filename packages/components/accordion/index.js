@@ -2,8 +2,9 @@ import './index.css'
 
 export default {
   template: `
+    <div class="LstAccordionWr"></div>
     <div class="LstTrigger">
-        <strong class="LstTriggerHeader">header</strong>
+        <div class="LstTriggerHeader"></div>
         <div class="LstTriggerIcon LstArrow"></div>
     </div>
     <div class="LstPanel">
@@ -14,7 +15,9 @@ export default {
   },
   props: {
     params: {
-      header: {}
+      header: {
+        default: 'header'
+      }
     },
     proxies: {
       header: {}
@@ -31,7 +34,7 @@ export default {
         },
         onclick: () => {
           this.proxy.hide = !this.proxy.hide
-          this.method.change(this.proxy.hide)
+          this.method.change && this.method.change(this.proxy.hide)
         }
       },
       LstTriggerHeader: {

@@ -68,16 +68,16 @@ export default {
         this.proxy.tasks = this.param.DB
         this.proxy.completedCount = null
       }
-    }
-  },
-  async created() {
-    try {
-      const DB = await localStorage.getItem('tasks')
-      const data = DB ? JSON.parse(DB) : []
-      this.param.DB = data.sort((a, b) => (Date.parse(b.date) - Date.parse(a.date)))
-      this.proxy.tasks = this.param.DB
-    } catch (e) {
-      console.log(e)
+    },
+    async create() {
+      try {
+        const DB = await localStorage.getItem('tasks')
+        const data = DB ? JSON.parse(DB) : []
+        this.param.DB = data.sort((a, b) => (Date.parse(b.date) - Date.parse(a.date)))
+        this.proxy.tasks = this.param.DB
+      } catch (e) {
+        console.log(e)
+      }
     }
   }
 }

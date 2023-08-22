@@ -18,7 +18,7 @@ class Store {
     Object.preventExtensions(this.context.param)
     for (const key in this.store.methods) {
       this.context.method[key] = (...args) => {
-        if (args.length && (args.length > 1 || typeof args[0] !== 'object')) return errorStore(this.context.name, 404, key)
+        if (args.length && (args.length > 1 || typeof args[0] !== 'object')) return errorStore(this.context.name, 403, key)
         const arg = {...replicate(args[0])}
         if (this.store.middlewares && key in this.store.middlewares) {
           return (async () => {
@@ -73,9 +73,10 @@ function createStore(options = {}) {
       this.stores[key] = store
     },
     async get(key) {
+      if (!options.stores) return errorStore(key, 401)
       if (!this.stores.hasOwnProperty(key)) {
-        if (!options.stores?.hasOwnProperty(key)) return errorStore(key, 401)
         const module = await loadModule(options.stores[key])
+        if (!module) return
         this.create(module, key)
       }
       return this.stores[key]

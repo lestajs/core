@@ -21,6 +21,7 @@ export default class InitComponent {
   }
   async loaded(container) {
     this.context.container = container
+    if (typeof this.component !== 'object') return errorComponent(container.nodepath,211)
     this.component.loaded && await this.component.loaded.bind(this.context)()
   }
   async created() {
