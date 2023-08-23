@@ -2,14 +2,10 @@ import renderComponent from './renderComponent'
 import { lifecycle } from '../lifecycle'
 import { Init } from '../../init'
 import Nodes from '../../nodes'
+import plugins from '../plugins'
 
 function createApp(entry) {
-  entry.plugins = {
-    ...entry.plugins,
-    get isBrowser() {
-      return typeof window !== 'undefined' && typeof document !== 'undefined'
-    }
-  }
+  entry.plugins = { ...entry.plugins, plugins }
   const app = {
     ...entry,
     async mount(options, nodeElement, props = {}) {

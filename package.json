@@ -15,13 +15,12 @@
     "dist/lesta.createWidget.js",
     "dist/lesta.createWidget.prod.js"
   ],
-  "jsdelivr": "dist/lesta.global.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lestajs/lesta.git"
+    "url": "git+https://github.com/lestajs/core.git"
   },
   "bugs": {
-    "url": "https://github.com/lestajs/lesta/issues"
+    "url": "https://github.com/lestajs/core/issues"
   },
   "main": "dist/lesta.esm.js",
   "module": "dist/lesta.esm.js",
@@ -44,8 +43,5 @@
     "path": "^0.12.7",
     "zlib": "^1.0.5"
   },
-  "type": "module",
-  "dependencies": {
-    "esbuild-plugin-brotli": "^0.2.0"
-  }
+  "type": "module"
 }

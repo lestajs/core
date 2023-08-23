@@ -26,6 +26,9 @@ const widget = createWidget({
     },
     updated({ value }) {
         this.proxy.count = value
+    },
+    created() {
+        console.log(this.isMobileDevice)
     }
 }, root)
 

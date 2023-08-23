@@ -14,7 +14,7 @@ const router = createRouter({
     to.extras.auth = !!(typeof window !== 'undefined' && localStorage.getItem('auth'))
     const locale = to.params.locale
     if (!locale && plugins.i18n.persisted() !== plugins.i18n.defaultLocal) {
-      return { params: { locale: plugins.i18n.guess() }, replace: true }
+      return { params: { locale: plugins.i18n.guess() }, replace: true, query: true, hash: true }
     }
   },
   afterEnter(to, from) {},

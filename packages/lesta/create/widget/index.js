@@ -1,10 +1,10 @@
 import { lifecycle } from '../lifecycle'
-import { errorNode } from '../../../utils/errors/node'
 import { InitBasic } from '../../init/basic'
 import NodesBasic from '../../nodes/basic'
+import plugins from '../plugins'
 
 async function createWidget(options, root) {
-  const component = new InitBasic(options, { errorNode }, NodesBasic)
+  const component = new InitBasic(options, { plugins }, NodesBasic)
   root.innerHTML = options.template
   await lifecycle(component, root)
   return {
