@@ -64,7 +64,7 @@ class Store {
   }
 }
 
-function createStore(options = {}) {
+function createStores(stores = {}) {
   return {
     app: {},
     stores: {},
@@ -73,9 +73,9 @@ function createStore(options = {}) {
       this.stores[key] = store
     },
     async get(key) {
-      if (!options.stores) return errorStore(key, 401)
+      if (!stores) return errorStore(key, 401)
       if (!this.stores.hasOwnProperty(key)) {
-        const module = await loadModule(options.stores[key])
+        const module = await loadModule(stores[key])
         if (!module) return
         this.create(module, key)
       }
@@ -95,4 +95,4 @@ function createStore(options = {}) {
   }
 }
 
-export { createStore }
+export { createStores }

@@ -4,7 +4,7 @@ import api from './plugins/api.js'
 import i18n from './plugins/i18n.js'
 import lang from "./stores/lang/index.js"
 import { createRouter } from 'lesta'
-import { createStore } from 'lesta'
+import { createStores } from 'lesta'
 
 const router = createRouter({
   routes,
@@ -20,8 +20,7 @@ const router = createRouter({
   afterEnter(to, from) {},
   afterEach(to, from) {}
 })
-const stores = { lang }
-const store = createStore({ stores })
+const store = createStores({ lang })
 
 export {
   router,

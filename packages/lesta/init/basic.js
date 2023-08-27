@@ -18,7 +18,6 @@ class InitBasic extends InitComponent {
     }
   }
   async mounted() {
-    this.context.source.stylesheet && await this.context.source.stylesheet()
     this.component.mounted && await this.component.mounted.bind(this.context)()
   }
   getProxy() {
@@ -55,8 +54,9 @@ class InitBasic extends InitComponent {
       for await (const [keyNode, options] of Object.entries(nodes)) {
         const selector = (this.component.selectors && this.component.selectors[keyNode] ) || `.${keyNode}`
         const nodeElement = container.querySelector(selector) || container.classList.contains(keyNode) && container
-        if (!nodeElement) return errorNode(keyNode, 105)
-        nodeElement.nodepath = container.nodepath ? container.nodepath + '.' + keyNode : keyNode
+        const nodepath = container.nodepath ? container.nodepath + '.' + keyNode : keyNode
+        if (!nodeElement) return errorNode(nodepath, 105)
+        nodeElement.nodepath = nodepath
         nodeElement.nodename = keyNode
         Object.assign(this.context.node, { [keyNode]: nodeElement })
         if (options) {

@@ -37,10 +37,8 @@ function cleanHTML(str) {
   }
   
   const html = stringToHTML(str)
-  
   removeScripts(html)
   clean(html)
-  
   return html.childNodes
   
 }

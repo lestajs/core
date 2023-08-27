@@ -1,0 +1,16 @@
+.LstTags {
+    display: flex;
+    gap: 2px;
+}
+.LstTag {
+    cursor: pointer;
+    background-color: #00000020;
+    vertical-align:middle;
+    display: table-cell;
+}
+.LstTag .LstClose {
+    font-size: .9em;
+}
+.LstTag.selected {
+    opacity: 0.6;
+}

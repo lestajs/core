@@ -1,0 +1,32 @@
+.LstSelect {
+    position: relative;
+}
+
+.LstSelectWr {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.LstSelectInput {
+    flex-basis: 100%;
+}
+.LstSelectInput .LstInput {
+    padding-right: 2.4em;
+}
+.LstSelect .arrow {
+    border: solid;
+    border-width: 0 2px 2px 0;
+    display: inline-block;
+    padding: 3px;
+    transform: rotate(45deg);
+    position: absolute;
+    right: 1.2em;
+    transition: transform ease-in .15s;
+}
+.LstSelect .arrowTop {
+    transform: rotate(135deg);
+}
+.LstSelect .LtsDropdown {
+    margin-top: -1px;
+    border-radius: 2px;
+}

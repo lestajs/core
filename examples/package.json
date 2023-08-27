@@ -8,6 +8,7 @@
     "ToDoListStore": "parcel ToDoListStore/index.html",
     "SSGi18n": "parcel SSGi18n/index.html",
     "UI": "parcel UI/index.html",
+    "UIB": "parcel build UI/index.html",
     "ssg": "parcel build SSGi18n/index.html && SET NODE_ENV='development' && nodemon SSGi18n/server/ssg.js",
     "ssr": "parcel build SSGi18n/index.html && nodemon SSGi18n/server/ssr.js",
     "build": "parcel build --target SSGi18n"

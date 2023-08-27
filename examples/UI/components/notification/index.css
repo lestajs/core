@@ -1,0 +1,9 @@
+.LstNotifyList {
+    min-width: 288px;
+}
+
+.LstNBR {
+    position: fixed;
+    right: var(--s);
+    bottom: var(--xxs);
+}

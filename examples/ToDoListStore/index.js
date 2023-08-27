@@ -1,13 +1,11 @@
 import component from './app'
 import tasks from './stores/tasks'
-import { createApp, createStore } from 'lesta'
+import { createApp, createStores } from 'lesta'
 
-const store = createStore({
-    stores: { tasks }
-})
+const stores = createStores({ tasks })
 
 const app = createApp({
     root: document.querySelector('#root'),
 })
-store.init(app)
+stores.init(app)
 app.mount(component)

@@ -1,0 +1,76 @@
+.LstSidebar {
+  width: var(--sidebar-width);
+  position: sticky;
+  top: var(--sidebar-top);
+  overflow-y: auto;
+  background-color: #ffffff08;
+  display: none;
+  height: 100%;
+  outline: 1px solid #00000020;
+}
+
+.LstSidebar.mini {
+  width: var(--sidebar-minWidth);
+  overflow: hidden;
+}
+
+.wr-sidebar {
+  height: 100%;
+  padding: var(--xxs);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.wr-sidebar [section="content"] {
+  padding: var(--xs) 0;
+}
+
+.LstSidebar.mini .wr-sidebar {
+  padding: 0;
+}
+
+.LstSidebar::-webkit-scrollbar {
+  width: 7px;
+}
+
+.LstSidebar::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.LstSidebar::-webkit-scrollbar-thumb {
+  background-color: var(--gray300);
+  border-radius: 1px;
+}
+
+.LstSidebar .content {
+  width: 100%;
+  transition: width .3s .2s;
+  right: 0;
+  display: grid;
+}
+.LstSidebar.show {
+  display: block;
+}
+
+.LstSidebar .LstClose {
+  display: none;
+  position: relative;
+  margin: var(--ss) 0 0 auto;
+}
+
+@media (max-width: 559px) {
+  .LstSidebar {
+    position: fixed;
+    width: 100vw;
+    max-height: 100vh !important;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 10;
+  }
+  .LstSidebar .LstClose {
+    display: block;
+  }
+}

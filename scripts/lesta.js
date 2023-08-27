@@ -2,7 +2,7 @@ import { debounce, throttling, delay, replicate, mapProps, deleteReactive, loadM
 import { createApp } from '../packages/lesta/create/app'
 import { createWidget } from '../packages/lesta/create/widget'
 import { createRouter } from '../packages/router'
-import { createStore } from '../packages/store'
+import { createStores } from '../packages/store'
 
 export {
   createApp,
@@ -18,5 +18,5 @@ export {
   queue,
   deepFreeze,
   createRouter,
-  createStore
+  createStores
 }

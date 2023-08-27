@@ -1,0 +1,14 @@
+.miniava {
+    margin-left: var(--xxs);
+}
+.rightBar .LstButtons {
+    border-radius: 100px;
+    overflow: hidden;
+    background-color: #00000030;
+}
+
+.rightBar .LstButtons .active {
+    font-weight: normal;
+    background-color: #ffffff50;
+    border-radius: 100px;
+}
