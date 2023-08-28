@@ -27,8 +27,7 @@ export default class Components extends Node {
     return result
   }
   async section(specialty, nodeElement, proxies) {
-    const integrate = async (section, options) => {
-      nodeElement.setAttribute('integrate', '')
+    const mount = async (section, options) => {
       if (nodeElement.section[section].unmount) await this.nodeElement.section[section].unmount()
       options.section = section
       await this.create(specialty, nodeElement, options, proxies(options.proxies, nodeElement.section[options.section], options.section))
@@ -41,9 +40,9 @@ export default class Components extends Node {
         if (!sectionNode.reactivity) sectionNode.reactivity = {component: new Map()}
         Object.assign(nodeElement.section, {[section]: sectionNode})
         if (options.src) {
-          await integrate(section, options)
+          await mount(section, options)
         } else if (this.node.component.iterate) return errorComponent(sectionNode.nodepath, 204)
-        nodeElement.integrate = integrate
+        sectionNode.mount = (component) => mount(section, component || options)
       }
     }
   }

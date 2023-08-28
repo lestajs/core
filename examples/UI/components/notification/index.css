@@ -1,5 +1,6 @@
 .LstNotifyList {
     min-width: 288px;
+    z-index: 11;
 }
 
 .LstNBR {

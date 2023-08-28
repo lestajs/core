@@ -11,6 +11,11 @@ export default {
         <span>Проекты</span><div class="add"></div>
     </div>
     <div class="projects"></div>`,
+  props: {
+    methods: {
+      notifyAdd: { store: 'notification' }
+    }
+  },
   nodes() {
     return {
       searchBar: {
@@ -29,7 +34,12 @@ export default {
           params: {
             width: '100%',
             size: 'mini',
-            buttons: ['Мои задачи', 'Все задачи', 'Все проекты']
+          },
+          proxies: {
+            buttons: ['📂 Мои задачи', '📂 Все задачи', '📂 Все проекты']
+          },
+          methods: {
+            change: (value) => this.method.notifyAdd({ value })
           }
         }
       },
@@ -47,7 +57,9 @@ export default {
           src: buttons,
           params: {
             width: '100%',
-            size: 'mini',
+            size: 'mini'
+          },
+          proxies: {
             buttons: ['Спутник', 'Мой дом']
           }
         }

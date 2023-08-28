@@ -4,9 +4,9 @@ import { throttling } from 'lesta'
 export default {
   template: `
     <div class="LstSidebar w-side">
-      <div class="wr-sidebar">
-        <div class="LstClose"></div>
+      <div class="LstSidebarWr">
         <div>
+          <div class="LstClose"></div>
           <div section="top"></div>
           <div section="content"></div>
         </div>
@@ -19,7 +19,7 @@ export default {
       top: {},
       width: {},
       minWidth: {},
-      autoHeight: {},
+      scrollContainer: {},
     },
     proxies: {
       show: {
@@ -32,6 +32,9 @@ export default {
     methods: {
       close: {}
     }
+  },
+  params: {
+    scrollHandler: () => {}
   },
   nodes() {
     return {
@@ -48,20 +51,21 @@ export default {
   },
   methods: {
     resize() {
-      this.node.LstSidebar.style.maxHeight = this.root.clientHeight - this.node.LstSidebar.getBoundingClientRect().top + 'px'
+      const top = this.node.LstSidebar.getBoundingClientRect().top
+      this.node.LstSidebar.style.maxHeight = this.param.scrollContainer.clientHeight - top + 'px'
     }
   },
   mounted() {
-    if (this.param.autoHeight) {
+    if (this.param.scrollContainer) {
       this.method.resize()
-      this.param.autoHeight = throttling(() => this.method.resize(), 100)
-      this.root.addEventListener('scroll', this.param.autoHeight)
+      this.param.scrollHandler = throttling(() => this.method.resize(), 100)
+      this.param.scrollContainer.addEventListener('scroll', this.param.scrollHandler)
     }
     this.node.LstSidebar.style.setProperty('--sidebar-width', this.param.width || '210px')
     this.node.LstSidebar.style.setProperty('--sidebar-top', this.param.top || '0')
     this.node.LstSidebar.style.setProperty('--sidebar-minWidth', this.param.minWidth || '56px')
   },
   unmount() {
-    this.param.autoHeight && this.root.removeEventListener('scroll', this.param.autoHeight)
+    this.param.scrollContainer && this.root.removeEventListener('scroll', this.param.scrollHandler)
   }
 }

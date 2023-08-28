@@ -9,12 +9,7 @@
   outline: 1px solid #00000020;
 }
 
-.LstSidebar.mini {
-  width: var(--sidebar-minWidth);
-  overflow: hidden;
-}
-
-.wr-sidebar {
+.LstSidebarWr {
   height: 100%;
   padding: var(--xxs);
   display: flex;
@@ -22,12 +17,8 @@
   justify-content: space-between;
 }
 
-.wr-sidebar [section="content"] {
+.LstSidebarWr [section="content"] {
   padding: var(--xs) 0;
-}
-
-.LstSidebar.mini .wr-sidebar {
-  padding: 0;
 }
 
 .LstSidebar::-webkit-scrollbar {
@@ -56,21 +47,36 @@
 .LstSidebar .LstClose {
   display: none;
   position: relative;
-  margin: var(--ss) 0 0 auto;
 }
 
-@media (max-width: 559px) {
+@media (max-width: 560px) {
   .LstSidebar {
     position: fixed;
     width: 100vw;
     max-height: 100vh !important;
+    backdrop-filter: blur(100px);
+    background-color: #000000cc;
+    color: #ffffffcc;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
     z-index: 10;
   }
+  .LstSidebarWr {
+    padding: var(--xs);
+  }
   .LstSidebar .LstClose {
     display: block;
+    margin: 0 0 var(--xs) auto;
+  }
+}
+@media (min-width: 560px) {
+  .LstSidebar.mini {
+    width: var(--sidebar-minWidth);
+    overflow: hidden;
+  }
+  .LstSidebar.mini .LstSidebarWr {
+    padding: 0;
   }
 }

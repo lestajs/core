@@ -9,7 +9,7 @@ import subHeader from './pages/main/components/subHeader'
 import image from './components/image'
 import notification from './components/notification'
 import table from './components/table'
-import { uid } from 'lesta'
+import { uid, mapProps } from 'lesta'
 
 export default {
   template: `
@@ -27,13 +27,16 @@ export default {
       notifications: { store: 'notification' }
     },
     methods: {
-      notifyAdd: { store: 'notification' },
-      notifyClose: { store: 'notification' }
+      ...mapProps(['notifyAdd', 'notifyClose'], { store: 'notification' }),
+      // notifyAdd: { store: 'notification' },
+      // notifyClose: { store: 'notification' }
     }
   },
   proxies: {
     mini: false,
-    body: []
+    show: true,
+    body: [],
+    sidebarBottom: ['Шаблоны', 'Архивы']
   },
   nodes() {
     return {
@@ -47,7 +50,25 @@ export default {
                 icon: '☰'
               },
               methods: {
-                change: () => this.proxy.mini = !this.proxy.mini
+                change: () => {
+                  this.proxy.mini = !this.proxy.mini
+                  if (this.proxy.mini) {
+                    this.node.sidebar.section.bottom.unmount()
+                    this.node.sidebar.section.content.mount({
+                      src: button,
+                      params: {
+                        size: 'normal'
+                      },
+                      proxies: {
+                        text: '📂'
+                      }
+                    })
+                  } else {
+                    this.node.sidebar.section.bottom.mount()
+                    this.node.sidebar.section.content.mount()
+                  }
+                  this.proxy.show = true
+                }
               }
             },
             center: {
@@ -72,7 +93,11 @@ export default {
         component: {
           src: sidebar,
           proxies: {
-            mini: () => this.proxy.mini
+            mini: () => this.proxy.mini,
+            show: () => this.proxy.show
+          },
+          methods: {
+            close: () => this.proxy.show = false
           },
           sections: {
             top: {
@@ -84,16 +109,15 @@ export default {
                 url: 'https://i.pinimg.com/736x/a5/b9/b6/a5b9b6cda1fe53b27d88ad7bc5b6dcac.jpg',
               }
             },
-            content: {
-              src: sidebarContent,
-              induce: () => !this.proxy.mini
-            },
+            content: { src: sidebarContent },
             bottom: {
               src: buttons,
               params: {
                 width: '100%',
-                size: 'mini',
-                buttons: ['Шаблоны', 'Архивы']
+                size: 'mini'
+              },
+              proxies: {
+                buttons: () => this.proxy.sidebarBottom
               },
               methods: {
                 change: (value) => this.method.notifyAdd({ value })
@@ -127,16 +151,6 @@ export default {
           }
         }
       }
-      // accordion: {
-      //   component: {
-      //     src: accordion,
-      //     sections: {
-      //       content: {
-      //         src: { template: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.' }
-      //       }
-      //     }
-      //   }
-      // }
     }
   },
   loaded() {

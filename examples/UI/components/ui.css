@@ -70,6 +70,10 @@ body {
     font-size: var(--fs-xs);
     height: 100vh;
 }
+#root {
+    height: 100vh;
+    overflow-x: auto;
+}
 
 a {
     text-decoration: none;
@@ -230,6 +234,7 @@ input, button {
     padding-left: .8em;
     opacity: 0.8;
     cursor: pointer;
+    width: max-content;
 }
 .LstClose:before {
     content: '✕';

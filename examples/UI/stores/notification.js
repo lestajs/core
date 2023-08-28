@@ -7,7 +7,7 @@ export default {
   methods: {
     async notifyAdd({ value }) {
       this.proxy.notifications.unshift(value)
-      await delay(2000)
+      await delay(3000)
       this.proxy.notifications.pop()
     },
     notifyClose({ index }) {

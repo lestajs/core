@@ -73,26 +73,23 @@ export default {
             hide: () => this.proxy.hide
           },
           sections: {
-            content: {}
+            content: {
+              src: list,
+              params: {
+                list: this.param.options
+              },
+              methods: {
+                change: (v) => {
+                  this.proxy.value = v
+                  this.param.value = v
+                  this.method.change && this.method.change(this.param)
+                }
+              }
+            }
           }
         }
       }
     }
-  },
-  mounted() {
-    this.node.LstSelectOptions.integrate('content', {
-      src: list,
-      params: {
-        list: this.param.options
-      },
-      methods: {
-        change: (v) => {
-          this.proxy.value = v
-          this.param.value = v
-          this.method.change && this.method.change(this.param)
-        }
-      }
-    })
   },
   methods: {
     set(v) {

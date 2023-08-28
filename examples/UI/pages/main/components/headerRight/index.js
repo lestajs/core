@@ -14,10 +14,8 @@ export default {
       rightBar: {
         component: {
           src: buttons,
-          params: {
-            buttons: ['☀', '☾']
-          },
           proxies: {
+            buttons: ['☀', '☾'],
             active: 1
           },
           methods: {

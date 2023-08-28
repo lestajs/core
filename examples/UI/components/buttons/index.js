@@ -4,10 +4,6 @@ export default {
   props: {
     params: {
       width: {},
-      buttons: {
-        type: 'array',
-        default: []
-      },
       size: { default: 'small' },
       lock: {},
       actives: {
@@ -16,6 +12,10 @@ export default {
       }
     },
     proxies: {
+      buttons: {
+        type: 'array',
+        default: []
+      },
       active: {
         type: 'number',
         default: null
@@ -29,8 +29,8 @@ export default {
   setters: {
     active(v) {
       if (this.param.actives) {
-        const active = this.param.actives.indexOf(this.param.buttons[v])
-        active === -1 ? this.param.actives.push(this.param.buttons[v]) : this.param.actives.splice(active, 1)
+        const active = this.param.actives.indexOf(this.proxy.buttons[v])
+        active === -1 ? this.param.actives.push(this.proxy.buttons[v]) : this.param.actives.splice(active, 1)
         this.method.select && this.method.select(this.param.actives)
         this.node.LstButtons.children[v].classList.toggle('active')
       } else {
@@ -43,12 +43,12 @@ export default {
   nodes() {
     return {
       LstButtons: {
-        _html: this.method.render(),
+        _html: () => this.method.render(),
         onclick: (event) => {
           if (!this.param.lock && event.target.closest('.LstButtons > button')) {
             const index = +event.target.dataset.index
             this.proxy.active = index
-            this.method.change && this.method.change(this.param.buttons[index])
+            this.method.change && this.method.change(this.proxy.buttons[index])
           }
         }
       }
@@ -58,21 +58,14 @@ export default {
     render() {
       const isActive = (index) => {
         if (this.param.actives) {
-          return this.param.actives.includes(this.param.buttons[index])
+          return this.param.actives.includes(this.proxy.buttons[index])
         } else return this.proxy.active === index
       }
-      return this.param.buttons.reduce((accum, el, index) => accum + `
-        <button class="br${ this.param.lock || isActive(index) ? ' active' : ''}" data-index="${index}" size="${ this.param.size }">${el}</button>`, '')
-    },
-    update(arr) {
-      this.param.buttons = arr
-      this.node.LstButtons.innerHTML = this.method.render()
-    },
-    empty(text) {
-      this.node.LstButtons.innerHTML = text
+      return this.proxy.buttons.reduce((accum, el, index) => accum + `
+        <button class="${ this.param.lock || isActive(index) ? ' active' : ''}" data-index="${index}" size="${ this.param.size }">${el}</button>`, '')
     },
     active(v) {
-      this.proxy.active = this.param.buttons.indexOf(v)
+      this.proxy.active = this.proxy.buttons.indexOf(v)
     }
   },
   mounted() {

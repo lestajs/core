@@ -41,7 +41,7 @@ export default {
       text: {
         textContent: () => this.proxy.li
       },
-      close: {
+      LstClose: {
         onclick: (event) => {
           event.stopPropagation(),
           this.method.remove(this.param.index)
