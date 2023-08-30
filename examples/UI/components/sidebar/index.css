@@ -6,7 +6,7 @@
   background-color: #ffffff08;
   display: none;
   height: 100%;
-  outline: 1px solid #00000020;
+  border-right: 1px solid #00000020;
 }
 
 .LstSidebarWr {

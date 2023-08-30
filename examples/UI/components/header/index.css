@@ -1,17 +1,17 @@
 .LstHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   background-color: #ffffff10;
   border-bottom: 1px solid #00000020;
-  padding: var(--xxs);
   width: 100%;
+}
+.LstHeaderContent {
+  justify-content: space-between;
+  align-items: center;
   margin: 0 auto;
+  padding: var(--xxs);
 }
 [section="center"] {
   flex: 1;
 }
-
 [section]:empty {
   display: none;
 }

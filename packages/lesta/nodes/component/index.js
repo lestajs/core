@@ -1,6 +1,7 @@
 import Node from '../node.js'
 import optionsComponent from './optionsComponent.js'
-import { errorComponent } from '../../../utils/errors/component'
+import sections from './sections/index.js'
+import { errorComponent } from '../../../utils/errors/component.js'
 
 export default class Components extends Node {
   constructor(...args) {
@@ -26,36 +27,14 @@ export default class Components extends Node {
     }
     return result
   }
-  async section(specialty, nodeElement, proxies) {
-    const mount = async (section, options) => {
-      if (nodeElement.section[section].unmount) await this.nodeElement.section[section].unmount()
-      options.section = section
-      await this.create(specialty, nodeElement, options, proxies(options.proxies, nodeElement.section[options.section], options.section))
-    }
-    nodeElement.section = {}
-    if (this.node.component.sections) {
-      for await (const [section, options] of Object.entries(this.node.component.sections)) {
-        const sectionNode = nodeElement.querySelector(`[section="${section}"]`)
-        if (!sectionNode) return errorComponent(nodeElement.nodepath, 201, section)
-        if (!sectionNode.reactivity) sectionNode.reactivity = {component: new Map()}
-        Object.assign(nodeElement.section, {[section]: sectionNode})
-        if (options.src) {
-          await mount(section, options)
-        } else if (this.node.component.iterate) return errorComponent(sectionNode.nodepath, 204)
-        sectionNode.mount = (component) => mount(section, component || options)
-      }
-    }
-  }
   async create(specialty, nodeElement, component, proxies, value, index) {
     if (!component.src) return errorComponent(nodeElement.nodepath, 203)
     const { options, props } = await optionsComponent.collect(component, proxies, value, index)
     const result = await this.app.mount(options, nodeElement, props)
-    if (component.sections) {
-      await this.section(specialty, result?.container, (proxies, target, section) => {
-        if (index !== undefined) {
-          return specialty(proxies, result?.container.section[section], index)
-        } else { return specialty(proxies, target) }
-      })
-    }
+    await sections(component, specialty, result?.container, (proxies, target, section) => {
+      if (index !== undefined) {
+        return specialty(proxies, result?.container.section[section], index)
+      } else { return specialty(proxies, target) }
+    }, this.create.bind(this))
   }
 }

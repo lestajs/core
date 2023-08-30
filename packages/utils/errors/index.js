@@ -9,7 +9,7 @@ const component = {
   201: 'section "%s" is not found in the template.',
   202: 'section "%s" is not defined.',
   203: '"src" property must not be empty.',
-  204: '"iterate" property is not supported for sections.',
+  204: 'section mounting is not available for iterable components. You can set the default component in the "sections".',
   205: '"iterate" property expects a function.',
   206: '"iterate" function must return an array.',
   207: 'node is a section, the "component" property is not supported.',
@@ -20,6 +20,7 @@ const component = {
   212: 'the "induce" property expects a function as a value.',
   213: 'param "%s" is already in props.',
   214: 'proxy "%s" is already in props.',
+  215: '"iterate" and "induce" property is not supported for sections.'
 }
 const props = {
   301: 'parent component passes proxies, you need to specify them in props.',

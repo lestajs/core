@@ -1,4 +1,4 @@
-import { createApp } from '../lesta/packages/lesta/create/app'
+import { createApp } from 'lesta'
 import axios from 'axios'
 import filters from './plugins/filters'
 
@@ -7,7 +7,6 @@ const app = createApp({
   directives: {},
   plugins: {
     axios,
-    filters,
-    ui: {}
+    filters
   }
 })

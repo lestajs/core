@@ -109,7 +109,9 @@ export default {
                 url: 'https://i.pinimg.com/736x/a5/b9/b6/a5b9b6cda1fe53b27d88ad7bc5b6dcac.jpg',
               }
             },
-            content: { src: sidebarContent },
+            content: {
+              src: sidebarContent
+            },
             bottom: {
               src: buttons,
               params: {
