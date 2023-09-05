@@ -26,7 +26,8 @@ export default {
       test: { store: 'tasks' }
     },
     methods: {
-      ...mapProps(['create', 'add', 'edit', 'remove', 'complete', 'search', 'filter', 'delayFilterStop'], { store: 'tasks' })
+      // loadTasks: { store: 'tasks' },
+      ...mapProps(['loadTasks', 'add', 'edit', 'remove', 'complete', 'search', 'filter', 'delayFilterStop'], { store: 'tasks' })
     }
   },
   handlers: {
@@ -102,7 +103,7 @@ export default {
   },
   methods: {
     popupAdd() {
-      this.param.popup.integrate('content', {
+      this.param.popup.section.content.mount({
         src: form,
         methods: {
           save: (task) => {
@@ -114,7 +115,7 @@ export default {
       this.param.popup.method.open()
     },
     popupEdit(task) {
-      this.param.popup.integrate('content', {
+      this.param.popup.section.content.mount({
         src: form,
         params: {
           card: task,
@@ -133,6 +134,6 @@ export default {
     }
   },
   async created() {
-    this.method.create()
+    this.method.loadTasks() // with await
   }
 }

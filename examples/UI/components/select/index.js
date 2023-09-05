@@ -70,7 +70,7 @@ export default {
         component: {
           src: dropdown,
           proxies: {
-            hide: () => this.proxy.hide
+            hidden: () => this.proxy.hide
           },
           sections: {
             content: {
