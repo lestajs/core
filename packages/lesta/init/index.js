@@ -1,8 +1,14 @@
 import { InitBasic } from './basic'
+import propsValidation from './propsValidation'
 
 class Init extends InitBasic {
   constructor(...args) {
     super(...args)
+  }
+  async props(props) {
+    if (props) {
+      this.proxiesData = await propsValidation.init(props, this.component.props, this.context, this.context.container, this.app) || {}
+    }
   }
   destroy(container) {
     if (container.reactivity) container.reactivity.component.clear()
@@ -32,7 +38,7 @@ class Init extends InitBasic {
         if (node.reactivity) node.reactivity.node.clear()
       }
     }
-    this.component.unmount && await this.component.unmount.bind(this.context)()
+    this.component.unmounted && await this.component.unmounted.bind(this.context)()
   }
 }
 export { Init }

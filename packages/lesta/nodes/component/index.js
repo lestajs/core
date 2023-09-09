@@ -31,10 +31,13 @@ export default class Components extends Node {
     if (!component.src) return errorComponent(nodeElement.nodepath, 203)
     const { options, props } = await optionsComponent.collect(component, proxies, value, index)
     const result = await this.app.mount(options, nodeElement, props)
-    await sections(component, specialty, result?.container, (proxies, target, section) => {
+    if (!result?.container) return
+    await sections(component, specialty, result.container, (proxies, target, section) => {
       if (index !== undefined) {
-        return specialty(proxies, result?.container.section[section], index)
-      } else { return specialty(proxies, target) }
+        return specialty(proxies, result.container.section[section], index)
+      } else {
+        return specialty(proxies, target)
+      }
     }, this.create.bind(this))
   }
 }

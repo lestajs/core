@@ -7,7 +7,7 @@ export default async function renderComponent(app, options, container= {}, props
   if (!matches || !options.nodes) return template
   const component = new Init(options, app)
   await component.loaded(container)
-  props && await component.props(props)
+  await component.props(props)
   component.params()
   component.methods()
   component.proxies()
