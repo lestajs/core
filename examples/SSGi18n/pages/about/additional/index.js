@@ -3,9 +3,6 @@ export default {
     <!--text:more-->
   </div>
   <div class="content"></div>`,
-  sources: {
-    stylesheet: () => import('./index.css')
-  },
   props: {
     proxies: {
       isPreview: {},
@@ -29,5 +26,8 @@ export default {
         _text: (node) => this.i18n.translation(node, this.proxy.locale)
       }
     }
+  },
+  created() {
+    import('./index.css')
   }
 }

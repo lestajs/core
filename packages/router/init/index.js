@@ -49,6 +49,7 @@ class Router extends RouterBasic {
         await this.root.unmount?.()
         const layout = await loadModule(this.router.layouts[target.layout])
         this.currentLayout = await this.mount(layout, this.root)
+        if (this.currentLayout.WASTED) return
       }
       document.title = target.title || 'Lesta'
       this.root.setAttribute('name', target.name || '')
@@ -56,7 +57,9 @@ class Router extends RouterBasic {
       this.routerView = this.root.querySelector('[section="router"]')
       const page = await loadModule(target.component)
       this.current = await this.mount(page, this.routerView || this.root)
+      if (this.current.WASTED) return
     }
+    return true
   }
 }
 

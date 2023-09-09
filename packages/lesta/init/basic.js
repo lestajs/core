@@ -17,6 +17,7 @@ class InitBasic extends InitComponent {
       root: app.root
     }
   }
+  async props() {}
   async mounted() {
     this.component.mounted && await this.component.mounted.bind(this.context)()
   }

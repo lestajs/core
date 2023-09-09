@@ -26,18 +26,18 @@ const _attr = {
   }
 }
 
-const _overlay = {
+const _outside = {
   stop: (event) => event.stopPropagation(),
   create: (node, options, directive) => {
-    if (typeof options.hide === 'function') {
-      node.addEventListener('click', directive.stop)
-      document.addEventListener('click', options.hide)
+    if (typeof options.change === 'function') {
+      if (options.stop) node.addEventListener('click', directive.stop)
+      document.addEventListener('click', options.change)
     }
   },
   destroy: (node, options, directive) => {
-    node.removeEventListener('click', directive.stop)
-    document.removeEventListener('click', options.hide)
+    if (options.stop) node.removeEventListener('click', directive.stop)
+    document.removeEventListener('click', options.change)
   }
 }
 
-export { _classes, _attr, _overlay }
+export { _classes, _attr, _outside }
