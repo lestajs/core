@@ -19,9 +19,7 @@ export default {
         </div>
         <div class="catalog ">
             <div class="sidebar"></div>
-            <div class="preload" style="width: 100px; height: 100px;">
-                <div class="LstSpinner"></div>
-            </div>
+            <div class="preload LstSpinner"></div>
             <div class="cards LstCards container content"></div>
         </div>
     `,
@@ -112,7 +110,7 @@ export default {
         this.proxy.products = this.param.products;
         console.log(this.proxy.products);
         this.param.categories = await api.getAllCategories();
-//        await delay(3000);
+        await delay(1500);
         this.proxy.hidden = true;
     }
 }
