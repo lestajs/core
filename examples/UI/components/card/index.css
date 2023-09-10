@@ -22,6 +22,9 @@
   overflow: hidden;
   background-color: var(--light-gray);
 }
+.LstCardImage .LstImage {
+  object-fit: contain;
+}
 .LstCard {
   max-width: 30rem;
   position: relative;
