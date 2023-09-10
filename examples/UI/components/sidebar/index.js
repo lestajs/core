@@ -3,10 +3,10 @@ import { throttling } from 'lesta'
 
 export default {
   template: `
-    <div class="LstSidebar w-side">
+    <div class="LstSidebar">
+      <div class="LstClose"></div>
       <div class="LstSidebarWr">
         <div>
-          <div class="LstClose"></div>
           <div section="top"></div>
           <div section="content"></div>
         </div>
@@ -19,6 +19,7 @@ export default {
       top: {},
       width: {},
       minWidth: {},
+      tabletWidth: {},
       scrollContainer: {},
     },
     proxies: {
@@ -34,7 +35,11 @@ export default {
     }
   },
   params: {
-    scrollHandler: () => {}
+    scrollHandler: () => {},
+    matchMedia: null
+  },
+  proxies: {
+    tablet: false
   },
   nodes() {
     return {
@@ -45,6 +50,7 @@ export default {
         _class: {
           mini: () => this.proxy.mini,
           show: () => this.proxy.show,
+          tablet: () => this.proxy.tablet
         },
       }
     }
@@ -53,6 +59,13 @@ export default {
     resize() {
       const top = this.node.LstSidebar.getBoundingClientRect().top
       this.node.LstSidebar.style.maxHeight = this.param.scrollContainer.clientHeight - top + 'px'
+    },
+    tabletChange(v) {
+      this.proxy.tablet = v.matches
+      if (this.proxy.tablet && this.proxy.show) this.method.close && this.method.close()
+    },
+    isTablet() {
+      return this.proxy.tablet
     }
   },
   mounted() {
@@ -64,8 +77,12 @@ export default {
     this.node.LstSidebar.style.setProperty('--sidebar-width', this.param.width || '210px')
     this.node.LstSidebar.style.setProperty('--sidebar-top', this.param.top || '0')
     this.node.LstSidebar.style.setProperty('--sidebar-minWidth', this.param.minWidth || '56px')
+    this.param.matchMedia = window.matchMedia(`(max-width: ${ this.param.tabletWidth || '560px' })`)
+    this.method.tabletChange(this.param.matchMedia)
+    this.param.matchMedia.addListener(this.method.tabletChange)
   },
-  unmount() {
+  unmounted() {
     this.param.scrollContainer && this.root.removeEventListener('scroll', this.param.scrollHandler)
+    this.param.matchMedia.removeListener(this.method.tabletChange)
   }
 }

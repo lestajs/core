@@ -14,8 +14,7 @@ function createApp(entry) {
         app.update = (args) => component.context.options.updated.bind(component.context)(args)
         const hasHTML = app.plugins.router?.to.route.static
         const container = renderComponent({...options}, nodeElement || app.root, component, props.section, hasHTML)
-        await lifecycle(component, container, props)
-        return { options, context: component.context, container }
+        return await lifecycle(component, container, props)
       }
     },
     async unmount() {

@@ -3,15 +3,12 @@
   position: sticky;
   top: var(--sidebar-top);
   overflow-y: auto;
-  background-color: #ffffff08;
   display: none;
   height: 100%;
-  border-right: 1px solid #00000020;
+  padding: var(--xxs);
 }
 
 .LstSidebarWr {
-  height: 100%;
-  padding: var(--xxs);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -46,37 +43,38 @@
 
 .LstSidebar .LstClose {
   display: none;
-  position: relative;
+  height: var(--s);
+  width: var(--s);
+  background-color: var(--gray200);
+  border-radius: 50%;
+  margin-top: var(--xxs);
+  font-weight: 600;
 }
 
-@media (max-width: 560px) {
-  .LstSidebar {
-    position: fixed;
-    width: 100vw;
-    max-height: 100vh !important;
-    backdrop-filter: blur(100px);
-    background-color: #000000cc;
-    color: #ffffffcc;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 10;
-  }
-  .LstSidebarWr {
-    padding: var(--xs);
-  }
-  .LstSidebar .LstClose {
-    display: block;
-    margin: 0 0 var(--xs) auto;
-  }
+.LstSidebar.mini {
+  width: var(--sidebar-minWidth);
+  padding: 0;
+  overflow: hidden;
 }
-@media (min-width: 560px) {
-  .LstSidebar.mini {
-    width: var(--sidebar-minWidth);
-    overflow: hidden;
-  }
-  .LstSidebar.mini .LstSidebarWr {
-    padding: 0;
-  }
+
+/* tablet */
+.tablet.LstSidebar {
+  position: fixed;
+  width: 100vw;
+  max-height: 100vh !important;
+  inset: 0;
+  z-index: 100;
+  background-color: var(--bg-primary);
+  padding: var(--s) var(--xs);
+}
+
+.tablet.LstSidebar .LstClose {
+  margin: var(--xs) var(--xs);
+  display: flex;
+  position: fixed;
+  right: 0;
+  top: 0;
+}
+.tablet .LstSidebarWr {
+  margin-top: var(--s);
 }

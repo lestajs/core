@@ -65,6 +65,7 @@ export default class RouterBasic {
         return
       }
       res = await this.router.render()
+      if (!res) return
       this.form = this.router.to
       await this.afterHooks(this.afterEnter)
       await this.afterHooks(target.afterEnter)

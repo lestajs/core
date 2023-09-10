@@ -69,8 +69,9 @@ export default {
         this.proxy.completedCount = null
       }
     },
-    async create() {
+    async loadTasks() {
       try {
+        await delay(3000)
         const DB = await localStorage.getItem('tasks')
         const data = DB ? JSON.parse(DB) : []
         this.param.DB = data.sort((a, b) => (Date.parse(b.date) - Date.parse(a.date)))

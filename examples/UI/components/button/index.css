@@ -2,7 +2,7 @@
   display: flex;
   line-height: 1;
   font-size: var(--fs-xs);
-  background-color: #00000030;
+  background-color: var(--gray100);
   color: inherit;
   overflow: hidden;
   align-items: center;
@@ -32,15 +32,6 @@
   padding: 0;
 }
 
-.LstButton.filled {
-  background-color: var(--black);
-  color: white;
-}
-
-.LstButton.filled svg {
-  fill: white;
-  stroke: white;
-}
 .LstButton[type="text"] {
   background-color: transparent;
 }

@@ -1,31 +1,35 @@
 import './index.css'
-import { _overlay } from '../directives'
+import { _outside } from '../directives'
 
 export default {
   template: `
   <div class="LtsDropdown hide">
     <div section="content"></div>
   </div>`,
-  directives: { _overlay },
+  directives: { _outside },
   props: {
+    params: {
+      target: {}
+    },
     proxies: {
-      hide: {
+      hidden: {
         default: true
       }
     },
     methods: {
-      change: {}
+      hide: {}
     }
   },
   nodes() {
     return {
       LtsDropdown: {
         _class: {
-          hide: () => this.proxy.hide
+          hide: () => this.proxy.hidden
         },
-        _overlay: {
-          hide: () => {
-            this.method.change && this.method.change(true)
+        _outside: {
+          change: (event) => {
+            if (this.param.target && this.param.target.contains(event.target)) return
+            this.method.hide && this.method.hide(true)
           }
         }
       }

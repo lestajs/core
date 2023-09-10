@@ -1,4 +1,3 @@
-import propsValidation from './propsValidation.js'
 import { replicate } from '../../utils/index.js'
 import { errorComponent } from '../../utils/errors/component.js'
 
@@ -22,10 +21,10 @@ export default class InitComponent {
   async loaded(container) {
     this.context.container = container
     if (typeof this.component !== 'object') return errorComponent(container.nodepath,211)
-    this.component.loaded && await this.component.loaded.bind(this.context)()
+    if (this.component.loaded) return await this.component.loaded.bind(this.context)()
   }
   async created() {
-    this.component.created && await this.component.created.bind(this.context)()
+    if (this.component.created) return await this.component.created.bind(this.context)()
   }
   methods() {
     if (!this.context.container.method) this.context.container.method = {}
@@ -55,8 +54,5 @@ export default class InitComponent {
     }
     this.context.proxy = this.getProxy()
     Object.preventExtensions(this.context.proxy)
-  }
-  async props(props) {
-    this.proxiesData = await propsValidation.init(props, this.component.props, this.context, this.context.container, this.app) || {}
   }
 }

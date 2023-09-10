@@ -1,10 +1,15 @@
 import esbuild from 'esbuild'
 import { resolve } from 'path'
 import zlib from 'zlib'
+import fs from 'fs'
 
 function outputSize(name) {
-  let size = bytesToSize(zlib.brotliCompressSync(resolve(`dist/${name}.prod.js`)).length)
-  console.log("\x1b[32m", `${name}: ${size}`, "\x1b[0m")
+  const filePath = resolve(`dist/${name}.prod.js`)
+  const fileContent = fs.readFileSync(filePath)
+  const compressedSize = zlib.brotliCompressSync(fileContent)
+  const size = bytesToSize(compressedSize.length)
+  const fullSize = bytesToSize(fileContent.length)
+  console.log(`\x1b[32m${name}: ${size} | ${fullSize} \x1b[0m`)
 }
 
 function bytesToSize(bytes) {
