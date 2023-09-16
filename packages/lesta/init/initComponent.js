@@ -2,7 +2,8 @@ import { replicate } from '../../utils/index.js'
 import { errorComponent } from '../../utils/errors/component.js'
 
 export default class InitComponent {
-  constructor(component, app) {
+  constructor(component, app, signal) {
+    this.abortSignal = signal
     this.component = component
     this.app = app
     this.proxiesData = {}
@@ -18,10 +19,16 @@ export default class InitComponent {
     }
     Object.preventExtensions(this.context.source)
   }
-  async loaded(container) {
+  async aborted(stage) {
+    if (this.component.aborted) return await this.component.aborted.bind(this.context)(stage)
+  }
+  async loaded() {
+    if (this.component.loaded) return await this.component.loaded.bind(this.context)()
+  }
+  async rendered(container) {
     this.context.container = container
     if (typeof this.component !== 'object') return errorComponent(container.nodepath,211)
-    if (this.component.loaded) return await this.component.loaded.bind(this.context)()
+    if (this.component.rendered) return await this.component.rendered.bind(this.context)()
   }
   async created() {
     if (this.component.created) return await this.component.created.bind(this.context)()

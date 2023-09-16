@@ -17,10 +17,13 @@ const component = {
   209: 'iterable component must have a template.',
   210: 'iterable component must have only one root tag in the template.',
   211: 'component should have object as the object type.',
-  212: 'the "induce" property expects a function as a value.',
+  212: '"induce" property expects a function as a value.',
   213: 'param "%s" is already in props.',
   214: 'proxy "%s" is already in props.',
-  215: '"iterate" and "induce" property is not supported for sections.'
+  215: '"iterate" and "induce" property is not supported for sections.',
+  216: 'component is undefined.',
+  217: '"abortSignal" property must have the class AbortSignal.',
+  218: '"aborted" property expects a function as a value.'
 }
 const props = {
   301: 'parent component passes proxies, you need to specify them in props.',
@@ -32,7 +35,7 @@ const props = {
   307: 'store "%s" is not found.'
 }
 const store = {
-  401: 'the "createStore" function expects an object with the property "stores".',
+  401: '"createStore" function expects an object with the property "stores".',
   403: 'method "%s" can take only one argument of type object.',
   404: 'middleware "%s" returns a value not of the object type',
   405: 'store must be initialized before router is initialized.'

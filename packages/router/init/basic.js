@@ -61,7 +61,7 @@ export default class RouterBasic {
       if (await this.beforeHooks(target.beforeEnter)) return
       if (target.redirect) {
         let v = target.redirect
-        typeof v === 'function' ? await this.push(await v(to, from)) : await this.push(v)
+        typeof v === 'function' ? await this.push(await v(to, this.router.from)) : await this.push(v)
         return
       }
       res = await this.router.render()

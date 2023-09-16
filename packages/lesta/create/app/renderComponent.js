@@ -1,14 +1,16 @@
 import { errorComponent } from '../../../utils/errors/component'
 import { stringToHTML } from '../../../utils'
 
-export default function renderComponent(options, nodeElement, component, section, hasHTML) {
-  if (section) {
+export default function renderComponent(nodeElement, component, props, hasHTML) {
+  const options = { ...component.context.options }
+  if (props.section) {
+    const section = props.section
     const sectionNode = nodeElement.section[section]
     if (!sectionNode) return errorComponent(nodeElement.nodename, 202, section)
     if (!hasHTML) sectionNode.innerHTML = options.template
     sectionNode.nodepath = nodeElement.nodepath + '.' + section
     sectionNode.nodename = section
-    if (!sectionNode.unmount) sectionNode.unmount = async () => {
+    sectionNode.unmount = async () => {
       component.destroy(sectionNode)
       sectionNode.innerHTML = ''
       await component.unmount()
@@ -42,7 +44,7 @@ export default function renderComponent(options, nodeElement, component, section
     } else if (options.template && !hasHTML) {
       nodeElement.innerHTML = options.template
     }
-    if (!nodeElement.unmount) nodeElement.unmount = async () => {
+    nodeElement.unmount = async () => {
       component.destroy(nodeElement)
       nodeElement.innerHTML = ''
       await component.unmount()

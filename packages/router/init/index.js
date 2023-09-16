@@ -1,14 +1,13 @@
 import RouterBasic from './basic.js'
-import { loadModule } from '../../utils/index.js'
 
 class Router extends RouterBasic {
   constructor(...args) {
     super(...args)
     this.currentLayout = null
-    this.routerView = null
     this.current = null
     this.router.go = (v) => history.go(v)
     this.router.render = this.render.bind(this)
+    this.container = null
   }
   init(app) {
     this.root = app.root
@@ -29,35 +28,36 @@ class Router extends RouterBasic {
   setHistory(v, url) {
     v.replace ? history.replaceState(null, null, url) : history.pushState(null, null, url)
   }
-  async routeUpdate(component) {
-    await component.options.updated?.bind(component.context)({ to: this.router.to, from: this.router.from })
-  }
   async render() {
     const target = this.router.to.route
     const from = this.router.from
-    if (this.current && from?.route === target) {
-      if (this.currentLayout) await this.routeUpdate(this.currentLayout)
-      await this.routeUpdate(this.current)
-    } else if (target.component) {
-      if (!(target.layout in this.router.layouts) && this.current) {
+    if (target.component && !(this.current && from?.route === target)) {
+      await this.container?.unmount?.()
+      if (this.currentLayout) { //  && (!(target.layout in this.router.layouts) || target.layout !== from?.route.layout)
+        console.log('unmounted', from?.route, this.currentLayout)
         this.currentLayout = null
-        await this.root.unmount?.()
-      } else if (this.currentLayout && from?.route.layout === target.layout) {
-        await this.routeUpdate(this.currentLayout)
-        await this.routerView.unmount?.()
-      } else if (target.layout) {
-        await this.root.unmount?.()
-        const layout = await loadModule(this.router.layouts[target.layout])
-        this.currentLayout = await this.mount(layout, this.root)
-        if (this.currentLayout.WASTED) return
+        await this.root.unmount()
       }
+      if (target.layout) {
+        // if (target.layout !== from?.route.layout) {
+          if (this.abortControllerLayout) this.abortControllerLayout.abort()
+          this.abortControllerLayout = new AbortController()
+          this.currentLayout = await this.mount(this.router.layouts[target.layout], this.abortControllerLayout.signal, this.root)
+          console.log(target.layout, from?.route, this.currentLayout)
+          this.abortControllerLayout = null
+          if (!this.currentLayout) return
+          this.container = this.root.querySelector('[router]')
+          this.root.setAttribute('layout', target.layout)
+        // }
+      } else this.container = this.root
       document.title = target.title || 'Lesta'
       this.root.setAttribute('name', target.name || '')
-      target.layout && this.root.setAttribute('layout', target.layout)
-      this.routerView = this.root.querySelector('[section="router"]')
-      const page = await loadModule(target.component)
-      this.current = await this.mount(page, this.routerView || this.root)
-      if (this.current.WASTED) return
+      if (this.abortController) this.abortController.abort()
+      this.abortController = new AbortController()
+      this.current = await this.mount(target.component, this.abortController.signal, this.container)
+      console.log(target.name, from?.route, this.current)
+      this.abortController = null
+      if (!this.current) return
     }
     return true
   }

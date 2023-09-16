@@ -69,6 +69,6 @@ export default function link(v, t, l) {
       }
     }
   } else res = v
-  res = res.replace(/\/$/, '').replace(/^([^/])/, '/$1')
+  res = res.replace(/\/$/, '') // .replace(/^([^/])/, '/$1')
   return res || '/'
 }
