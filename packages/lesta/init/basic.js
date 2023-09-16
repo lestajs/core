@@ -6,8 +6,8 @@ import { errorNode } from '../../utils/errors/node'
 import impress from './impress'
 
 class InitBasic extends InitComponent {
-  constructor(component, app, Nodes) {
-    super(component, app)
+  constructor(component, app, signal, Nodes) {
+    super(component, app, signal)
     this.Nodes = Nodes
     this.impress = impress
     this.context = {

@@ -9,22 +9,16 @@ export default class Basic extends Components {
     const createBasic = () => this.create(this.proxies.bind(this), this.nodeElement, this.node.component, this.proxies(this.node.component.proxies, this.nodeElement))
     if (this.node.component.induce) {
       if (typeof this.node.component.induce !== 'function') return errorComponent(this.nodeElement.nodepath, 212)
+      this.nodeElement.setAttribute('induced', '')
       this.impress.collect = true
       const permit = this.node.component.induce()
-      const mount = async () => {
-        await createBasic()
-        this.nodeElement.setAttribute('induced', '')
-      }
+      const mount = async () => await createBasic()
       this.reactiveNode(this.impress.define(), async () => {
-        const p = this.node.component.induce()
-        if (this.nodeElement.hasAttribute('induced')) {
-          if (!p) {
-            await this.nodeElement.unmount()
-            this.nodeElement.removeAttribute('induced')
-          }
-        } else if (p) await mount()
+        if (!this.node.component.induce()) {
+          await this.nodeElement.unmount?.()
+        } else if (!this.nodeElement.unmount) await mount()
       })
-      if (permit) await mount()
+      if (permit) mount()
     } else {
       await createBasic()
     }
