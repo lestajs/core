@@ -7,6 +7,7 @@
     "ToDoListSimple": "parcel ToDoListSimple/index.html",
     "ToDoListStore": "parcel ToDoListStore/index.html",
     "SSGi18n": "parcel SSGi18n/index.html",
+    "livelyHooks": "parcel livelyHooks/index.html",
     "UI": "parcel UI/index.html",
     "WPAShop": "parcel WPAShop/src/index.html",
     "UIB": "parcel build UI/index.html",

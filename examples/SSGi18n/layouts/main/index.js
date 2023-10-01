@@ -1,7 +1,7 @@
 import def from '../default/index.js'
 
 export default {
-  ...def,
+  mixins: [def],
   template: def.template + `
     <div class="footer">
         <a class="link" href="https://lesta.dev">
@@ -9,14 +9,12 @@ export default {
         </a>
     </div>`,
   props: {
-    ...def.props,
     proxies: {
       locale: { store: 'lang' }
     }
   },
   nodes() {
     return {
-      ...def.nodes.bind(this)(),
       link: {
         _text: (node) => this.method.t(node)
       }

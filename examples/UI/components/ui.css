@@ -169,6 +169,9 @@ input, button {
 .fx-b {
     align-items: flex-end;
 }
+.fx-rev {
+    flex-direction: row-reverse;
+}
 .jc-r {
     justify-content: flex-end;
 }

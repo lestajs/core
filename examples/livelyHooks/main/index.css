@@ -1,0 +1,54 @@
+body {
+    margin: 30px;
+}
+.grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 8px;
+}
+.panel {
+    margin: 30px 0;
+}
+button {
+    padding: 5px 8px;
+}
+[status] {
+    padding: 30px 20px;
+    background-color: #eeeeee;
+    position: relative;
+}
+
+[status]:before {
+    content: '';
+    display: block;
+    position: absolute;
+    width: calc(100% - 40px);
+    height: 4px;
+    background-color: #00000020;
+    top: 20px;
+}
+[status]:after {
+    content: '';
+    display: block;
+    position: absolute;
+    height: 4px;
+    background-color: #00000099;
+    top: 20px;
+    transition: width .3s ease-in-out;
+}
+[status="1"]:after  {
+    width: calc(20% - 40px);
+}
+[status="2"]:after  {
+    width: calc(40% - 40px);
+}
+[status="3"]:after  {
+    width: calc(60% - 40px);
+}
+[status="4"]:after  {
+    width: calc(80% - 40px);
+}
+[status="5"]:after  {
+    width: calc(100% - 40px);
+}

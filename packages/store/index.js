@@ -9,11 +9,17 @@ class Store {
     this.context = {
       name,
       ...app.plugins,
+      options: module,
       reactivity: new Map(),
       param: {},
       method: {},
       source: this.store.sources,
     }
+  }
+  async loaded() {
+    this.store.loaded && await this.store.loaded.bind(this.context)()
+  }
+  create() {
     this.context.param = this.store.params
     Object.preventExtensions(this.context.param)
     for (const key in this.store.methods) {
@@ -68,16 +74,16 @@ function createStores(stores = {}) {
   return {
     app: {},
     stores: {},
-    create(module, key) {
-      const store = new Store(module, this.app, key)
-      this.stores[key] = store
-    },
     async get(key) {
       if (!stores) return errorStore(key, 401)
       if (!this.stores.hasOwnProperty(key)) {
-        const module = await loadModule(stores[key])
-        if (!module) return
-        this.create(module, key)
+        const options = await loadModule(stores[key])
+        if (!options) return errorStore(key, 402)
+        const store = new Store(options, this.app, key)
+        this.stores[key] = store
+        await store.loaded()
+        store.create()
+        await store.created()
       }
       return this.stores[key]
     },
