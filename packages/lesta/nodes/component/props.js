@@ -1,12 +1,10 @@
-import { loadModule } from '../../../utils/loadModule.js'
-
 export default {
-  async props(component, proxies, val, index) {
+  collect(propertyComponent, proxies, val, index) {
     return {
       proxies: this.proxies(proxies),
-      params: this.params(component.params, val, index),
-      methods: this.methods(component.methods),
-      section: component.section
+      params: this.params(propertyComponent.params, val, index),
+      methods: this.methods(propertyComponent.methods),
+      section: propertyComponent.section
     }
   },
   proxies(proxies) {
@@ -35,10 +33,5 @@ export default {
         Object.assign(result, { [pr]: data })
       }
     } return result
-  },
-  async collect(component, proxies, val, index) {
-    const props = await this.props(component, proxies, val, index)
-    const options = await loadModule(component.src)
-    return { options, props }
   }
 }

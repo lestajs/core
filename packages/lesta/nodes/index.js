@@ -18,7 +18,7 @@ export default class Nodes extends NodesBasic {
       return errorComponent(this.nodeElement.nodepath, 208)
     }
     if (this.node.component.iterate) {
-      await this.iterate.init()
+      this.iterate.init()
     } else {
       await this.basic.init()
     }

@@ -5,8 +5,8 @@ export default {
     <div class="header">
         <!--component:header-->
     </div>
-    <div class="wrapper" section="router">
-        <!--section:router-->
+    <div class="wrapper" router>
+        <!--router-->
     </div>`,
   props: {
     methods: {

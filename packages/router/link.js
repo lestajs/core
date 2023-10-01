@@ -22,7 +22,7 @@ export default function link(v, t, l) {
   let res = ''
   if (!v) return '/'
   if (typeof v === 'object') {
-    if (v.path) {
+    if (v.path && v.path.startsWith('/')) {
       res = v.path
     } else if (v.name) {
       const index = l.findIndex((e)=> e.name === v.name)
@@ -68,7 +68,9 @@ export default function link(v, t, l) {
         res += url.hash
       }
     }
-  } else res = v
+  } else if (typeof v === 'string' && v.startsWith('/')) {
+    res = v
+  } else return v
   res = res.replace(/\/$/, '').replace(/^([^/])/, '/$1')
   return res || '/'
 }

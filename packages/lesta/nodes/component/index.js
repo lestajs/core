@@ -1,7 +1,7 @@
 import Node from '../node.js'
-import optionsComponent from './optionsComponent.js'
+import props from '../../nodes/component/props'
 import sections from './sections/index.js'
-import { errorComponent } from '../../../utils/errors/component.js'
+import { errorComponent } from '../../../utils/errors/component'
 
 export default class Components extends Node {
   constructor(...args) {
@@ -27,14 +27,13 @@ export default class Components extends Node {
     }
     return result
   }
-  async create(specialty, nodeElement, component, proxies, value, index) {
-    if (!component.src) return errorComponent(nodeElement.nodepath, 203)
-    const { options, props } = await optionsComponent.collect(component, proxies, value, index)
-    const result = await this.app.mount(options, nodeElement, props)
-    if (!result?.container) return
-    await sections(component, specialty, result.container, (proxies, target, section) => {
+  async create(specialty, nodeElement, propertyComponent, proxies, value, index) {
+    if (!propertyComponent.src) return errorComponent(nodeElement.nodepath, 203)
+    const container = await this.app.mount(propertyComponent.src, propertyComponent.abortSignal, propertyComponent.aborted, nodeElement, props.collect(propertyComponent, proxies, value, index))
+    if (!container) return
+    sections(propertyComponent, specialty, container, (proxies, target, section) => {
       if (index !== undefined) {
-        return specialty(proxies, result.container.section[section], index)
+        return specialty(proxies, container.section[section], index)
       } else {
         return specialty(proxies, target)
       }

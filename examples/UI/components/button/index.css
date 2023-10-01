@@ -7,6 +7,7 @@
   overflow: hidden;
   align-items: center;
   cursor: pointer;
+  gap: 0.5em;
 }
 .LstButton.active {
   background-color: var(--gray300);
@@ -14,7 +15,6 @@
 .LstButtonText {
   min-height: 1em;
   min-width: 1em;
-  padding: 0 0 0 0.5em;
   font-weight: 400;
 }
 .LstButtonText:empty {

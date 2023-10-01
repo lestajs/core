@@ -30,7 +30,13 @@ export default class RouterBasic {
     return link(v, this.router.to, this.router.collection)
   }
   async push(v) {
+    const vs = v.path || v
+    if (typeof vs === 'string' && !vs.startsWith('/')) {
+      window.open(vs, v.target || '_blank', v.windowFeatures)
+      return
+    }
     const path = this.link(v)
+    if (typeof path !== 'string') return path
     this.setHistory && this.setHistory(v, path)
     const url = new URL((this.origin || window.location.origin) + path)
     await this.update(url)
@@ -61,7 +67,7 @@ export default class RouterBasic {
       if (await this.beforeHooks(target.beforeEnter)) return
       if (target.redirect) {
         let v = target.redirect
-        typeof v === 'function' ? await this.push(await v(to, from)) : await this.push(v)
+        typeof v === 'function' ? await this.push(await v(to, this.router.from)) : await this.push(v)
         return
       }
       res = await this.router.render()

@@ -6,8 +6,8 @@ import { errorNode } from '../../utils/errors/node'
 import impress from './impress'
 
 class InitBasic extends InitComponent {
-  constructor(component, app, Nodes) {
-    super(component, app)
+  constructor(component, app, signal, Nodes) {
+    super(component, app, signal)
     this.Nodes = Nodes
     this.impress = impress
     this.context = {
@@ -56,16 +56,17 @@ class InitBasic extends InitComponent {
         const selector = (this.component.selectors && this.component.selectors[keyNode] ) || `.${keyNode}`
         const nodeElement = container.querySelector(selector) || container.classList.contains(keyNode) && container
         const nodepath = container.nodepath ? container.nodepath + '.' + keyNode : keyNode
-        if (!nodeElement) return errorNode(nodepath, 105)
-        nodeElement.nodepath = nodepath
-        nodeElement.nodename = keyNode
-        Object.assign(this.context.node, { [keyNode]: nodeElement })
-        if (options) {
-          const node = new this.Nodes(options, this.context, nodeElement, this.impress, this.app, keyNode)
-          for await (const [key] of Object.entries(options)) {
-            await node.controller(key)
+        if (nodeElement) {
+          nodeElement.nodepath = nodepath
+          nodeElement.nodename = keyNode
+          Object.assign(this.context.node, { [keyNode]: nodeElement })
+          if (options) {
+            const node = new this.Nodes(options, this.context, nodeElement, this.impress, this.app, keyNode)
+            for await (const [key] of Object.entries(options)) {
+              await node.controller(key)
+            }
           }
-        }
+        } else errorNode(nodepath, 105)
       }
       Object.preventExtensions(this.context.node)
     }

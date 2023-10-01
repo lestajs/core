@@ -24,7 +24,8 @@ export default {
       autofocus: {},
       icon: {
         default: ''
-      }
+      },
+      iconPosition: {}
     },
     methods: {
       change: {}
@@ -36,7 +37,8 @@ export default {
         _class: {
           hide: () => this.proxy.hide,
           active: () => this.proxy.active,
-          filled: this.param.type && this.param.type !== 'text'
+          filled: this.param.type && this.param.type !== 'text',
+          'fx-rev': this.param.iconPosition
         },
         _attr: {
           size: this.param.size,

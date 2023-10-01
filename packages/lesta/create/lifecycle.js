@@ -1,28 +1,31 @@
-async function lifecycle(component, container, props) {
+async function lifecycle(component, render, aborted, props) {
+  let status = 0
+  let container = null
   const hooks = [
-    async () => await component.loaded(container),
+    async () => await component.loaded(),
+    async () => {
+      container = render()
+      return await component.rendered(container)
+    },
     async () => {
       await component.props(props)
       component.params()
       component.methods()
       component.proxies()
-      return false
     },
     async () => await component.created(),
     async () => await component.nodes(),
     async () => await component.mounted()
   ]
-  let WASTED = false
   for await (const hook of hooks) {
-    WASTED = await hook() || !container.unmount
-    if (WASTED) break
+    const data = await hook()
+    status++
+    if (component.context.abortSignal?.aborted || data) {
+      aborted && aborted({ status, data, abortSignal: component.context.abortSignal })
+      return
+    }
   }
-  return {
-    options: component.component,
-    context: component.context,
-    container,
-    WASTED
-  }
+  return container
 }
 
 export { lifecycle }
