@@ -1,5 +1,5 @@
-import accordion from '../../../../../UI/components/accordion';
-import checkbox from '../../../../../UI/components/checkbox';
+import accordion from '../../../../../UI/components/accordion/index.js';
+import groupcheckbox from './groupcheckbox/index.js';
 
 export default {
     template: `<div class="accordion"></div>`,
@@ -24,12 +24,12 @@ export default {
                     },
                     sections: {
                         content: {
-                            src: checkbox,
-                            proxies: {
+                            src: groupcheckbox,
+                            param: {
                                 text: '50 - 100',
                             },
                             methods: {
-                                change: () => this.method.priceFilter(50, 100),
+                                priceFilter:  this.method.priceFilter,
                             }
                         }
                     }

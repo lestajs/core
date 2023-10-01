@@ -3,6 +3,7 @@
   cursor: pointer;
   user-select: none;
   font-family: inherit;
+  display: block;
 }
 .LstCheckbox input {
   position: absolute;

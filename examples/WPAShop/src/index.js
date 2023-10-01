@@ -1,6 +1,6 @@
-import { createApp, createRouter } from 'lesta';
+import { createApp, createRouter, createStores } from 'lesta';
 import { _attr, _classes } from '../../UI/components/directives/index.js';
-import api from '../common/api.js';
+import catalogApi from '../common/catalogApi.js';
 import catalog from './pages/catalog/index.js';
 import '../../UI/components/ui.css';
 import axios from 'axios'
@@ -22,10 +22,24 @@ const router = createRouter({
             path: '/catalog',
             component: catalog,
             name: 'catalog',
-        }
+        },
     ],
 });
 
+const stores = createStores({
+    products: {
+        params: {
+            products: [],
+        },
+        methods: {
+            async getAll() {
+                this.param.products = await catalogApi.getProducts(); 
+            }
+        },
+    },
+});
+
+stores.init(app);
 router.init(app);
 
 //app.mount(catalog);

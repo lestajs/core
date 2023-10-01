@@ -23,5 +23,5 @@ export default {
     //     });
         
     //     return this.products;
-    // }
+    // },
 }

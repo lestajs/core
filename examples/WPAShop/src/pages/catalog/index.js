@@ -2,12 +2,16 @@ import { delay } from 'lesta';
 import card from "../../../../UI/components/card";
 import sidebar from "../../../../UI/components/sidebar";
 import accordion from "../../../../UI/components/accordion";
-import api from "../../../common/api.js";
+import catalogApi from "../../../common/catalogApi.js";
 import './index.pcss';
 import filter from './filters/index.js';
 import button from "../../../../UI/components/button";
 import buttons from "../../../../UI/components/buttons";
 import '../../../../UI/components/spinner/index.css';
+import cartApi from '../../../common/cartApi';
+import dropdown from '../../../../UI/components/dropdown';
+import groupcheckbox from './filters/groupcheckbox';
+import cart from '../../layouts/cart';
 
 export default {
     template:
@@ -16,16 +20,28 @@ export default {
         <div class="filterBar">
             <div class="switchFilters"></div>
             <div class="category"></div>
+            <div class="filtersBtn"></div>
         </div>
         <div class="catalog ">
-            <div class="sidebar"></div>
             <div class="preload LstSpinner"></div>
             <div class="cards LstCards container content"></div>
+            <div class="sidebar"></div>
         </div>
     `,
+    props: {
+        params: {
+            products: {
+                store: 'products',
+            },
+        },
+        methods: {
+            getAll: {
+                store: 'products',
+            }
+        }
+    },
     params: {
         categories: [],
-        products: [],
     },
     proxies: {
         products: [],
@@ -41,7 +57,7 @@ export default {
                     iterate: () => this.proxy.products,
                     proxies: {
                         title: (product) => product.title,
-                        buttons: () => ['1', '2', '3'],
+                        buttons: () => ['To cart'],
                         image: (product) => product.image,
                         description: (product) => product.description,
                     }
@@ -55,16 +71,18 @@ export default {
                     },
                     sections: {
                         content: {
-                            src: filter,
-                            params: {
-                                header: 'New Filter'
-                            },
-                            methods: {
-                                change: () => {},
-                                priceFilter: (from, to) => {
-                                    this.proxy.products = this.param.products.filter((el) => el.price >= from && el.price <= to);
-                                }
-                            }
+                            //src: cart,
+
+                            // src: filter,
+                            // params: {
+                            //     header: 'New Filter'
+                            // },
+                            // methods: {
+                            //     change: () => {},
+                            //     priceFilter: (from, to) => {
+                            //         this.proxy.products = this.param.products.filter((el) => el.price >= from && el.price <= to);
+                            //     }
+                            // }
                         }
                     }
                 }
@@ -93,9 +111,25 @@ export default {
                     methods: {
                         change: async (value) => {
                             this.proxy.hidden = false;
-                            this.proxy.products = await api.getProductsByCategory(value);
+                            this.proxy.products = await catalogApi.getProductsByCategory(value);
                             this.proxy.hidden = true;
                             this.proxy.activeCategory = value;
+                        }
+                    }
+                }
+            },
+            filtersBtn: {
+                component: {
+                    src: dropdown,
+                    proxies: {
+                        hidden: () => {},
+                    },
+                    sections: {
+                        content: {
+                            src: groupcheckbox,
+                            proxies: {
+                                texts: ["10-50", "50-100", "all"]
+                            }
                         }
                     }
                 }
@@ -106,11 +140,10 @@ export default {
         }
     },
     async created() {
-        this.param.products = await api.getProducts();
-        this.proxy.products = this.param.products;
+        await this.method.getAll();
         console.log(this.proxy.products);
-        this.param.categories = await api.getAllCategories();
-        await delay(1500);
+        this.param.categories = await catalogApi.getAllCategories();
+        //await delay(1500);
         this.proxy.hidden = true;
     }
 }
