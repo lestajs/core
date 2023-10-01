@@ -1,11 +1,11 @@
-async function lifecycle(nodeElement, component, render, aborted, props) {
+async function lifecycle(component, render, aborted, props) {
   let status = 0
   let container = null
   const hooks = [
     async () => await component.loaded(),
     async () => {
       container = render()
-      await component.rendered(container)
+      return await component.rendered(container)
     },
     async () => {
       await component.props(props)
@@ -18,12 +18,12 @@ async function lifecycle(nodeElement, component, render, aborted, props) {
     async () => await component.mounted()
   ]
   for await (const hook of hooks) {
-    if (component.signal?.aborted) {
-      aborted && aborted({ status })
+    const data = await hook()
+    status++
+    if (component.context.abortSignal?.aborted || data) {
+      aborted && aborted({ status, data, abortSignal: component.context.abortSignal })
       return
     }
-    await hook()
-    status++
   }
   return container
 }

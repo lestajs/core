@@ -3,12 +3,12 @@ import { errorComponent } from '../../utils/errors/component.js'
 
 export default class InitComponent {
   constructor(component, app, signal) {
-    this.abortSignal = signal
     this.component = component
     this.app = app
     this.proxiesData = {}
     this.context = {
       ...app.plugins,
+      abortSignal: signal,
       options: component,
       container: null,
       node: {},

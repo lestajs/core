@@ -21,7 +21,7 @@ const component = {
   213: 'param "%s" is already in props.',
   214: 'proxy "%s" is already in props.',
   215: '"iterate" and "induce" property is not supported for sections.',
-  216: 'component is undefined.',
+  216: 'component module is undefined.',
   217: '"abortSignal" property must have the class AbortSignal.',
   218: '"aborted" property expects a function as a value.'
 }
@@ -35,10 +35,11 @@ const props = {
   307: 'store "%s" is not found.'
 }
 const store = {
-  401: '"createStore" function expects an object with the property "stores".',
+  401: '"createStore" function expects an object with stores',
+  402: 'store module is undefined.',
   403: 'method "%s" can take only one argument of type object.',
   404: 'middleware "%s" returns a value not of the object type',
-  405: 'store must be initialized before router is initialized.'
+  405: 'store must be initialized before router is initialized.',
 }
 const router = {
   501: 'path not found in route.',

@@ -22,12 +22,12 @@ export default {
       popup: {}
     },
     proxies: {
-      tasks: { store: 'tasks' },
-      test: { store: 'tasks' }
+      // tasks: { store: 'tasks' },
+      // test: { store: 'tasks' }
+      ...mapProps(['tasks', 'test'], { store: 'tasks' })
     },
     methods: {
-      // loadTasks: { store: 'tasks' },
-      ...mapProps(['loadTasks', 'add', 'edit', 'remove', 'complete', 'search', 'filter', 'delayFilterStop'], { store: 'tasks' })
+      ...mapProps(['add', 'edit', 'remove', 'complete', 'search', 'filter', 'delayFilterStop'], { store: 'tasks' })
     }
   },
   handlers: {
@@ -132,8 +132,5 @@ export default {
       })
       this.param.popup.method.open()
     }
-  },
-  async created() {
-    this.method.loadTasks() // with await
   }
 }
