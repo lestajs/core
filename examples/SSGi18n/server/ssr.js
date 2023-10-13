@@ -1,7 +1,6 @@
-import app from './render.js'
+import serverApp from './index.js'
 
-
-const publicFolder = app.outDir
+const publicFolder = serverApp.outDir
 
 import express from 'express'
 const server = express()
@@ -9,8 +8,9 @@ const server = express()
 
 server.use(express.static(publicFolder))
 
-server.use((req, res, next) => {
-  app.ssr(req.url, (html, to) => res.end(html))
+server.use(async (req, res, next) => {
+  const to = await serverApp.routerPush(req.url)
+  res.end(to.html)
 })
 
 const port = process.env.PORT || 8080

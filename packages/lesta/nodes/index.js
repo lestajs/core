@@ -11,16 +11,8 @@ export default class Nodes extends NodesBasic {
     this.iterate = new Iterate(node, context, nodeElement, impress, app, keyNode)
   }
   async component() {
-    if (this.nodeElement.hasAttribute('section')) {
-      return errorComponent(this.nodeElement.nodepath, 207)
-    }
-    if (this.nodeElement.hasAttribute('iterable')) {
-      return errorComponent(this.nodeElement.nodepath, 208)
-    }
-    if (this.node.component.iterate) {
-      this.iterate.init()
-    } else {
-      await this.basic.init()
-    }
+    if (this.nodeElement.hasAttribute('section')) return errorComponent(this.nodeElement.nodepath, 207)
+    if (this.nodeElement.hasAttribute('iterable')) return errorComponent(this.nodeElement.nodepath, 208)
+    this.node.component.iterate ? await this.iterate.init() : await this.basic.init()
   }
 }

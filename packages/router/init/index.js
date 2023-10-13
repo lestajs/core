@@ -38,25 +38,23 @@ class Router extends RouterBasic {
         await this.root.unmount()
       }
       if (target.layout) {
-          if (this.abortControllerLayout) this.abortControllerLayout.abort()
-          this.abortControllerLayout = new AbortController()
-          this.currentLayout = await this.mount(this.router.layouts[target.layout], this.abortControllerLayout.signal, null, this.root)
-          console.log(target.layout, from?.route, this.currentLayout)
-          this.abortControllerLayout = null
-          if (!this.currentLayout) return
-          this.container = this.root.querySelector('[router]')
-          this.root.setAttribute('layout', target.layout)
+        if (this.abortControllerLayout) this.abortControllerLayout.abort()
+        this.abortControllerLayout = new AbortController()
+        this.currentLayout = await this.mount(this.router.layouts[target.layout], this.abortControllerLayout.signal, null, this.root)
+        this.abortControllerLayout = null
+        if (!this.currentLayout) return
+        this.container = this.root.querySelector('[router]')
+        this.root.setAttribute('layout', target.layout)
       } else this.container = this.root
       document.title = target.title || 'Lesta'
       this.root.setAttribute('name', target.name || '')
       if (this.abortController) this.abortController.abort()
       this.abortController = new AbortController()
       this.current = await this.mount(target.component, this.abortController.signal, null, this.container)
-      console.log(target.name, from?.route, this.current)
       this.abortController = null
       if (!this.current) return
     }
-    return true
+    return this.router.to
   }
 }
 

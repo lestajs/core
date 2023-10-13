@@ -4,11 +4,15 @@
 .LstInput {
   min-height: 1em;
   min-width: 10ch;
-  width: 100%;
-  background-color: #ffffff10;
-  outline: 1px solid #00000020;
+  width: var(--width);
+  background-color: var(--white100);
+  border: 1px solid var(--gray200);
   color: inherit;
 }
+.LstInputError {
+  border: 1px solid var(--red);
+}
+
 .LstInput[type="search"] {
   padding-right: 2.2em;
 }
@@ -41,15 +45,14 @@
   display: none;
 }
 .LstInput:focus {
-  outline: 1px solid #00000022;
+  outline: 0;
+  border: 1px solid var(--gray400);
 }
 .LstLabel {
   font-weight: 600;
-  margin: var(--xs) 0 var(--xxs) 0;
+  font-size: var(--fs-xxs);
+  margin-bottom: .5em;
 }
 .LstLabel:empty {
-  display: none;
-}
-.LstMessage:empty {
   display: none;
 }

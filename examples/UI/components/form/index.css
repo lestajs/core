@@ -1,16 +1,33 @@
-.LstForm {
-    padding: var(--xs);
-    width: 320px;
+.LstElements > * {
+    display: contents;
 }
-.LsrError {
+.row {
     width: 100%;
-    background-color: var(--red);
-    color: white;
-    margin-bottom: var(--xxs);
 }
-.LsrError:empty {
+.LstForm {
+    padding: var(--xxs);
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.5s ease-out;
+}
+.LstElements {
+    overflow: hidden;
+}
+.LstForm.loaded {
+    grid-template-rows: 1fr;
+}
+.brError {
+  border: 1px solid var(--red);
+}
+.LsrFormError {
+    padding: .3em 0;
+    color: var(--red);
+    border-radius: 2px;
+    font-size: var(--fs-xxs);
+}
+.LsrFormError:empty {
     display: none;
 }
 .LstElement {
-    margin-top: var(--xs);
+    margin-bottom: var(--xs);
 }

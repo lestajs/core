@@ -10,22 +10,15 @@ export default {
   directives: { _attr },
   props: {
     proxies: {
-      color: {},
-      text: {},
-      active: {},
-      disabled: {},
-      hide: {}
+      value: {},
+      disabled: {}
     },
     params: {
       name: { default: '' },
-      text: {},
-      type: { default: '' },
+      type: { default: 'button' },
       size: { default: 'small' },
-      autofocus: {},
-      icon: {
-        default: ''
-      },
-      iconPosition: {}
+      text: {},
+      options: { default: {} }
     },
     methods: {
       change: {}
@@ -35,23 +28,21 @@ export default {
     return {
       LstButton: {
         _class: {
-          hide: () => this.proxy.hide,
-          active: () => this.proxy.active,
-          filled: this.param.type && this.param.type !== 'text',
-          'fx-rev': this.param.iconPosition
+          'fx-rev': this.param.options.reverse
         },
         _attr: {
           size: this.param.size,
         },
         name: this.param.name,
         type: this.param.type,
-        onclick: () => this.method.change && this.method.change(this.param)
+        disabled: () => this.proxy.disabled,
+        onclick: () => this.method.change && this.method.change(this.param.name)
       },
       LstButtonIcon: {
-        _html: () => this.param.icon
+        _html: () => this.param.options.icon
       },
       LstButtonText: {
-        textContent: () => this.proxy.text ?? this.param.text ?? ''
+        textContent: () => this.param.text ?? this.proxy.value
       }
     }
   }

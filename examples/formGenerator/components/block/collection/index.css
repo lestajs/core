@@ -1,0 +1,7 @@
+.panel {
+    gap: 1px;
+    margin-left: auto;
+}
+.main {
+    width: max-content;
+}

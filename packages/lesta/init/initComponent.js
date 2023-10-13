@@ -17,7 +17,6 @@ export default class InitComponent {
       proxy: {},
       source: component.sources || {}
     }
-    Object.preventExtensions(this.context.source)
   }
   async aborted(stage) {
     if (this.component.aborted) return await this.component.aborted.bind(this.context)(stage)
@@ -25,9 +24,8 @@ export default class InitComponent {
   async loaded() {
     if (this.component.loaded) return await this.component.loaded.bind(this.context)()
   }
-  async rendered(container) {
-    this.context.container = container
-    if (typeof this.component !== 'object') return errorComponent(container.nodepath,211)
+  async rendered() {
+    if (typeof this.component !== 'object') return errorComponent(this.context.container.nodepath,211)
     if (this.component.rendered) return await this.component.rendered.bind(this.context)()
   }
   async created() {

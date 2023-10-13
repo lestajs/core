@@ -10,8 +10,10 @@
     "livelyHooks": "parcel livelyHooks/index.html",
     "UI": "parcel UI/index.html",
     "WPAShop": "parcel WPAShop/src/index.html",
+    "formGenerator": "parcel formGenerator/index.html",
     "UIB": "parcel build UI/index.html",
     "ssg": "parcel build SSGi18n/index.html && SET NODE_ENV='development' && nodemon SSGi18n/server/ssg.js",
+    "ssgDebug": "SET NODE_ENV='development' && nodemon SSGi18n/server/ssg.js",
     "ssr": "parcel build SSGi18n/index.html && nodemon SSGi18n/server/ssr.js",
     "build": "parcel build --target SSGi18n"
   },

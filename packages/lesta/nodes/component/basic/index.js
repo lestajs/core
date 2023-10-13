@@ -9,7 +9,6 @@ export default class Basic extends Components {
     const createBasic = () => this.create(this.proxies.bind(this), this.nodeElement, this.node.component, this.proxies(this.node.component.proxies, this.nodeElement))
     if (this.node.component.induce) {
       if (typeof this.node.component.induce !== 'function') return errorComponent(this.nodeElement.nodepath, 212)
-      this.nodeElement.setAttribute('induced', '')
       this.impress.collect = true
       const permit = this.node.component.induce()
       const mount = async () => await createBasic()

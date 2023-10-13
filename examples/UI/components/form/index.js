@@ -3,19 +3,19 @@ import element from './element'
 
 export default {
   template: `
-      <form class="LstForm">
-        <div class="LsrError pn"></div>
-        <legend class="LstFormName"></legend>
-        <fieldset class="LstElements"></fieldset>
-      </form>`,
+    <div class="LstForm">
+      <div class="LsrFormError"></div>
+      <div class="LstElements fx gap"></div>
+    </div>`,
   props: {
     params: {
       elements: {
         type: 'Array'
       },
-      name: {},
-      description: {},
-      size: {}
+      path: {},
+      error: {
+        default: ''
+      },
     },
     methods: {
       change: {},
@@ -23,51 +23,41 @@ export default {
     }
   },
   params: {
-    valid: true
+    errors: []
+  },
+  proxies: {
+    error: ''
   },
   nodes() {
     return {
       LstForm: {
-        onsubmit: (event) => event.preventDefault()
-      },
-      LstFormName: {
-        textContent: () => this.param.name
+        _class: {
+          brError: () => this.proxy.error
+        }
       },
       LstElements: {
         component: {
           src: element,
-          iterate: () => this.param.elements || [],
+          iterate: () => this.param.elements,
           params: {
             element: (el) => el,
-            size: this.param.size
+            path: this.param.path,
+            size: 'mini'
           },
           methods: {
-            change: (v) => {
-              if (v.type === 'submit') {
-                // for (const el of this.param.elements) {
-                //   if (el.validate && !this.method.transit(el.name, 'validate')) {
-                //     this.param.valid = false
-                //     break
-                //   }
-                // }
-                if (this.param.valid) this.method.submit && this.method.submit()
-                this.param.valid = true
-              } else this.method.change && this.method.change(v)
+            error: (key, v) => {
+              this.param.errors[key] = v
+              this.proxy.error = Object.values(this.param.errors).includes(true) ? this.param.error : ''
             }
           }
         }
       },
-      LsrError: {}
+      LsrFormError: {
+        textContent: () => this.proxy.error
+      }
     }
   },
   methods: {
-    error(v) {
-      this.node.LsrError.textContent = v
-    },
-    visible(n, v) {
-      const index = this.param.elements.findIndex(el => el.name === n)
-      return this.node.LstElements.children[index]?.method.visible(v)
-    },
     transit(n, m, v) {
       const index = this.param.elements.findIndex(el => el.name === n)
       this.node.LstElements.children[index]?.method.transit(m, v)

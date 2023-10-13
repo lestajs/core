@@ -3,7 +3,6 @@
 }
 .LstButtons > button {
     background-color: transparent;
-    width: var(--buttons-width);
 }
 
 .LstButtons > button.active {

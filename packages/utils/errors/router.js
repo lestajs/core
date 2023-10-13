@@ -1,4 +1,4 @@
-import { router } from './index'
+import { router } from './index.js'
 
 const errorRouter = (name = '', code, param = '') => {
   if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'local') {

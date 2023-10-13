@@ -1,4 +1,4 @@
-import { loadModule } from 'lesta'
+import { loadModule } from '../../../packages/utils/loadModule.js'
 
 export default {
   locales: {

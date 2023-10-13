@@ -1,21 +1,22 @@
 async function lifecycle(component, render, aborted, props) {
   let status = 0
-  let container = null
   const hooks = [
     async () => await component.loaded(),
     async () => {
-      container = render()
-      return await component.rendered(container)
+      component.context.container = render()
+      if (typeof document !== 'undefined') return await component.rendered()
     },
     async () => {
       await component.props(props)
       component.params()
       component.methods()
       component.proxies()
+      return await component.created()
     },
-    async () => await component.created(),
-    async () => await component.nodes(),
-    async () => await component.mounted()
+    async () => {
+      await component.nodes()
+      if (typeof document !== 'undefined') return await component.mounted()
+    }
   ]
   for await (const hook of hooks) {
     const data = await hook()
@@ -25,7 +26,7 @@ async function lifecycle(component, render, aborted, props) {
       return
     }
   }
-  return container
+  return component.context.container
 }
 
 export { lifecycle }

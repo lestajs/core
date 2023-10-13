@@ -1,0 +1,28 @@
+.head {
+    padding: 0 var(--xxs);
+}
+.LstButtons {
+    width: 100%;
+}
+
+.main .LstButtons {
+    border: 1px solid var(--gray200);
+    width: max-content;
+    border-radius: 2px;
+    gap: 0;
+}
+
+.LstButtons > button.active {
+    background-color: var(--gray100);
+}
+.content {
+    padding: 0;
+}
+.children {
+    padding: var(--xxs);
+    outline: 1px solid var(--gray200);
+    margin-bottom: var(--xs);
+}
+.children:empty {
+    display: none;
+}

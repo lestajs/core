@@ -1,4 +1,5 @@
 import { replicate } from './replicate.js'
+import { deliver } from './deliver.js'
 import { mapProps } from './mapProps.js'
 import { debounce } from './debounce.js'
 import { throttling } from './throttling.js'
@@ -10,10 +11,10 @@ import { stringToHTML } from './stringToHTML.js'
 import { uid } from './uid.js'
 import { queue } from './queue.js'
 import { deepFreeze } from './deepFreeze.js'
-import { performanceRating } from './performanceRating.js'
 
 export {
   replicate,
+  deliver,
   mapProps,
   debounce,
   throttling,
@@ -24,6 +25,5 @@ export {
   stringToHTML,
   uid,
   queue,
-  deepFreeze,
-  performanceRating
+  deepFreeze
 }

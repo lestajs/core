@@ -1,6 +1,6 @@
 import './styles/index.css'
 import './layouts/default/index.css'
-import { router, store, api, i18n } from './app.js'
+import { router, stores, api, i18n } from './app.js'
 import { createApp } from 'lesta'
 
 const app = createApp({
@@ -11,7 +11,7 @@ const app = createApp({
     },
     // directives: {},
 })
-store.init(app)
+stores.init(app)
 router.init(app)
 
 

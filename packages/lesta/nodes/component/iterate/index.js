@@ -8,6 +8,7 @@ export default class Iterate extends Components {
         this.queue = queue()
         this.name = null
         this.created = false
+        this.nodeElement.removeAll= async () => await this.remove.bind(this)(0)
     }
     async init() {
         if (typeof this.node.component.iterate !== 'function') return errorComponent(this.nodeElement.nodepath, 205)
@@ -18,38 +19,39 @@ export default class Iterate extends Components {
         }
         this.impress.collect = true
         this.data = this.node.component.iterate()
-        if (!Array.isArray(this.data)) return errorComponent(this.nodeElement.nodepath, 206)
-        this.name = this.impress.refs[0]
-        this.impress.clear()
-        this.nodeElement.setAttribute('iterate', '')
-        if (Object.getPrototypeOf(this.data).instance === 'Proxy') {
-            this.reactiveComponent([this.name], async (v) => {
-                this.data = this.node.component.iterate()
-                if (v.length) this.queue.add(async () => {
-                    if (this.node.component.proxies) {
-                        for (const [pr, fn] of Object.entries(this.node.component.proxies)) {
-                            if (typeof fn === 'function' && fn.name) {
-                                if (fn.length) {
-                                    for (let i = 0; i < Math.min(this.nodeElement.children.length, v.length); i++) {
-                                        const v = fn(this.data[i], i)
-                                        this.nodeElement.children[i].proxy[pr](v)
-                                        this.sections(this.node.component.sections, this.nodeElement.children[i], i)
+        if (this.data) {
+            if (!Array.isArray(this.data)) return errorComponent(this.nodeElement.nodepath, 206)
+            this.name = this.impress.refs.at(-1)
+            this.impress.clear()
+            this.nodeElement.setAttribute('iterate', '')
+            if (Object.getPrototypeOf(this.data).instance === 'Proxy') {
+                this.reactiveComponent([this.name], async (v) => {
+                    this.data = this.node.component.iterate()
+                    if (v.length) this.queue.add(async () => {
+                        if (this.node.component.proxies) {
+                            for (const [pr, fn] of Object.entries(this.node.component.proxies)) {
+                                if (typeof fn === 'function' && fn.name) {
+                                    if (fn.length) {
+                                        for (let i = 0; i < Math.min(this.nodeElement.children.length, v.length); i++) {
+                                            const v = fn(this.data[i], i)
+                                            this.nodeElement.children[i].proxy[pr](v)
+                                            this.sections(this.node.component.sections, this.nodeElement.children[i], i)
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
+                    })
+                    this.queue.add(async () => await this.length(v.length))
                 })
-                this.queue.add(async () => await this.length(v.length))
-            })
-            this.reactiveComponent([this.name + '.length'], async (v) => {
-                this.queue.add(async () => await this.length(v))
-            })
+                this.reactiveComponent([this.name + '.length'], async (v) => {
+                    this.queue.add(async () => await this.length(v))
+                })
+            }
+            for await (const [index] of this.data.entries()) {
+                await this.createIterate(index)
+            }
         }
-        for await (const [index] of this.data.entries()) {
-            await this.createIterate(index)
-        }
-        return this.createIterate
     }
     sections(sections, target, index) {
         if (sections) {
@@ -98,8 +100,9 @@ export default class Iterate extends Components {
     }
     async length(length) {
         if (this.data.length === length) {
-            length > this.nodeElement.children.length && await this.add(length)
-            length < this.nodeElement.children.length && await this.remove(length)
+            const qty = this.nodeElement.children.length
+            length > qty && await this.add(length)
+            length < qty && await this.remove(length)
         }
     }
     async add(length) {

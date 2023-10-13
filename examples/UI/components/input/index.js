@@ -7,70 +7,61 @@ export default {
     <div class="LstLabel"></div>
     <div class="LstInputWr">
       <input type="text" class="LstInput b0 br pn">
-      <div class="LstMessage"></div>
     </div>`,
   directives: { _attr },
   props: {
     proxies: {
-      value: {
-        default: ''
-      },
-      message: {}
+      value: {},
+      disabled: {},
+      error: {},
     },
     params: {
-      value: {},
-      label: {},
-      type: {
-        default: 'text'
-      },
+      type: { default: 'text'},
+      name: { default: '' },
       size: { default: 'small' },
-      validate: {},
-      placeholder: {
-        default: ''
-      },
-      readonly: {},
-      autocomplete: {},
-      autofocus: {},
-      maxlength: {},
-      minlength: {},
-      max: {},
-      min: {},
-      step: {}
+      text: {},
+      options: { default: {} }
     },
     methods: {
       change: {},
       onfocus: {},
-      onblur: {}
+      onblur: {},
+      validated: {}
     }
   },
   nodes() {
     return {
       LstLabel: {
-        textContent: () => this.param.label
-      },
-      LstMessage: {
-        textContent: () => this.proxy.message
+        textContent: () => this.param.text
       },
       LstInput: {
+        _class: {
+          LstInputError: () => this.proxy.error
+        },
         _attr: {
           size: this.param.size,
-          readonly: this.param.readonly,
-          required: this.param.validate?.required,
-          minlength: this.param.minlength,
-          maxlength: this.param.maxlength,
-          min: this.param.min,
-          max: this.param.max
+          readonly: this.param.options.readonly,
+          required: this.param.options.required,
+          minlength: this.param.options.minlength,
+          maxlength: this.param.options.maxlength,
+          min: this.param.options.min,
+          max: this.param.options.max,
+          step: this.param.options.step
         },
-        value: () => this.proxy.value ?? this.param.value ?? '',
         type: this.param.type,
-        placeholder: this.param.placeholder,
-        oninput: debounce((event) => {
-          this.param.value = event.target.value
-          this.proxy.value = event.target.value
-          this.method.change && this.method.change(this.param)
-        }),
+        name: this.param.name,
+        placeholder: this.param.options.placeholder ?? '',
+        value: () => {
+          const v = this.param.type === 'number' ? Number(this.proxy.value) : this.proxy.value
+          return this.param.options.fixed ? v.toFixed(2) : v
+        },
+        disabled: () => this.proxy.disabled,
         onfocus: () => this.method.onfocus && this.method.onfocus(this.proxy.value),
-        onblur: () => this.method.onblur && this.method.onblur(this.proxy.value)
+        onblur: () => this.method.onblur && this.method.onblur(this.proxy.value),
+        oninput: debounce((event) => {
+          this.proxy.value = event.target.value
+          this.method.change && this.method.change(event.target.value)
+        }, 300)
       }
     }
   },
@@ -78,11 +69,8 @@ export default {
     set(v) {
       this.proxy.value = v
     },
-    validate() {
-      if (!this.node.LstInput.checkValidity()) {
-        this.proxy.message = this.node.LstInput.validationMessage
-      } else return true
-
+    validated() {
+      if (!this.node.LstInput.checkValidity()) this.methods.validated(this.node.LstInput.validationMessage)
     },
     blur() {
       this.node.LstInput.blur()
@@ -92,9 +80,9 @@ export default {
     },
     select() {
       this.node.LstInput.select()
-    },
-    disabled(v) {
-      this.node.LstInput.disabled = v
     }
+  },
+  mounted() {
+    this.param.options.width && this.node.LstInput.style.setProperty('--width', this.param.options.width)
   }
 }
