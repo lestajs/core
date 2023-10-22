@@ -1,5 +1,6 @@
 import { lifecycle } from '../lifecycle'
-import plugins from '../plugins'
+import { createStores } from '../../store'
+import basicPlugins from '../plugins'
 import { mixins } from '../mixins'
 import renderComponent from './renderComponent'
 import { Init } from '../../init'
@@ -8,9 +9,12 @@ import { loadModule } from '../../../utils'
 import { errorComponent } from '../../../utils/errors/component'
 
 function createApp(entry) {
-  entry.plugins = { ...entry.plugins, plugins }
+  const { root, plugins = {}, directives = {} } = entry
+  Object.assign(plugins, basicPlugins)
   const app = {
-    ...entry,
+    root,
+    plugins,
+    directives,
     async mount(src, signal, aborted, nodeElement, props = {}) {
       nodeElement = nodeElement || app.root
       const nodepath = nodeElement.nodepath || 'root'
@@ -26,6 +30,10 @@ function createApp(entry) {
     async unmount() {
       await app.root.unmount()
     }
+  }
+  if (entry.stores) {
+    const stores = createStores(entry.stores)
+    stores.init(app)
   }
   return app
 }

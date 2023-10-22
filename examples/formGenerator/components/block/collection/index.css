@@ -1,0 +1,17 @@
+.fblPanel {
+    gap: 5px;
+    margin-left: auto;
+}
+.fblPanel .lstBtn {
+    border-radius: 2em;
+}
+.fblPanel .lstBtnText {
+    font-weight: 600;
+}
+.fblCount {
+    background-color: var(--black);
+    color: white;
+    font-size: var(--fs-xxs);
+    padding: 0 .5em;
+    border-radius: 1em;
+}

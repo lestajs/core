@@ -1,0 +1,25 @@
+.fblMain {
+    max-width: var(--max-width-middle);
+}
+
+.fblMain .fblHead, .fblMain .fblMainHead {
+    padding: 0 var(--xxs);
+    margin-bottom: var(--xxs);
+}
+
+.fblChildren {
+    padding: var(--xxs);
+    border-left: 2px solid var(--gray300);
+    margin-bottom: var(--xs);
+}
+.fblChildren:empty {
+    display: none;
+}
+
+.fblSubmit .lstBnt {
+    margin-left: auto;
+}
+.fblSubmit .lstBtn:not([disabled]) {
+    background-color: var(--gray700);
+    color: white;
+}

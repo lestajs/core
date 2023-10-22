@@ -22,7 +22,7 @@ export default {
         }
       },
       LstClose: {
-        onclick: () => this.method.onclose && this.method.onclose()
+        onclick: () => this.method.onclose ? this.method.onclose() : this.method.close()
       }
     }
   },

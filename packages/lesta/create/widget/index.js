@@ -11,7 +11,7 @@ async function createWidget(src, root, signal, aborted) {
   const component = new InitBasic(src, { plugins }, signal, NodesBasic)
   const render = () => {
     root.innerHTML = src.template
-    return root
+    component.context.container = root
   }
   await lifecycle(component, render, aborted)
   return {

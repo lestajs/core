@@ -1,15 +1,16 @@
-import { loadModule } from '../utils/index.js'
 import { getStaticFile, generateStaticPage, saveStaticPage } from './generateStaticPage.js'
 import renderComponent from './renderComponent.js'
+import plugins from '../lesta/create/plugins.js'
+import { RouterBasic } from '../router/init/index.js'
 
 class Render {
   constructor(entry) {
-    entry.plugins = typeof entry.plugins === 'object' ? entry.plugins: {}
+    Object.assign(entry.plugins || {}, plugins)
     entry.origin = entry.origin?.replace(/\/$/, '')
     this.app = {
       ...entry,
-      ssg: this.ssg.bind(this),
-      ssr: this.ssr.bind(this)
+      routerPush: this.routerPush.bind(this),
+      generateStatics: this.generateStatics.bind(this)
     }
   }
   cartesian(arrays) {
@@ -35,13 +36,12 @@ class Render {
       await this.app.plugins.router.push(v)
     }
   }
-  async ssr(path, next) {
+  async routerPush(path) {
     this.app.plugins.router.render = async (to) => {
       let html = ''
       switch (to.route.type) {
         case 'dynamic':
           html = await getStaticFile(this.app.source)
-          console.log(html)
           break
         case 'static':
           html = await getStaticFile(path)
@@ -53,12 +53,17 @@ class Render {
         default:
           html = await this.renderPage.bind(this)(to)
       }
-      await next(html, to)
+      to.html = html
+      return to
     }
-    await this.app.plugins.router.push(path)
+    return await this.app.plugins.router.push(path)
   }
-  async ssg() {
-    this.app.plugins.router.render = this.renderPage.bind(this)
+  async generateStatics() {
+    this.app.plugins.router.render = async (to) => {
+      const html = await this.renderPage.bind(this)(to)
+      await saveStaticPage(this.app.outDir + to.path, html)
+      return to
+    }
     for await (const c of this.app.plugins.router.collection) {
       if (c.route.type === 'static') {
         const arrays = []
@@ -70,15 +75,18 @@ class Render {
     }
   }
   async renderPage(to) {
-    const options = await loadModule(to.route.component)
-    let pageHtml = await renderComponent(this.app, options)
+    let pageHtml = await renderComponent(to.route.component, this.app)
     if (to.route.layout) {
-      const layout = await loadModule(this.app.plugins.router.layouts[to.route.layout])
-      const layoutHtml = await renderComponent(this.app, layout)
-      pageHtml = layoutHtml.replace('<!--section:router-->', pageHtml)
+      const layoutHtml = await renderComponent(this.app.plugins.router.layouts[to.route.layout], this.app)
+      pageHtml = layoutHtml.replace('<!--router-->', pageHtml)
     }
     return await generateStaticPage(this.app, to, pageHtml)
   }
+}
+
+function createRouter(options) {
+  const router = new RouterBasic(options)
+  return { init: router.initBasic }
 }
 
 function createServerApp(options) {
@@ -86,4 +94,4 @@ function createServerApp(options) {
   return render.app
 }
 
-export { createServerApp }
+export { createServerApp, createRouter }

@@ -27,7 +27,7 @@ export default {
       }
     }
   },
-  created() {
+  rendered() {
     import('./index.css')
   }
 }

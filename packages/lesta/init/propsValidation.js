@@ -1,12 +1,12 @@
-import deliver from '../reactivity/deliver.js'
+import { deliver } from '../../utils/deliver.js'
 import { replicate } from '../../utils/index.js'
 import { errorProps } from '../../utils/errors/props.js'
 
 class Props {
-  constructor(props, context, container, app) {
+  constructor(props, context, app) {
     this.props = props
     this.context = context
-    this.container = container
+    this.container = context.container
     this.app = app
   }
   async setup(componentProps) {
@@ -109,8 +109,8 @@ class Props {
 }
 
 export default {
-  async init(props, componentProps, context, container, app) {
-    const p = new Props(props, context, container, app)
+  async init(props, componentProps, context, app) {
+    const p = new Props(props, context, app)
     return await p.setup(componentProps)
   }
 }

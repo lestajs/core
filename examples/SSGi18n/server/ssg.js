@@ -1,2 +1,2 @@
-import app from './render.js'
-app.ssg()
+import serverApp from './index.js'
+serverApp.generateStatics()

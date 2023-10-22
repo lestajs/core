@@ -1,17 +1,8 @@
-import { RouterBasic, Router } from './init/index.js'
+import { Router } from './init'
 
 function createRouter(options) {
-  return {
-    init: (app) => {
-      if (app.ssr) {
-        const router = new RouterBasic(options)
-        router.initBasic(app)
-      } else {
-        const router = new Router(options)
-        router.init(app)
-      }
-    }
-  }
+    const router = new Router(options)
+    return { init } = router
 }
 
 export { createRouter }

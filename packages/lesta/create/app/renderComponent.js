@@ -12,8 +12,8 @@ export default function renderComponent(nodeElement, component, props, hasHTML) 
     sectionNode.nodename = section
     sectionNode.unmount = async () => {
       component.destroy(sectionNode)
-      sectionNode.innerHTML = ''
       await component.unmount()
+      sectionNode.innerHTML = ''
     }
     return sectionNode
   } else {
@@ -30,15 +30,13 @@ export default function renderComponent(nodeElement, component, props, hasHTML) 
       iterableElement.nodepath = nodeElement.nodepath
       if (!nodeElement.unmount) nodeElement.unmount = async () => {
         component.destroy(nodeElement)
-        for await (const child of nodeElement.children) {
-          await child.unmount()
-        }
+        await nodeElement.removeChildren()
       }
       iterableElement.setAttribute('iterable', '')
       iterableElement.unmount = async () => {
         component.destroy(iterableElement)
-        iterableElement.remove()
         await component.unmount()
+        iterableElement.remove()
       }
       return iterableElement
     } else if (options.template && !hasHTML) {
@@ -46,8 +44,8 @@ export default function renderComponent(nodeElement, component, props, hasHTML) 
     }
     nodeElement.unmount = async () => {
       component.destroy(nodeElement)
-      nodeElement.innerHTML = ''
       await component.unmount()
+      nodeElement.innerHTML = ''
     }
     return nodeElement
   }

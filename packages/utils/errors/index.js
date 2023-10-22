@@ -38,8 +38,7 @@ const store = {
   401: '"createStore" function expects an object with stores',
   402: 'store module is undefined.',
   403: 'method "%s" can take only one argument of type object.',
-  404: 'middleware "%s" returns a value not of the object type',
-  405: 'store must be initialized before router is initialized.',
+  404: 'middleware "%s" returns a value not of the object type'
 }
 const router = {
   501: 'path not found in route.',
@@ -49,7 +48,7 @@ const router = {
   553: 'param "%s" not found in current route.',
   554: 'param "%s" not found in object route.',
   555: 'param "%s" does not match regular expression.',
-  557: 'property "path" is required.',
+  557: 'property "path" is required.'
 }
 
 export { component, node, props, router, store }

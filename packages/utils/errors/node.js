@@ -1,4 +1,4 @@
-import { node } from './index'
+import { node } from './index.js'
 
 const errorNode = (name, code, param = '') => {
   if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'local') {

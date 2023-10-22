@@ -12,13 +12,13 @@ class Init extends InitComponent {
   }
   async props(props) {
     if (props) {
-      this.proxiesData = await propsValidation.init(props, this.component.props, this.context, this.context.container, this.app) || {}
+      this.proxiesData = await propsValidation.init(props, this.component.props, this.context, this.app) || {}
     }
   }
-  async render(matches) {
+  async nodes() {
     const nodes = this.component.nodes && this.component.nodes.bind(this.context)()
     const container = this.context.container
-    return await Promise.all(matches.map(async (match) => {
+    container.html = await Promise.all(container.sections.map(async (match) => {
       const result = /<!--(\w+):(\w+)-->/i.exec(match)
       const handler = result.at(1)
       const nodeKey = result.at(2)

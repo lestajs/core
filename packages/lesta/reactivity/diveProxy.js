@@ -4,7 +4,6 @@ export default function diveProxy(target, handler, path = '') {
   if (typeof target !== 'object' || target === null) {
     return target
   }
-  const hasOwn = Object.prototype.hasOwnProperty
   const proxyHandler = {
     getPrototypeOf(target) {
       return {target, instance: 'Proxy'}
@@ -16,7 +15,7 @@ export default function diveProxy(target, handler, path = '') {
     set(target, prop, value, receiver) {
       const reject = handler.beforeSet(value, `${path}${prop}`, (v) => value = v)
       if (reject) return true
-      if (Reflect.get(target, prop, receiver) !== value || hasOwn.call(target, prop)) {
+      if (Reflect.get(target, prop, receiver) !== value || prop === 'length' || prop.startsWith('__')) {
         value = replicate(value)
         value = diveProxy(value, handler, `${path}${prop}.`)
         Reflect.set(target, prop, value, receiver);

@@ -1,7 +1,7 @@
-import active from '../lesta/reactivity/active.js'
-import diveProxy from '../lesta/reactivity/diveProxy.js'
-import { replicate, loadModule } from '../utils/index.js'
-import { errorStore } from '../utils/errors/store.js'
+import active from '../reactivity/active.js'
+import diveProxy from '../reactivity/diveProxy.js'
+import { replicate, loadModule } from '../../utils'
+import { errorStore } from '../../utils/errors/store.js'
 
 class Store {
   constructor(module, app, name) {
@@ -62,7 +62,9 @@ class Store {
     const active = (v, p) => container.proxy[key](v, p)
     this.context.reactivity.set(active, key)
     if (!container.unstore) container.unstore = {}
-    container.unstore[key] = () => this.context.reactivity.delete(active)
+    container.unstore[key] = () => {
+      this.context.reactivity.delete(active)
+    }
     return this.context.proxy[key]
   }
   methods(key) {
@@ -92,7 +94,6 @@ function createStores(stores = {}) {
     },
     init(app) {
       this.app = app
-      if (app.plugins.router) return errorStore('', 405)
       app.plugins.store = {
         get: this.get.bind(this),
         destroy: this.destroy.bind(this)

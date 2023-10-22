@@ -1,0 +1,27 @@
+.lstEls > * {
+    display: contents;
+}
+
+.lstForm {
+    padding: var(--xxs);
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.5s ease-out;
+}
+.lstEls {
+    overflow: hidden;
+}
+.lstForm.l-loaded {
+    grid-template-rows: 1fr;
+}
+.lstFormErr {
+    padding: .3em 0;
+    color: var(--red);
+    font-size: var(--fs-xxs);
+}
+.lstFormErr:empty {
+    display: none;
+}
+.lstEl {
+    margin-bottom: var(--xxs);
+}

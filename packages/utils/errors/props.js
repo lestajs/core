@@ -1,4 +1,4 @@
-import { props } from './index'
+import { props } from './index.js'
 
 const errorProps = (name = 'root', type, prop, code, param = '') => {
   if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'local') {

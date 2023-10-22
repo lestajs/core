@@ -1,0 +1,39 @@
+.LstInputWr {
+  position: relative;
+}
+
+.LstInputError {
+  border: 1px solid var(--red);
+}
+
+.LstInput[type="search"] {
+  padding-right: 2.2em;
+}
+.LstInputWr:has(input[type="search"]):before {
+  display: block;
+  position: absolute;
+  content: '';
+  top: .6em;
+  right: .9em;
+  width: .9em;
+  height: .9em;
+  border: 2px solid;
+  border-radius: 1em;
+  z-index: 2;
+}
+.LstInputWr:has(input[type="search"]):after {
+  display: block;
+  position: absolute;
+  content: '';
+  right: .8em;
+  top: 1.6em;
+  width: .4em;
+  border: 1px solid;
+  z-index: 2;
+  transform-origin: right;
+  transform: rotate(45deg);
+}
+
+.LstInput[type="search"]::-webkit-search-cancel-button{
+  display: none;
+}

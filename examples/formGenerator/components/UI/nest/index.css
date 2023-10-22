@@ -1,0 +1,22 @@
+.lstNst {
+    padding: .1em;
+    min-width: 10ch;
+    width: fit-content;
+    gap: 1px;
+}
+.lstNstBtn button {
+    border: 1px solid var(--gray);
+    background-color: var(--gray100);
+}
+.lstNst .lstNstCont {
+    gap: .1em;
+}
+.lstNstErr {
+    border: 1px solid var(--red);
+}
+.lstNstCont > span {
+    background-color: var(--gray);
+    border: 1px solid var(--gray100);
+    line-height: 1;
+}
+

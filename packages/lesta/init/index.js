@@ -6,10 +6,10 @@ class Init extends InitBasic {
     super(...args)
   }
   async props(props) {
-    this.proxiesData = await propsValidation.init(props, this.component.props, this.context, this.context.container, this.app) || {}
+    this.proxiesData = await propsValidation.init(props, this.component.props, this.context, this.app) || {}
   }
   destroy(container) {
-    if (container.reactivity) container.reactivity.component.clear() // !!
+    // if (container.reactivity) container.reactivity.component.clear() // !!
     delete container.proxy
     delete container.method
     for (const key in container.unstore) {
@@ -33,7 +33,7 @@ class Init extends InitBasic {
             directive.destroy && directive.destroy()
           }
         }
-        if (node.reactivity) node.reactivity.node.clear() // !!
+        // if (node.reactivity) node.reactivity.node.clear() // !!
       }
     }
     this.component.unmounted && await this.component.unmounted.bind(this.context)()

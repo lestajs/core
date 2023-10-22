@@ -1,16 +1,15 @@
-import optionsComponent from '../../lesta/nodes/component/optionsComponent.js'
+import props from '../../lesta/nodes/component/props.js'
 import renderComponent from '../renderComponent.js'
+import { errorComponent } from '../../utils/errors/component.js'
 
 export default {
   component: async (node, nodeElement, app) => {
-    const create = async (component, val, index) => {
-      if (!component.src) return ''
-      const proxies = optionsComponent.params(component.proxies, val, index)
-      const { options, props } = await optionsComponent.collect(component, proxies, val, index)
-      let  html = await renderComponent(app, options, nodeElement, props)
-      if (component.sections) {
-        
-        for await (const [section, sectionOptions] of Object.entries(component.sections)) {
+    const create = async (propertyComponent, val, index) => {
+      if (!propertyComponent.src) return errorComponent(nodeElement.nodepath, 203)
+      let html = await renderComponent(propertyComponent.src, app, nodeElement, props.collect(propertyComponent, props.params(propertyComponent.proxies, val, index), val, index))
+      if (!html) return
+      if (propertyComponent.sections) {
+        for await (const [section, sectionOptions] of Object.entries(propertyComponent.sections)) {
           sectionOptions.section = section
           const sectionHTML = await create(sectionOptions, val, index)
           html = html.replace(`<!--section:${section}-->`, sectionHTML)
