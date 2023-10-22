@@ -1,0 +1,66 @@
+.lstPopupHd {
+    padding: 0 var(--xxs);
+}
+
+.lstPopupNav {
+    margin-bottom: var(--xs);
+}
+
+.lstPopupNav .lstBtns {
+    gap: 0;
+}
+
+.lstPopupNav .lstBtns button {
+    padding: 0.5em;
+    color: var(--gray400);
+}
+
+.lstPopupNav .lstBtns button:hover {
+    color: var(--gray700);
+    font-weight: bold;
+}
+
+.lstPopupNav .lstBtns .active {
+    color: var(--gray700);
+}
+
+.lstPopupList li {
+    width: 25%;
+    cursor: pointer;
+    text-transform: capitalize;
+}
+.lstPopupList li.active {
+    background-color: var(--gray700);
+    color: white;
+}
+
+.lstPopupList li.active:after {
+    /*content: "";*/
+    display: block;
+    position: absolute;
+    width: 7px;
+    height: 13px;
+    border: 3px solid var(--gray700);
+    border-width: 0 3px 3px 0;
+    top: .6em;
+    left: -1em;
+    transform: rotate(45deg);
+}
+.lstPopupResult {
+    margin: var(--s) 0 var(--xs);
+    border-top: 1px solid var(--gray100);
+    padding: var(--s) 0;
+}
+.lstPopupResult .lstBtns > button {
+    background-color: var(--gray);
+    border: 1px solid var(--gray100);
+    border-radius: 6px;
+    font-weight: normal;
+}
+.lstPopupResult .lstBtns {
+    gap: .1em;
+}
+.lstPopupApply button {
+    background-color: var(--gray700);
+    color: #fff;
+}

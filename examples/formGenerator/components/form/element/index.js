@@ -3,27 +3,20 @@ import { deliver } from 'lesta'
 export default {
   template: `
     <div>
-      <div class="LstElement"></div>
+      <div class="lstEl"></div>
     </div>`,
-  sources: {
-    input: () => import('../../input'),
-    select: () => import('../../select'),
-    button: () => import('../../button'),
-    buttons: () => import('../../buttons')
-  },
   props: {
     params: {
       element: {},
       size: {},
       path: {},
-      spec: { store: 'form' }
     },
     proxies: {
       _values: { store: 'form' },
     },
     methods: {
       set: { store: 'form' },
-      execute: { store: 'form' },
+      add: { store: 'form' },
       error: {}
     }
   },
@@ -34,23 +27,21 @@ export default {
     fullPath: [],
     changed: false
   },
-  setters: {},
   nodes() {
     return {
-      LstElement: {
+      lstEl: {
         hidden: () => this.proxy.hidden,
         _class: {
-          row: this.param.element.row
+          'l-row': this.param.element.row
         },
         component: {
-          src: this.source[this.param.element.component],
+          src: this.elements[this.param.element.component],
           proxies: {
             value: () => {
-              console.log(this.param.fullPath)
               const binding = this.param.element.binding
               let v = deliver(this.proxy._values, this.param.fullPath)
               if (binding && !this.param.changed) {
-                v = this.method.execute({ path: this.param.path, value: v, direction: binding })
+                v = this.execute({ _values: this.proxy._values, path: this.param.path, value: v, direction: binding })
                 this.method.set({path: this.param.fullPath, value: v})
               }
               this.param.changed = false
@@ -58,13 +49,12 @@ export default {
             },
             disabled: () => this.param.element.disabled,
             error: () => {
-              const validation = this.param.element.validation
-              if (validation) {
-                let v = deliver(this.proxy._values, this.param.fullPath)
-                v = this.method.execute({ path: this.param.path, value: v, direction: validation })
-                this.method.error(this.param.element.name, !v)
-                return !v
-              }
+              const { validation, required } = this.param.element
+              const value = deliver(this.proxy._values, this.param.fullPath)
+              const ex = validation && !this.execute({ _values: this.proxy._values, path: this.param.path, value, direction: validation })
+              const v = ex || (required && (!value || (Array.isArray(value) && !value.length)))
+              this.method.error(this.param.element.name, v)
+              return v
             }
           },
           params: {
@@ -90,7 +80,7 @@ export default {
       this.proxy.hidden = v
     },
     transit(m, v) {
-      this.node.LstElement.method[m] && this.node.LstElement.method[m](v)
+      this.node.lstEl.method[m] && this.node.lstEl.method[m](v)
     }
   },
   created() {

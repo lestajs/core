@@ -1,19 +1,19 @@
 import './index.css'
-import button from '../../../../UI/components/button'
-import form from '../../../../UI/components/form'
+import button from '../../UI/button'
+import form from '../../form'
 import general from "../general"
-import { deliver } from "lesta"
+import { deliver, mapProps } from "lesta"
 
 export default {
   template: `
-    <div class="fx fx-bl">
-      <h4 class="head"></h4>
-      <div class="panel fx">
-          <div class="dec"></div>
-          <div class="inc"></div>
+    <div class="l-fx l-fx-bl">
+      <h4 class="fblHead"></h4><span class="fblCount"></span>
+      <div class="fblPanel l-fx">
+          <div class="fblDec"></div>
+          <div class="fblInc"></div>
       </div>
     </div>
-    <div class="collection"></div>`,
+    <div class="fblCollection"></div>`,
   props: {
     params: {
       target: {},
@@ -23,8 +23,7 @@ export default {
       _values: { store: 'form' }
     },
     methods: {
-      add: { store: 'form' },
-      create: { store: 'form' },
+      ...mapProps(['set', 'add', 'remove', 'error'], { store: 'form' })
     }
   },
   proxies: {
@@ -32,10 +31,13 @@ export default {
   },
   nodes() {
     return {
-      head: {
-        _text: () => `${this.param.target.head} (${deliver(this.proxy._values, [...this.param.path, 'length']) ?? 0})`
+      fblHead: {
+        _text: () => `${this.param.target.head}`
       },
-      dec: {
+      fblCount: {
+        _text: () => `${deliver(this.proxy._values, [...this.param.path, 'length']) ?? 0}`
+      },
+      fblDec: {
         component: {
           src: button,
           params: {
@@ -43,26 +45,32 @@ export default {
             size: 'mini'
           },
           proxies: {
-            disabled: () => deliver(this.proxy._values, [...this.param.path, 'length']) === 0
+            disabled: () => deliver(this.proxy._values, [...this.param.path, 'length']) === (this.param.target.collection.minlength || 0)
           },
           methods: {
-            change: () => this.method.remove({ path: this.param.path }),
+            change: () => {
+              this.method.remove({ path: this.param.path })
+              this.method.error({ key: [...this.param.path, deliver(this.proxy._values, [...this.param.path, 'length'])].join('_'), value: false })
+            },
           }
         }
       },
-      inc: {
+      fblInc: {
         component: {
           src: button,
           params: {
             text: '+',
             size: 'mini'
           },
+          proxies: {
+            disabled: () => deliver(this.proxy._values, [...this.param.path, 'length']) === (this.param.target.collection.maxlength || 100)
+          },
           methods: {
             change: () => this.method.add({ path: this.param.path, value: {} })
           }
         }
       },
-      collection: {
+      fblCollection: {
         component: {
           src: general,
           iterate: () => deliver(this.proxy._values, this.param.path),
@@ -78,7 +86,7 @@ export default {
     if (!deliver(this.proxy._values, this.param.path)) {
       const minlength = this.param.target.collection.minlength
       const value = minlength ? Array(minlength).fill({}) : []
-      this.method.create({ path: this.param.path, value })
+      this.method.set({ path: this.param.path, value })
     }
   }
 }

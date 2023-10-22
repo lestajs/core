@@ -1,6 +1,6 @@
 import './index.css'
 export default {
-  template: `<div class="LstLabel label"></div><fieldset class="LstButtons fx"></fieldset>`,
+  template: `<div class="lstLbl l-label"></div><fieldset class="lstBtns l-fx"></fieldset>`,
   props: {
     proxies: {
       value: {},
@@ -29,17 +29,17 @@ export default {
   },
   nodes() {
     return {
-      LstLabel: {
+      lstLbl: {
         textContent: () => this.param.text
       },
-      LstButtons: {
+      lstBtns: {
         name: this.param.name,
         _class: {
           radio: this.param.type === 'radio'
         },
         _html: () => this.method.render(),
         onclick: (event) => {
-          if (event.target.closest('.LstButtons > button')) {
+          if (event.target.closest('.lstBtns > button')) {
             const index = +event.target.dataset.index
             const buttons = this.param.options.buttons || this.proxy.value
             this.method.change(buttons[index], index)

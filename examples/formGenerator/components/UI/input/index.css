@@ -2,9 +2,6 @@
   position: relative;
 }
 
-.LstInputWarn {
-  border: 1px solid var(--orange);
-}
 .LstInputError {
   border: 1px solid var(--red);
 }

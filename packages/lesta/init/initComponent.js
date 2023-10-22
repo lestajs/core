@@ -45,8 +45,8 @@ export default class InitComponent {
     if (this.component.params) {
       for (const key in this.component.params) {
         if (key in this.context.param) return errorComponent(this.context.container.nodepath, 213, key)
-        this.context.param[key] = this.component.params[key]
       }
+      Object.assign(this.context.param, replicate(this.component.params))
     }
     Object.preventExtensions(this.context.param)
   }

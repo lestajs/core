@@ -2,8 +2,8 @@ import general from '../general'
 
 export default {
   template: `
-      <h4 class="head"></h4>
-      <div class="standard"></div>`,
+      <h4 class="fblHead"></h4>
+      <div class="fblStandard"></div>`,
   props: {
     params: {
       target: {},
@@ -12,10 +12,10 @@ export default {
   },
   nodes() {
     return {
-      head: {
+      fblHead: {
         _text: () => this.param.target.head,
       },
-      standard: {
+      fblStandard: {
         component: {
           src: general,
           params: {

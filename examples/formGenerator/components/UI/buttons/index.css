@@ -1,18 +1,18 @@
-.LstButtons {
+.lstBtns {
     gap: .5em;
 }
-.LstButtons > button {
+.lstBtns > button {
     background-color: transparent;
     position: relative;
 }
-.LstButtons.radio {
+.lstBtns.radio {
     gap: 1em;
 }
-.LstButtons.radio > button {
+.lstBtns.radio > button {
     padding-left: 2.2em;
 }
 
-.LstButtons.radio > button:before {
+.lstBtns.radio > button:before {
     position: absolute;
     content: '';
     display: inline-block;
@@ -24,10 +24,10 @@
     margin-left: -2.2em;
 }
 
-.LstButtons > button.active {
+.lstBtns > button.active {
     font-weight: 600;
 }
 
-.LstButtons.radio > button.active:before {
+.lstBtns.radio > button.active:before {
     border: .5em solid var(--gray700);
 }

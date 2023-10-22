@@ -30,7 +30,7 @@ export default function renderComponent(nodeElement, component, props, hasHTML) 
       iterableElement.nodepath = nodeElement.nodepath
       if (!nodeElement.unmount) nodeElement.unmount = async () => {
         component.destroy(nodeElement)
-        await nodeElement.removeAll()
+        await nodeElement.removeChildren()
       }
       iterableElement.setAttribute('iterable', '')
       iterableElement.unmount = async () => {

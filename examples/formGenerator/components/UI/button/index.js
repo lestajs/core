@@ -3,7 +3,7 @@ import './index.css'
 
 export default {
   template: `
-  <button class="lstBtn fx-b br pn">
+  <button class="lstBtn l-fx-b l-br">
     <span class="lstBtnIcon"></span>
     <span class="lstBtnText"></span>
   </button>`,
@@ -28,7 +28,7 @@ export default {
     return {
       lstBtn: {
         _class: {
-          'fx-rev': this.param.options.reverse
+          'l-fx-rev': this.param.options.reverse
         },
         _attr: {
           size: this.param.size,

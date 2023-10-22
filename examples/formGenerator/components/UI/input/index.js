@@ -4,9 +4,9 @@ import { _attr } from '../directives'
 
 export default {
   template: `
-    <div class="LstLabel label"></div>
-    <div class="LstInputWr">
-      <input type="text" class="LstInput field br pn">
+    <div class="lstLbl l-label"></div>
+    <div class="lstInputWr">
+      <input type="text" class="lstInput l-field l-br">
     </div>`,
   directives: { _attr },
   props: {
@@ -31,10 +31,10 @@ export default {
   },
   nodes() {
     return {
-      LstLabel: {
+      lstLbl: {
         textContent: () => this.param.text
       },
-      LstInput: {
+      lstInput: {
         _class: {
           LstInputError: () => this.proxy.error
         },
@@ -70,19 +70,19 @@ export default {
       this.proxy._value = v
     },
     validated() {
-      if (!this.node.LstInput.checkValidity()) this.methods.validated(this.node.LstInput.validationMessage)
+      if (!this.node.lstInput.checkValidity()) this.methods.validated(this.node.lstInput.validationMessage)
     },
     blur() {
-      this.node.LstInput.blur()
+      this.node.lstInput.blur()
     },
     focus() {
-      this.node.LstInput.focus()
+      this.node.lstInput.focus()
     },
     select() {
-      this.node.LstInput.select()
+      this.node.lstInput.select()
     }
   },
   mounted() {
-    this.param.options.width && this.node.LstInput.style.setProperty('--width', this.param.options.width)
+    this.param.options.width && this.node.lstInput.style.setProperty('--width', this.param.options.width)
   }
 }

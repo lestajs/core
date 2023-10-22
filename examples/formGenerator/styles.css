@@ -1,28 +1,25 @@
-.head {
+.fblMain {
+    max-width: var(--max-width-middle);
+}
+
+.fblMain .fblHead, .fblMain .fblMainHead {
     padding: 0 var(--xxs);
-}
-.LstButtons {
-    width: 100%;
+    margin-bottom: var(--xxs);
 }
 
-.main .LstButtons {
-    border: 1px solid var(--gray200);
-    width: max-content;
-    border-radius: 2px;
-    gap: 0;
-}
-
-.LstButtons > button.active {
-    background-color: var(--gray100);
-}
-.content {
-    padding: 0;
-}
-.children {
+.fblChildren {
     padding: var(--xxs);
-    outline: 1px solid var(--gray200);
+    border-left: 2px solid var(--gray300);
     margin-bottom: var(--xs);
 }
-.children:empty {
+.fblChildren:empty {
     display: none;
+}
+
+.fblSubmit .lstBnt {
+    margin-left: auto;
+}
+.fblSubmit .lstBtn:not([disabled]) {
+    background-color: var(--gray700);
+    color: white;
 }

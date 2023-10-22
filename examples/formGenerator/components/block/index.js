@@ -1,5 +1,5 @@
 export default {
-  template: `<div><div class="content"></div></div>`,
+  template: `<div><div class="fblBlock"></div></div>`,
   sources: {
     collection: () => import('./collection'),
     standard: () => import('./standard')
@@ -12,7 +12,7 @@ export default {
   },
   nodes() {
     return {
-      content: {
+      fblBlock: {
         component: {
           src: this.param.target.collection ? this.source.collection : this.source.standard,
           params: {

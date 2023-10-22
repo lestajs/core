@@ -1,33 +1,27 @@
-.LstElements > * {
+.lstEls > * {
     display: contents;
 }
-.row {
-    width: 100%;
-}
-.LstForm {
+
+.lstForm {
     padding: var(--xxs);
     display: grid;
     grid-template-rows: 1fr;
     transition: grid-template-rows 0.5s ease-out;
 }
-.LstElements {
+.lstEls {
     overflow: hidden;
 }
-.LstForm.loaded {
+.lstForm.l-loaded {
     grid-template-rows: 1fr;
 }
-.brError {
-  border: 1px solid var(--red);
-}
-.LsrFormError {
+.lstFormErr {
     padding: .3em 0;
     color: var(--red);
-    border-radius: 2px;
     font-size: var(--fs-xxs);
 }
-.LsrFormError:empty {
+.lstFormErr:empty {
     display: none;
 }
-.LstElement {
-    margin-bottom: var(--xs);
+.lstEl {
+    margin-bottom: var(--xxs);
 }

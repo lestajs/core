@@ -3,9 +3,9 @@ import element from './element'
 
 export default {
   template: `
-    <div class="LstForm">
-      <div class="LsrFormError"></div>
-      <div class="LstElements fx gap"></div>
+    <div class="lstForm">
+      <div class="lstFormErr"></div>
+      <div class="lstEls l-fx l-gap"></div>
     </div>`,
   props: {
     params: {
@@ -18,8 +18,7 @@ export default {
       },
     },
     methods: {
-      change: {},
-      submit: {}
+      error: { store: 'form' },
     }
   },
   params: {
@@ -30,12 +29,12 @@ export default {
   },
   nodes() {
     return {
-      LstForm: {
+      lstForm: {
         _class: {
           brError: () => this.proxy.error
         }
       },
-      LstElements: {
+      lstEls: {
         component: {
           src: element,
           iterate: () => this.param.elements,
@@ -47,12 +46,14 @@ export default {
           methods: {
             error: (key, v) => {
               this.param.errors[key] = v
-              this.proxy.error = Object.values(this.param.errors).includes(true) ? this.param.error : ''
+              const value = Object.values(this.param.errors).includes(true)
+              this.proxy.error = value ? this.param.error : ''
+              this.method.error({ key: this.param.path.join('_'), value })
             }
           }
         }
       },
-      LsrFormError: {
+      lstFormErr: {
         textContent: () => this.proxy.error
       }
     }
@@ -60,7 +61,7 @@ export default {
   methods: {
     transit(n, m, v) {
       const index = this.param.elements.findIndex(el => el.name === n)
-      this.node.LstElements.children[index]?.method.transit(m, v)
+      this.node.lstEls.children[index]?.method.transit(m, v)
     }
   }
 }

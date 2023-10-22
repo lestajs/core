@@ -2,8 +2,8 @@ import './index.css'
 
 export default {
   template: `
-  <dialog class="LstDialog scrollbar">
-    <div class="LstClose"></div>
+  <dialog class="lstDialog l-scrollbar">
+    <div class="lstClose"></div>
     <div section="content"></div>
   </dialog>`,
   props: {
@@ -16,22 +16,22 @@ export default {
   },
   nodes() {
     return {
-      LstDialog: {
+      lstDialog: {
         _class: {
-          'full-screen': () => this.proxy.fullScreen
+          'l-full-screen': () => this.proxy.fullScreen
         }
       },
-      LstClose: {
+      lstClose: {
         onclick: () => this.method.onclose ? this.method.onclose() : this.method.close()
       }
     }
   },
   methods: {
     close() {
-      this.node.LstDialog.close()
+      this.node.lstDialog.close()
     },
     open() {
-      this.node.LstDialog.showModal()
+      this.node.lstDialog.showModal()
     },
     fullScreen(v) {
       this.proxy.fullScreen = v

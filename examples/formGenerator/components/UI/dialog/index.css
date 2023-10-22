@@ -1,0 +1,35 @@
+.lstDialog {
+    position: fixed;
+    min-width: 320px;
+    width: 80%;
+    max-width: 768px;
+    background-color: #ffffff;
+    border: 0;
+    border-radius: 2px;
+    max-height: calc(100vh - (var(--xs) * 2));
+    padding: var(--xs);
+    padding-top: 0;
+    overflow-y: auto;
+    z-index: 9999;
+}
+
+.lstDialog .lstClose {
+    width: min-content;
+    top: var(--xxs);
+    position: sticky;
+    margin-left: auto;
+    padding: 8px;
+    box-sizing: content-box;
+    margin-bottom: auto;
+    font-size: var(--fs-s);
+}
+
+.lstDialog.l-full-screen {
+    width: 100vw;
+    height: 100vh;
+    max-width: initial;
+    max-height: initial;
+}
+body:has(.l-full-screen[open]) {
+    overflow: hidden;
+}
