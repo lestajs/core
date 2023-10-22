@@ -1,4 +1,19 @@
-import { replicate, deleteReactive, loadModule, queue } from '../packages/utils'
+import { debounce, throttling, delay, replicate, deliver, mapProps, deleteReactive, loadModule, uid, queue, deepFreeze } from '../packages/utils'
 import { createApp } from '../packages/lesta/create/app'
+import { createWidget } from '../packages/lesta/create/widget'
 
-window.lesta = { createApp, replicate, deleteReactive, loadModule, queue }
+window.lesta = {
+  createApp,
+  createWidget,
+  debounce,
+  throttling,
+  delay,
+  replicate,
+  deliver,
+  mapProps,
+  deleteReactive,
+  loadModule,
+  uid,
+  queue,
+  deepFreeze
+}
