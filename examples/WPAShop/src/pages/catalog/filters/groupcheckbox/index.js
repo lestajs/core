@@ -1,4 +1,4 @@
-import checkbox from '../../../../../../UI/components/checkbox';
+import checkbox from '../../../../../UI/components/checkbox';
 
 export default {
     template: '<div class="groupcheckbox"></div>',

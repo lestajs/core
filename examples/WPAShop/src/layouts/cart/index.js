@@ -1,36 +1,32 @@
 import cartCard from './cartCard/index.js';
-import cartApi from '../../../common/cartApi.js';
 
 export default {
-    template: `<div class="cart"></div>`,
+    template: `
+    <h3>Cart</h3>
+    <div class="cart"></div>`,
     props: {
         params: {
             products: {
                 store: 'products',
             },
         },
-    },
-    proxies: {
-        products: [],
+        proxies: {
+            cartProducts: {
+                store: 'products',
+            }
+        }
     },
     nodes() {
         return {
             cart: {
                 component: {
                     src: cartCard,
-                    iterate: () => this.proxy.products,
+                    iterate: () => this.proxy.cartProducts,
                     proxies: {
                         _product: (product) => product,
                     }
                 }
             }
         }
-    },
-    created() {
-        console.log(this.param.products)
-    },
-    async loaded() {
-        // console.log(this.options);
-        this.options.proxies.products = await cartApi.getCart(2);
-    },
+    }
 }

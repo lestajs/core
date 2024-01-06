@@ -1,0 +1,16 @@
+.LstForm {
+    padding: var(--xs);
+    width: 320px;
+}
+.LsrError {
+    width: 100%;
+    background-color: var(--red);
+    color: white;
+    margin-bottom: var(--xxs);
+}
+.LsrError:empty {
+    display: none;
+}
+.LstElement {
+    margin-top: var(--xs);
+}

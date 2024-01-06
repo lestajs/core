@@ -1,4 +1,4 @@
-import accordion from '../../../../../UI/components/accordion/index.js';
+import accordion from '../../../../UI/components/accordion/index.js';
 import groupcheckbox from './groupcheckbox/index.js';
 
 export default {
