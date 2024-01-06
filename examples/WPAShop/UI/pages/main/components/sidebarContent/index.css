@@ -1,0 +1,7 @@
+[section="content"] .hd {
+    padding: .4em;
+    margin-top: var(--xxs);
+}
+.searchBar {
+    margin-bottom: var(--xxs);
+}

@@ -1,0 +1,8 @@
+.filterBar .list {
+    background-color: #00000030;
+    padding: 0 5px;
+    flex: 1
+}
+.filterBar .select {
+    width: 120px;
+}

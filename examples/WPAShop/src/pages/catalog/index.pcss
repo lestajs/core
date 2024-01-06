@@ -1,8 +1,75 @@
+/* .header {
+    display: flex;
+    justify-content: space-between;
+    padding: 1vh 2vw;
+}
+
+.logo {
+    display: flex;
+} */
+
+
+#root {
+    margin: 0 auto;
+    max-width: 1200px;
+}
+
+.name {
+    font-size: 1.6vw;
+    font-weight: bold;
+    margin: 1vw 0;
+}
+
+/* .menu {
+    display: flex;
+}
+
+.li {
+    padding: 1vw;
+    margin-left: 2vw;
+} */
+.cart {
+    .miniCard {
+        display: flex;
+        outline: 1px solid var(--gray);
+        line-height: 1.1;
+
+
+        .card {
+            flex: 1;
+            .LstCard {
+                outline: none;
+            }
+            h4 {
+                font-size: var(--fs-xs);
+                min-height: 4em;
+            }
+        }
+        /*.changeBtns {
+            display: flex;
+        } */
+        .extra {
+            .price {
+                margin: .5em 0;
+            }
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            padding: .5em;
+            min-width: 10ch;
+        }
+    }
+}
+
 .catalog {
     display: flex;
     .cards {
         flex: 1;
     }
+}
+
+.sidebar {
+    display: contents;
 }
 
 .filterBar {
@@ -16,4 +83,49 @@
     left: var(--s);
     width: 72px;
     height: 72px;
+}
+
+.product {
+    display: flex;
+    padding: 5px;
+    margin: 5px;
+    gap: 40px;
+    flex-wrap: wrap;
+
+    .left {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        
+        .picture {
+            width: 45%;
+            min-width: 320px;
+            max-width: 540px;
+            object-fit: cover;
+        }
+    }
+
+    .right {
+        max-width: 400px;
+
+        .title {
+            font-weight: bold;
+            font-size: 1.7vw;
+        }
+
+        .price {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 1.3vw;
+        }
+
+        .ratingBar {
+            .reviews {
+                display: flex;
+            }
+
+            display: flex;
+            gap: 5em;
+        }
+    }
 }

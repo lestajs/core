@@ -1,13 +1,15 @@
 import { delay } from 'lesta';
-import card from "../../../../UI/components/card";
-import sidebar from "../../../../UI/components/sidebar";
-import accordion from "../../../../UI/components/accordion";
-import api from "../../../common/api.js";
+import card from '../../../UI/components/card/';
+import accordion from '../../../UI/components/accordion';
+import catalogApi from '../../../common/catalogApi.js';
 import './index.pcss';
 import filter from './filters/index.js';
-import button from "../../../../UI/components/button";
-import buttons from "../../../../UI/components/buttons";
-import '../../../../UI/components/spinner/index.css';
+import button from '../../../UI/components/button';
+import buttons from '../../../UI/components/buttons';
+import '../../../UI/components/spinner/index.css';
+import dropdown from '../../../UI/components/dropdown';
+import groupcheckbox from './filters/groupcheckbox';
+import cart from '../../layouts/cart/index.js';
 
 export default {
     template:
@@ -16,16 +18,27 @@ export default {
         <div class="filterBar">
             <div class="switchFilters"></div>
             <div class="category"></div>
+            <div class="filtersBtn"></div>
         </div>
-        <div class="catalog ">
-            <div class="sidebar"></div>
+        <div class="catalog">
             <div class="preload LstSpinner"></div>
             <div class="cards LstCards container content"></div>
         </div>
     `,
+    props: {
+        params: {
+            products: {
+                store: 'products',
+            },
+        },
+        methods: {
+            addToCart: {
+                store: 'products',
+            }
+        }
+    },
     params: {
         categories: [],
-        products: [],
     },
     proxies: {
         products: [],
@@ -39,35 +52,26 @@ export default {
                 component: {
                     src: card,
                     iterate: () => this.proxy.products,
-                    proxies: {
-                        title: (product) => product.title,
-                        buttons: () => ['1', '2', '3'],
-                        image: (product) => product.image,
-                        description: (product) => product.description,
-                    }
-                },
-            },
-            sidebar: {
-                component: {
-                    src: sidebar,
-                    proxies: {
-                        show: () => this.proxy.show,
+                    params: {
+                        index: (_, i) => i,
                     },
-                    sections: {
-                        content: {
-                            src: filter,
-                            params: {
-                                header: 'New Filter'
-                            },
-                            methods: {
-                                change: () => {},
-                                priceFilter: (from, to) => {
-                                    this.proxy.products = this.param.products.filter((el) => el.price >= from && el.price <= to);
-                                }
-                            }
+                    proxies: {
+                        header: (product) => product.title,
+                        buttons: () => [{
+                            name: 'cart',
+                            text: 'Add to cart'
+                        }],
+                        image: (product) => product.image,
+                        content: (product) => product.description,
+                        title: (product) => '$' + product.price,
+                        url: (product) => '/product/' + product.id
+                    },
+                    methods: {
+                        change: (btnName, i) => {
+                            this.method.addToCart(this.proxy.products[i])
                         }
                     }
-                }
+                },
             },
             switchFilters: {
                 component: {
@@ -93,11 +97,27 @@ export default {
                     methods: {
                         change: async (value) => {
                             this.proxy.hidden = false;
-                            this.proxy.products = await api.getProductsByCategory(value);
+                            this.proxy.products = await catalogApi.getProductsByCategory(value);
                             this.proxy.hidden = true;
                             this.proxy.activeCategory = value;
                         }
                     }
+                }
+            },
+            filtersBtn: {
+                component: {
+                    src: dropdown,
+                    proxies: {
+                        hidden: () => {},
+                    },
+                    // sections: {
+                    //     content: {
+                    //         src: groupcheckbox,
+                    //         proxies: {
+                    //             texts: ["10-50", "50-100", "all"]
+                    //         }
+                    //     }
+                    // }
                 }
             },
             preload: {
@@ -106,11 +126,15 @@ export default {
         }
     },
     async created() {
-        this.param.products = await api.getProducts();
+        // await this.method.getAll();
         this.proxy.products = this.param.products;
         console.log(this.proxy.products);
-        this.param.categories = await api.getAllCategories();
-        await delay(1500);
+        this.param.categories = await catalogApi.getAllCategories();
+        //await delay(1500);
         this.proxy.hidden = true;
+        console.dir(this.router.to.extras.sidebar)
+        this.router.to.extras.sidebar.section.content.mount({
+            src: cart,
+        })
     }
 }
