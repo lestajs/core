@@ -4,7 +4,7 @@ import { deliver } from "lesta"
 
 export default {
   template: `
-    <div>
+    <div class="fblContent">
     <div class="fblElements"></div>
     <div class="fblChildren"></div>
     </div>`,
@@ -22,6 +22,12 @@ export default {
   },
   nodes() {
     return {
+      fblContent: {
+        dataset: () => {
+          const index = this.param.path.at(-1)
+          return typeof index === 'number' ? { index: index + 1 } : {}
+        }
+      },
       fblElements: {
         component: {
           induce: () => this.param.target.elements,

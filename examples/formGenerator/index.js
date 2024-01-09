@@ -5,13 +5,14 @@ import main from './components/main'
 import entry from './spec'
 
 const fabula = {
-    create: async (root, entry) => {
-        const app = createApp({
+    entry: {},
+    app: {},
+    create: function (root) {
+        this.app = createApp({
             root: document.querySelector(root),
             stores: {
                 form: {
                     params: {
-                        entry,
                         errors: {}
                     },
                     proxies: {
@@ -54,7 +55,8 @@ const fabula = {
                     buttons: () => import('./components/UI/buttons'),
                     nest: () => import('./components/UI/nest')
                 },
-                localTokens: entry.localTokens,
+                fabula: this,
+                localTokens: this.entry.localTokens,
                 bus: { popup: {} },
                 execute({_values, path, value, direction}) {
                     const command = 'return ' + direction
@@ -73,9 +75,15 @@ const fabula = {
                 }
             }
         })
-        await app.mount(main)
+        
+    },
+    init: async function (entry) {
+        this.entry = entry
+        await this.app.mount(main)
     }
 }
 
-fabula.create('#root', entry)
+fabula.create('#root')
+fabula.init(entry)
+
 console.log(fabula)

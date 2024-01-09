@@ -8,7 +8,7 @@ class Store {
     this.store = module
     this.context = {
       name,
-      ...app.plugins,
+      ...app,
       options: module,
       reactivity: new Map(),
       param: {},
@@ -72,33 +72,24 @@ class Store {
   }
 }
 
-function createStores(stores = {}) {
-  return {
-    app: {},
-    stores: {},
-    async get(key) {
-      if (!stores) return errorStore(key, 401)
-      if (!this.stores.hasOwnProperty(key)) {
-        const options = await loadModule(stores[key])
+function createStores(app) {
+  if (!app.stores) app.stores = {}
+  let stores = {}
+  app.store = {
+    get: async (key) => {
+      if (!app.stores) return errorStore(key, 401)
+      if (!stores.hasOwnProperty(key)) {
+        const options = await loadModule(app.stores[key])
         if (!options) return errorStore(key, 402)
-        const store = new Store(options, this.app, key)
-        this.stores[key] = store
+        const store = new Store(options, app, key)
+        stores[key] = store
         await store.loaded()
         store.create()
         await store.created()
       }
-      return this.stores[key]
+      return stores[key]
     },
-    destroy() {
-      delete this.stores
-    },
-    init(app) {
-      this.app = app
-      app.plugins.store = {
-        get: this.get.bind(this),
-        destroy: this.destroy.bind(this)
-      }
-    }
+    destroy: (key) => delete stores[key]
   }
 }
 

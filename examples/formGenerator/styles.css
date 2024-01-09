@@ -8,8 +8,8 @@
 }
 
 .fblChildren {
-    padding: var(--xxs);
-    border-left: 2px solid var(--gray300);
+    padding: 13px;
+    border-left: 1px solid var(--gray200);
     margin-bottom: var(--xs);
 }
 .fblChildren:empty {

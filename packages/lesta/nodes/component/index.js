@@ -1,5 +1,6 @@
 import Node from '../node.js'
 import props from '../../nodes/component/props'
+import { mount } from '../../create/mount'
 import sections from './sections/index.js'
 import { errorComponent } from '../../../utils/errors/component'
 
@@ -27,16 +28,27 @@ export default class Components extends Node {
     }
     return result
   }
-  async create(specialty, nodeElement, propertyComponent, proxies, value, index) {
-    if (!propertyComponent.src) return errorComponent(nodeElement.nodepath, 203)
-    const container = await this.app.mount(propertyComponent.src, propertyComponent.abortSignal, propertyComponent.aborted, nodeElement, props.collect(propertyComponent, proxies, value, index))
+  async create(specialty, nodeElement, pc, proxies, value, index) {
+    if (!pc.src) return errorComponent(nodeElement.nodepath, 203)
+    const { src, abortSignal, aborted } = pc
+    let container = null
+    if (!nodeElement.process) {
+      nodeElement.process = true
+      container = await mount(this.app, nodeElement, {
+        src,
+        abortSignal,
+        aborted,
+        ...props.collect(pc, proxies, value, index)
+      })
+      delete nodeElement.process
+    }
     if (!container) return
-    sections(propertyComponent, specialty, container, (proxies, target, section) => {
-      if (index !== undefined) {
-        return specialty(proxies, container.section[section], index)
-      } else {
-        return specialty(proxies, target)
-      }
-    }, this.create.bind(this))
+    await sections(pc, specialty, container, (proxies, target, section) => {
+        if (index !== undefined) {
+          return specialty(proxies, container.section[section], index)
+        } else {
+          return specialty(proxies, target)
+        }
+      }, this.create.bind(this))
   }
 }

@@ -9,9 +9,33 @@
     font-weight: 600;
 }
 .fblCount {
-    background-color: var(--black);
+    font-size: var(--fs-xxs);
+    padding: .5em;
+    line-height: 1;
+    font-weight: 600;
+}
+.fblContent {
+    position: relative;
+}
+.fblCollection > div {
+    border-top: 1px solid var(--gray200);
+    margin-bottom: var(--xxs);
+}
+.fblContent:before {
+    content: attr(data-index);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    background-color: var(--gray700);
     color: white;
     font-size: var(--fs-xxs);
-    padding: 0 .5em;
-    border-radius: 1em;
+    height: 1.5em;
+    width: 1.5em;
+    border-radius: 2em;
+    left: -24px;
+    top: var(--xxs);
+}
+.fblContent:not([data-index]):before {
+    display: none;
 }
