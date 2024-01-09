@@ -7,9 +7,10 @@ import { deliver, mapProps } from "lesta"
 export default {
   template: `
     <div class="l-fx l-fx-bl">
-      <h4 class="fblHead"></h4><span class="fblCount"></span>
+      <h4 class="fblHead"></h4>
       <div class="fblPanel l-fx">
           <div class="fblDec"></div>
+          <span class="fblCount"></span>
           <div class="fblInc"></div>
       </div>
     </div>

@@ -6,20 +6,20 @@ export default class Basic extends Components {
     super(...args)
   }
   async init() {
-    const createBasic = () => this.create(this.proxies.bind(this), this.nodeElement, this.node.component, this.proxies(this.node.component.proxies, this.nodeElement))
-    const mount = async () => await createBasic()
+    const createComponent = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, this.proxies(pc.proxies, this.nodeElement))
+    this.nodeElement.createComponent = createComponent
     if (this.node.component.induce) {
       if (typeof this.node.component.induce !== 'function') return errorComponent(this.nodeElement.nodepath, 212)
       this.impress.collect = true
       const permit = this.node.component.induce()
       this.reactiveNode(this.impress.define(), async () => {
         if (!this.node.component.induce()) {
-          await this.nodeElement.unmount?.()
-        } else if (!this.nodeElement.unmount) await mount()
+          this.nodeElement.unmount?.()
+        } else if (!this.nodeElement.unmount) await createComponent(this.node.component)
       })
-      if (permit) await mount()
+      if (permit) await createComponent(this.node.component)
     } else {
-      await mount()
+      this.node.component.src && await createComponent(this.node.component)
     }
   }
   proxies(proxies, target) {

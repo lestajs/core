@@ -1,8 +1,8 @@
 import { replicate } from '../../utils/index.js'
 
-export default function diveProxy(target, handler, path = '') {
-  if (typeof target !== 'object' || target === null) {
-    return target
+export default function diveProxy(_value, handler, path = '') {
+  if (!(_value && (_value.constructor.name === 'Object' || _value.constructor.name === 'Array'))) {
+    return _value
   }
   const proxyHandler = {
     getPrototypeOf(target) {
@@ -16,7 +16,6 @@ export default function diveProxy(target, handler, path = '') {
       const reject = handler.beforeSet(value, `${path}${prop}`, (v) => value = v)
       if (reject) return true
       if (Reflect.get(target, prop, receiver) !== value || prop === 'length' || prop.startsWith('__')) {
-        value = replicate(value)
         value = diveProxy(value, handler, `${path}${prop}.`)
         Reflect.set(target, prop, value, receiver);
         handler.set(target, value, `${path}${prop}`)
@@ -30,8 +29,9 @@ export default function diveProxy(target, handler, path = '') {
       return Reflect.defineProperty(target, prop, descriptor)
     }
   }
-  for (let key in target) {
-    target[key] = diveProxy(target[key], handler, `${path}${key}.`)
+  _value = replicate(_value)
+  for (let key in _value) {
+    _value[key] = diveProxy(_value[key], handler, `${path}${key}.`)
   }
-  return new Proxy(target, proxyHandler)
+  return new Proxy(_value, proxyHandler)
 }

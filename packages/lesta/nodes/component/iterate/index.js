@@ -8,7 +8,7 @@ export default class Iterate extends Components {
         this.queue = queue()
         this.name = null
         this.created = false
-        this.nodeElement.removeChildren= async () => await this.remove.bind(this)(0)
+        this.nodeElement.removeChildren = () => this.remove.bind(this)(0)
     }
     async init() {
         if (typeof this.node.component.iterate !== 'function') return errorComponent(this.nodeElement.nodepath, 205)
@@ -54,9 +54,7 @@ export default class Iterate extends Components {
                 this.impress.collect = true
                 const permit = this.node.component.induce()
                 this.reactiveNode(this.impress.define(), async () => {
-                    if (!this.node.component.induce()) {
-                        await this.nodeElement.removeChildren()
-                    } else if (!this.nodeElement.children.length) await mount()
+                    !this.node.component.induce() ? this.nodeElement.removeChildren() : await mount()
                 })
                 if (permit) await mount()
             } else {
@@ -86,11 +84,13 @@ export default class Iterate extends Components {
                         if (p) {
                             p.shift()
                             this.nodeElement.children[index]?.proxy[pr](v, p)
+                            // this.sections(this.node.component.sections, this.nodeElement.children[index], index)
                         } else {
                             this.data = this.node.component.iterate()
                             if (index < this.data.length) {
                                 const val = fn(this.data[index], index)
                                 this.nodeElement.children[index]?.proxy[pr](val)
+                                // this.sections(this.node.component.sections, this.nodeElement.children[index], index)
                             }
                         }
                     })
@@ -98,9 +98,10 @@ export default class Iterate extends Components {
             } else {
                 if (!this.created) {
                     this.reactiveComponent(this.impress.define(pr), async (v, p) => {
-                        this.queue.add(async () => {
+                        !this.nodeElement.process && this.queue.add(async () => {
                             for (let i = 0; i < this.nodeElement.children.length; i++) {
-                                p ? this.nodeElement.children[i].proxy[pr](v, p) : this.nodeElement.children[i].proxy[pr](fn())
+                                p ? this.nodeElement.children[i].proxy[pr](v, p) : this.nodeElement.children[i].proxy[pr](fn(this.data[i], i))
+                                // this.sections(this.node.component.sections, this.nodeElement.children[i], i)
                             }
                         })
                     }, target)
@@ -110,10 +111,11 @@ export default class Iterate extends Components {
         return this.reactivate(proxies, reactive, this.data, index)
     }
     async length(length) {
+        this.data = this.node.component.iterate()
         if (this.data.length === length) {
             const qty = this.nodeElement.children.length
             length > qty && await this.add(length)
-            length < qty && await this.remove(length)
+            length < qty && this.remove(length)
         }
     }
     async add(length) {
@@ -123,12 +125,12 @@ export default class Iterate extends Components {
             qty++
         }
     }
-    async remove(length) {
+    remove(length) {
         let qty = this.nodeElement.children.length
         while (length < qty) {
             qty--
             deleteReactive(this.nodeElement.reactivity.component, this.name + '.' + qty)
-            await this.nodeElement.children[qty].unmount()
+            this.nodeElement.children[qty].unmount()
         }
     }
 }

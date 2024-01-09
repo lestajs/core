@@ -11,9 +11,6 @@ export default {
       <div class="fblSubmit"></div>
     </div>`,
   props: {
-    params: {
-      entry: { store: 'form' },
-    },
     proxies: {
       error: { store: 'form' }
     },
@@ -24,13 +21,13 @@ export default {
   nodes() {
     return {
       fblMainHead: {
-        textContent: this.param.entry.mainHead
+        textContent: this.fabula.entry.mainHead
       },
       fblForm: {
         component: {
           src: block,
           params: {
-            target: this.param.entry.form,
+            target: this.fabula.entry.form,
             path: []
           }
         }
@@ -39,7 +36,7 @@ export default {
         component: {
           src: button,
           params: {
-            text: this.param.entry.localTokens.submit,
+            text: this.fabula.entry.localTokens.submit,
             size: 'normal'
           },
           proxies: {
@@ -59,6 +56,9 @@ export default {
         }
       }
     }
+  },
+  created() {
+    console.log(this.fabula.entry)
   },
   mounted() {
     this.bus.popup = this.node.fblDialog

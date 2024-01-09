@@ -7,8 +7,8 @@ function mixins(target) {
     const mergeProperties = (a, b, key) => {
       return { ...a[key], ...b[key] }
     }
-    const mergeOprions = (options) => {
-      result.template = target.template || options.template
+    const mergeOptions = (options) => {
+      result.template = options.template || result.template
       properties.forEach((key) => {
         result[key] = mergeProperties(result, options, key)
       })
@@ -32,9 +32,9 @@ function mixins(target) {
       }
     }
     target.mixins.forEach((options) => {
-      mergeOprions(mixins(options))
+      mergeOptions(mixins(options))
     })
-    mergeOprions(target)
+    mergeOptions(target)
     return result
   }
   return target

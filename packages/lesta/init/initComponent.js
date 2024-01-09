@@ -7,7 +7,9 @@ export default class InitComponent {
     this.app = app
     this.proxiesData = {}
     this.context = {
-      ...app.plugins,
+      ...app,
+      mount: app.mount,
+      phase: 0,
       abortSignal: signal,
       options: component,
       container: null,
@@ -18,11 +20,8 @@ export default class InitComponent {
       source: component.sources || {}
     }
   }
-  async aborted(stage) {
-    if (this.component.aborted) return await this.component.aborted.bind(this.context)(stage)
-  }
-  async loaded() {
-    if (this.component.loaded) return await this.component.loaded.bind(this.context)()
+  async loaded(props) {
+    if (this.component.loaded) return await this.component.loaded.bind(this.context)(props)
   }
   async rendered() {
     if (typeof this.component !== 'object') return errorComponent(this.context.container.nodepath,211)

@@ -13,8 +13,7 @@ class InitBasic extends InitComponent {
     this.context = {
       ...this.context,
       exclude: this.impress.exclude.bind(this.impress),
-      directives: { _html, _evalHTML, _class, _text, ...app.directives, ...component.directives },
-      root: app.root
+      directives: { _html, _evalHTML, _class, _text, ...app.directives, ...component.directives }
     }
   }
   async props() {}

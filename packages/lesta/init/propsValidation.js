@@ -68,13 +68,7 @@ class Props {
           return replicate(storeParams)
         } else {
           const data = this.props?.params[key]
-          const isDataValid =
-            data instanceof Promise ||
-            data instanceof HTMLCollection ||
-            data instanceof NodeList ||
-            data instanceof Element ||
-            key.startsWith('__')
-          return isDataValid ? data : replicate(data)
+          return key.startsWith('__') ? data : replicate(data)
         }
       }
       const value = this.context.param[key] = await paramValue() ??
@@ -96,13 +90,11 @@ class Props {
         if (!storeModule) return errorProps(this.container.nodepath, 'methods', key, 307, store)
         const method = storeModule.methods(key)
         if (!method) return errorProps(this.container.nodepath, 'methods', key, 305, store)
-        this.context.method[key] = (...args) => method(...replicate(args))
+        this.context.method[key] = async (...args) => await method(...replicate(args))
       } else {
         const isMethodValid = this.props.methods && (key in this.props.methods)
         if (prop.required && !(isMethodValid)) return errorProps(this.container.nodepath, 'methods', key, 303)
-        if (isMethodValid) this.context.method[key] = (...args) => {
-          this.props.methods[key](...replicate(args))
-        }
+        if (isMethodValid) this.context.method[key] = async (...args) => await this.props.methods[key](...replicate(args))
       }
     }
   }

@@ -1,5 +1,4 @@
-async function lifecycle(component, render, aborted, props) {
-  let status = 0
+async function lifecycle(component, render, aborted) {
   const hooks = [
     async () => await component.loaded(),
     async () => {
@@ -7,7 +6,7 @@ async function lifecycle(component, render, aborted, props) {
       if (typeof document !== 'undefined') return await component.rendered()
     },
     async () => {
-      await component.props(props)
+      await component.props()
       component.params()
       component.methods()
       component.proxies()
@@ -20,9 +19,9 @@ async function lifecycle(component, render, aborted, props) {
   ]
   for await (const hook of hooks) {
     const data = await hook()
-    status++
+    component.context.phase++
     if (component.context.abortSignal?.aborted || data) {
-      aborted && aborted({ status, data, abortSignal: component.context.abortSignal })
+      aborted && aborted({ phase: component.context.phase, data, abortSignal: component.context.abortSignal })
       return
     }
   }

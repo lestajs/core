@@ -1,9 +1,9 @@
 export default {
   collect(propertyComponent, proxies, val, index) {
     return {
-      proxies: this.proxies(proxies),
       params: this.params(propertyComponent.params, val, index),
       methods: this.methods(propertyComponent.methods),
+      proxies: this.proxies(proxies),
       section: propertyComponent.section
     }
   },

@@ -1,5 +1,5 @@
-import { errorComponent } from '../../../utils/errors/component'
-import { stringToHTML } from '../../../utils'
+import { errorComponent } from '../../utils/errors/component'
+import { stringToHTML } from '../../utils'
 
 export default function renderComponent(nodeElement, component, section, hasHTML) {
   const options = { ...component.context.options }
