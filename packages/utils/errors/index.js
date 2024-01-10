@@ -35,14 +35,15 @@ const props = {
   307: 'store "%s" is not found.'
 }
 const store = {
-  401: '"createStore" function expects an object with stores',
-  402: 'store module is undefined.',
+  401: 'object with stores in not define.',
+  402: 'store module "%s" in not define.',
   403: 'method "%s" can take only one argument of type object.',
   404: 'middleware "%s" returns a value not of the object type'
 }
 const router = {
   501: 'path not found in route.',
   502: 'path not found in child route.',
+  503: 'attribute "router" not found in root component',
   551: 'name "%s" not found in routes.',
   552: 'current route has no parameters.',
   553: 'param "%s" not found in current route.',

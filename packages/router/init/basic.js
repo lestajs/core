@@ -2,15 +2,10 @@ import route from '../route/index.js'
 import link from '../link.js'
 import collectorRoutes from '../collectorRoutes.js'
 
-export default class RouterBasic {
-  constructor(options) {
-    this.routes = options.routes
-    this.afterEach = options.afterEach
-    this.beforeEach = options.beforeEach
-    this.beforeEnter = options.beforeEnter
-    this.afterEnter = options.afterEnter
-    this.form = null
-    this.router = {
+export default class BasicRouter {
+  constructor(app, options) {
+    this.app = app
+    this.app.router = {
       layouts: options.layouts || {},
       collection: [],
       push: this.push.bind(this),
@@ -19,15 +14,16 @@ export default class RouterBasic {
       to: null,
       render: () => {}
     }
-    collectorRoutes(this.routes, this.router.collection)
-  }
-  initBasic(app) {
-    this.origin = app.origin
-    this.plugins = app.plugins
-    app.plugins.router = this.router
+    this.routes = options.routes
+    this.afterEach = options.afterEach
+    this.beforeEach = options.beforeEach
+    this.beforeEnter = options.beforeEnter
+    this.afterEnter = options.afterEnter
+    this.form = null
+    collectorRoutes(this.routes, this.app.router.collection)
   }
   link(v)  {
-    return link(v, this.router.to, this.router.collection)
+    return link(v, this.app.router.to, this.app.router.collection)
   }
   async push(v) {
     const vs = v.path || v
@@ -37,41 +33,42 @@ export default class RouterBasic {
     }
     const path = this.link(v)
     if (typeof path !== 'string') return path
-    this.setHistory && this.setHistory(v, path)
-    const url = new URL((this.origin || window.location.origin) + path)
-    return await this.update(url)
+    const url = new URL((this.app.origin || window.location.origin) + path)
+    const res = await this.update(url)
+    if (res) this.setHistory && this.setHistory(v, path)
+    return res
   }
   async beforeHooks(hook) {
     if (hook) {
-      const res = await hook(this.router.to, this.router.from, this.plugins)
+      const res = await hook(this.app.router.to, this.app.router.from, this.app)
       if (res) {
-        this.push(res)
+        if (res !== true) this.push(res)
         return true
       }
     }
   }
   async afterHooks(hook) {
-    if (hook) await hook(this.router.to, this.router.from, this.plugins)
+    if (hook) await hook(this.app.router.to, this.app.router.from, this.app)
   }
   async update(url) {
     let res = null
     if (await this.beforeHooks(this.beforeEach)) return
-    const to = route.init(this.router.collection, url)
+    const to = route.init(this.app.router.collection, url)
     const target = to.route
     if (target) {
-      this.router.from = this.form
-      this.router.to = to
-      this.router.to.route.static = this.router.type === 'static' && document.querySelector('html').getAttribute('static')
+      this.app.router.from = this.form
+      this.app.router.to = to
+      this.app.router.to.route.static = this.app.router.type === 'static' && document.querySelector('html').getAttribute('static')
       if (await this.beforeHooks(this.beforeEnter)) return
       if (await this.beforeHooks(target.beforeEnter)) return
       if (target.redirect) {
         let v = target.redirect
-        typeof v === 'function' ? await this.push(await v(to, this.router.from)) : await this.push(v)
+        typeof v === 'function' ? await this.push(await v(to, this.app.router.from)) : await this.push(v)
         return
       }
-      res = await this.router.render(this.router.to)
+      res = await this.app.router.render(this.app.router.to)
       if (!res) return
-      this.form = this.router.to
+      this.form = this.app.router.to
       await this.afterHooks(this.afterEnter)
       await this.afterHooks(target.afterEnter)
     }

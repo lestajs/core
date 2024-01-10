@@ -6,8 +6,8 @@ export default class Basic extends Components {
     super(...args)
   }
   async init() {
-    const createComponent = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, this.proxies(pc.proxies, this.nodeElement))
-    this.nodeElement.createComponent = createComponent
+    const mount = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, this.proxies(pc.proxies, this.nodeElement))
+    this.nodeElement.createComponent = mount
     if (this.node.component.induce) {
       if (typeof this.node.component.induce !== 'function') return errorComponent(this.nodeElement.nodepath, 212)
       this.impress.collect = true
@@ -15,11 +15,11 @@ export default class Basic extends Components {
       this.reactiveNode(this.impress.define(), async () => {
         if (!this.node.component.induce()) {
           this.nodeElement.unmount?.()
-        } else if (!this.nodeElement.unmount) await createComponent(this.node.component)
+        } else if (!this.nodeElement.unmount) await mount(this.node.component)
       })
-      if (permit) await createComponent(this.node.component)
+      if (permit) await mount(this.node.component)
     } else {
-      this.node.component.src && await createComponent(this.node.component)
+      this.node.component.src && await mount(this.node.component)
     }
   }
   proxies(proxies, target) {
