@@ -40,7 +40,7 @@ export default class Router extends BasicRouter {
       if (target.layout) {
         if (this.abortControllerLayout) this.abortControllerLayout.abort()
         this.abortControllerLayout = new AbortController()
-        this.currentLayout = await this.app.mount({src: this.app.router.layouts[target.layout], signal: this.abortControllerLayout.signal, ssr }, this.app.root)
+        this.currentLayout = await this.app.mount(this.app.router.layouts[target.layout], this.app.root, { signal: this.abortControllerLayout.signal, ssr })
         this.abortControllerLayout = null
         if (!this.currentLayout) return
         this.contaner = this.app.root.querySelector('[router]')
@@ -54,7 +54,7 @@ export default class Router extends BasicRouter {
       this.app.root.setAttribute('name', target.name || '')
       if (this.abortController) this.abortController.abort()
       this.abortController = new AbortController()
-      this.current = await this.app.mount({ src: target.component, signal: this.abortController.signal, ssr }, this.contaner)
+      this.current = await this.app.mount(target.component, this.contaner, { signal: this.abortController.signal, ssr })
       this.abortController = null
       if (!this.current) return
     }

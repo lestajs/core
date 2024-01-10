@@ -34,8 +34,7 @@ export default class Components extends Node {
     let container = null
     if (!nodeElement.process) {
       nodeElement.process = true
-      container = await mount(this.app, nodeElement, {
-        src,
+      container = await mount(this.app, src, nodeElement, {
         abortSignal,
         aborted,
         sections,
