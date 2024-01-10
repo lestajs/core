@@ -6,9 +6,7 @@ import '../UI/components/ui.css'
 import axios from 'axios'
 import filters from '../plugins/filters.js'
 
-
 const app = createApp({
-    root: document.querySelector('#root'),
     directives: {
         _attr, _classes,
     },
