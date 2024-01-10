@@ -1,10 +1,8 @@
-import { createStores } from '../../store'
 import { mount } from '../mount'
 
 function createApp(app = {}) {
-  app.initPlugin = (plugin, options) => plugin.install(app, options),
-  app.root.mount = (pc) => mount(app, app.root, pc)
-  createStores(app)
+  app.use = (plugin, options) => plugin.setup(app, options),
+  app.mount = async (options, root) => await mount(app, root, options)
   return app
 }
 export { createApp }

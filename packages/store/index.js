@@ -1,7 +1,7 @@
-import active from '../reactivity/active.js'
-import diveProxy from '../reactivity/diveProxy.js'
-import { replicate, loadModule } from '../../utils'
-import { errorStore } from '../../utils/errors/store.js'
+import active from '../lesta/reactivity/active.js'
+import diveProxy from '../lesta/reactivity/diveProxy.js'
+import { replicate, loadModule } from '../utils'
+import { errorStore } from '../utils/errors/store.js'
 
 class Store {
   constructor(module, app, name) {
@@ -72,25 +72,24 @@ class Store {
   }
 }
 
-function createStores(app) {
-  if (!app.stores) app.stores = {}
-  let stores = {}
-  app.store = {
-    get: async (key) => {
-      if (!app.stores) return errorStore(key, 401)
-      if (!stores.hasOwnProperty(key)) {
-        const options = await loadModule(app.stores[key])
-        if (!options) return errorStore(key, 402)
-        const store = new Store(options, app, key)
-        stores[key] = store
-        await store.loaded()
-        store.create()
-        await store.created()
-      }
-      return stores[key]
-    },
-    destroy: (key) => delete stores[key]
+export default {
+  setup(app, storesOptions) {
+    if (!storesOptions) return errorStore(null, 401)
+    const stores = {}
+    app.store = {
+      create: async (key) => {
+        if (!stores.hasOwnProperty(key)) {
+          const options = await loadModule(storesOptions[key])
+          if (!options) return errorStore(key, 402)
+          const store = new Store(options, app, key)
+          stores[key] = store
+          await store.loaded()
+          store.create()
+          await store.created()
+        }
+        return stores[key]
+      },
+      destroy: (key) => delete stores[key]
+    }
   }
 }
-
-export { createStores }

@@ -46,7 +46,7 @@ class Props {
         if (this.props.proxies && key in this.props.proxies) {
           v = this.props.proxies[key]
         } else if (store) {
-          const storeModule = await this.context.store.get(store)
+          const storeModule = await this.context.store.create(store)
           if (!storeModule) return errorProps(this.container.nodepath, 'proxies', key, 307, store)
           v = storeModule.proxies(key, this.container)
         }
@@ -62,7 +62,7 @@ class Props {
       const paramValue = async () => {
         const { store } = prop
         if (store) {
-          const storeModule = await this.context.store.get(store)
+          const storeModule = await this.context.store.create(store)
           if (!storeModule) return errorProps(this.container.nodepath, 'params', key, 307, store)
           const storeParams = storeModule.params(key)
           return replicate(storeParams)
@@ -86,7 +86,7 @@ class Props {
       if (typeof prop !== 'object') return errorProps(this.container.nodepath, 'methods', key, 302)
       const { store } = prop
       if (store) {
-        const storeModule = await this.context.store.get(store)
+        const storeModule = await this.context.store.create(store)
         if (!storeModule) return errorProps(this.container.nodepath, 'methods', key, 307, store)
         const method = storeModule.methods(key)
         if (!method) return errorProps(this.container.nodepath, 'methods', key, 305, store)

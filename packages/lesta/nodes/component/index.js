@@ -1,7 +1,7 @@
 import Node from '../node.js'
 import props from '../../nodes/component/props'
+import sectionComponent from './sections/index.js'
 import { mount } from '../../create/mount'
-import sections from './sections/index.js'
 import { errorComponent } from '../../../utils/errors/component'
 
 export default class Components extends Node {
@@ -30,7 +30,7 @@ export default class Components extends Node {
   }
   async create(specialty, nodeElement, pc, proxies, value, index) {
     if (!pc.src) return errorComponent(nodeElement.nodepath, 203)
-    const { src, abortSignal, aborted } = pc
+    const { src, abortSignal, aborted, sections, ssr } = pc
     let container = null
     if (!nodeElement.process) {
       nodeElement.process = true
@@ -38,12 +38,14 @@ export default class Components extends Node {
         src,
         abortSignal,
         aborted,
+        sections,
+        ssr,
         ...props.collect(pc, proxies, value, index)
       })
       delete nodeElement.process
     }
     if (!container) return
-    await sections(pc, specialty, container, (proxies, target, section) => {
+    await sectionComponent(pc, specialty, container, (proxies, target, section) => {
         if (index !== undefined) {
           return specialty(proxies, container.section[section], index)
         } else {
