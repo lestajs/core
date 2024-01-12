@@ -72,24 +72,26 @@ class Store {
   }
 }
 
-export default {
-  setup(app, storesOptions) {
-    if (!storesOptions) return errorStore(null, 401)
-    const stores = {}
-    app.store = {
-      create: async (key) => {
-        if (!stores.hasOwnProperty(key)) {
-          const options = await loadModule(storesOptions[key])
-          if (!options) return errorStore(key, 402)
-          const store = new Store(options, app, key)
-          stores[key] = store
-          await store.loaded()
-          store.create()
-          await store.created()
-        }
-        return stores[key]
-      },
-      destroy: (key) => delete stores[key]
-    }
+function createStores(app, storesOptions) {
+  if (!storesOptions) return errorStore(null, 401)
+  const stores = {}
+  app.store = {
+    init: async (key) => {
+      if (!stores.hasOwnProperty(key)) {
+        const options = await loadModule(storesOptions[key])
+        if (!options) return errorStore(key, 402)
+        const store = new Store(options, app, key)
+        stores[key] = store
+        await store.loaded()
+        store.create()
+        await store.created()
+      }
+      return stores[key]
+    },
+    destroy: (key) => delete stores[key]
   }
+  return app.store
 }
+
+export { createStores }
+

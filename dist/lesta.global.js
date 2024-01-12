@@ -208,6 +208,11 @@
     return obj;
   }
 
+  // packages/utils/nextRepaint.js
+  async function nextRepaint() {
+    return new Promise(requestAnimationFrame);
+  }
+
   // packages/utils/errors/index.js
   var node = {
     102: 'incorrect directive name "%s", the name must start with the character "_".',
@@ -582,7 +587,7 @@
           if (this.props.proxies && key in this.props.proxies) {
             v = this.props.proxies[key];
           } else if (store) {
-            const storeModule = await this.context.store.create(store);
+            const storeModule = await this.context.store?.init(store);
             if (!storeModule)
               return errorProps(this.container.nodepath, "proxies", key, 307, store);
             v = storeModule.proxies(key, this.container);
@@ -600,7 +605,7 @@
         const paramValue = async () => {
           const { store } = prop;
           if (store) {
-            const storeModule = await this.context.store.create(store);
+            const storeModule = await this.context.store?.init(store);
             if (!storeModule)
               return errorProps(this.container.nodepath, "params", key, 307, store);
             const storeParams = storeModule.params(key);
@@ -624,7 +629,7 @@
           return errorProps(this.container.nodepath, "methods", key, 302);
         const { store } = prop;
         if (store) {
-          const storeModule = await this.context.store.create(store);
+          const storeModule = await this.context.store?.init(store);
           if (!storeModule)
             return errorProps(this.container.nodepath, "methods", key, 307, store);
           const method = storeModule.methods(key);
@@ -849,17 +854,19 @@
       return result;
     }
     async create(specialty, nodeElement, pc, proxies, value, index) {
-      if (!pc.src)
+      const { src, abortSignal, aborted, sections, repaint, ssr } = pc;
+      if (!src)
         return errorComponent(nodeElement.nodepath, 203);
-      const { src, abortSignal, aborted, sections, ssr } = pc;
+      if (repaint)
+        await nextRepaint();
       let container = null;
       if (!nodeElement.process) {
         nodeElement.process = true;
-        container = await mount(this.app, nodeElement, {
-          src,
+        container = await this.app.mount(src, nodeElement, {
           abortSignal,
           aborted,
           sections,
+          repaint,
           ssr,
           ...props_default.collect(pc, proxies, value, index)
         });
@@ -1021,7 +1028,7 @@
     }
     async init() {
       const mount2 = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, this.proxies(pc.proxies, this.nodeElement));
-      this.nodeElement.createComponent = mount2;
+      this.nodeElement.mount = mount2;
       if (this.node.component.induce) {
         if (typeof this.node.component.induce !== "function")
           return errorComponent(this.nodeElement.nodepath, 212);
@@ -1253,8 +1260,8 @@
   }
 
   // packages/lesta/create/mount.js
-  async function mount(app, container, props2) {
-    const { src, signal, aborted, params, methods, proxies, sections, section, ssr } = props2;
+  async function mount(app, src, container, props2) {
+    const { signal, aborted, params, methods, proxies, sections, section, repaint, ssr } = props2;
     const nodepath = container.nodepath || "root";
     if (signal && !(signal instanceof AbortSignal))
       errorComponent(nodepath, 217);
@@ -1264,14 +1271,15 @@
     if (!options)
       return errorComponent(nodepath, 216);
     const component2 = new Init(mixins(options), app, signal, Nodes);
-    component2.context.options.inputs = { params, methods, proxies, sections };
+    component2.context.options.inputs = { params, methods, proxies, sections, repaint };
     const render = () => renderComponent(container, component2, section, ssr);
     return await lifecycle(component2, render, aborted);
   }
 
   // packages/lesta/create/app/index.js
   function createApp(app = {}) {
-    app.use = (plugin, options) => plugin.setup(app, options), app.mount = async (options, root) => await mount(app, root, options);
+    app.use = (plugin, options) => plugin.setup(app, options);
+    app.mount = async (component2, container, props2) => await mount(app, component2, container, props2);
     return app;
   }
 
