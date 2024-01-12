@@ -11,6 +11,7 @@ import { stringToHTML } from './stringToHTML.js'
 import { uid } from './uid.js'
 import { queue } from './queue.js'
 import { deepFreeze } from './deepFreeze.js'
+import { nextRepaint } from './nextRepaint.js'
 
 export {
   replicate,
@@ -25,5 +26,6 @@ export {
   stringToHTML,
   uid,
   queue,
-  deepFreeze
+  deepFreeze,
+  nextRepaint
 }

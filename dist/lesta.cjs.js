@@ -20,6 +20,8 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var lesta_exports = {};
 __export(lesta_exports, {
   createApp: () => createApp,
+  createRouter: () => createRouter,
+  createStores: () => createStores,
   createWidget: () => createWidget,
   debounce: () => debounce,
   deepFreeze: () => deepFreeze,
@@ -28,10 +30,9 @@ __export(lesta_exports, {
   deliver: () => deliver,
   loadModule: () => loadModule,
   mapProps: () => mapProps,
+  nextRepaint: () => nextRepaint,
   queue: () => queue,
   replicate: () => replicate,
-  router: () => router_default,
-  store: () => store_default,
   throttling: () => throttling,
   uid: () => uid
 });
@@ -244,6 +245,11 @@ function deepFreeze(obj) {
     }
   });
   return obj;
+}
+
+// packages/utils/nextRepaint.js
+async function nextRepaint() {
+  return new Promise(requestAnimationFrame);
 }
 
 // packages/utils/errors/index.js
@@ -609,6 +615,7 @@ var Props = class {
     }
   }
   async proxies(proxies) {
+    var _a;
     if (proxies) {
       for (const key in this.props.proxies) {
         if (!proxies.hasOwnProperty(key))
@@ -620,10 +627,10 @@ var Props = class {
         if (typeof prop !== "object")
           return errorProps(this.container.nodepath, "proxies", key, 302);
         const validation = (v2) => {
-          var _a;
+          var _a2;
           if (prop.required && (v2 === null || v2 === void 0))
             return errorProps(this.container.nodepath, "proxies", key, 303);
-          const value = (_a = v2 != null ? v2 : prop.default) != null ? _a : null;
+          const value = (_a2 = v2 != null ? v2 : prop.default) != null ? _a2 : null;
           if (value && prop.type && (prop.type === "array" && !Array.isArray(value)) && typeof value !== prop.type)
             return errorProps(this.container.nodepath, "proxies", key, 304, prop.type);
           return value;
@@ -641,7 +648,7 @@ var Props = class {
         if (this.props.proxies && key in this.props.proxies) {
           v = this.props.proxies[key];
         } else if (store2) {
-          const storeModule = await this.context.store.create(store2);
+          const storeModule = await ((_a = this.context.store) == null ? void 0 : _a.init(store2));
           if (!storeModule)
             return errorProps(this.container.nodepath, "proxies", key, 307, store2);
           v = storeModule.proxies(key, this.container);
@@ -658,16 +665,16 @@ var Props = class {
       if (typeof prop !== "object")
         return errorProps(this.container.nodepath, "params", key, 302);
       const paramValue = async () => {
-        var _a2;
+        var _a2, _b;
         const { store: store2 } = prop;
         if (store2) {
-          const storeModule = await this.context.store.create(store2);
+          const storeModule = await ((_a2 = this.context.store) == null ? void 0 : _a2.init(store2));
           if (!storeModule)
             return errorProps(this.container.nodepath, "params", key, 307, store2);
           const storeParams = storeModule.params(key);
           return replicate(storeParams);
         } else {
-          const data = (_a2 = this.props) == null ? void 0 : _a2.params[key];
+          const data = (_b = this.props) == null ? void 0 : _b.params[key];
           return key.startsWith("__") ? data : replicate(data);
         }
       };
@@ -679,13 +686,14 @@ var Props = class {
     }
   }
   async methods(methods) {
+    var _a;
     for (const key in methods) {
       const prop = methods[key];
       if (typeof prop !== "object")
         return errorProps(this.container.nodepath, "methods", key, 302);
       const { store: store2 } = prop;
       if (store2) {
-        const storeModule = await this.context.store.create(store2);
+        const storeModule = await ((_a = this.context.store) == null ? void 0 : _a.init(store2));
         if (!storeModule)
           return errorProps(this.container.nodepath, "methods", key, 307, store2);
         const method = storeModule.methods(key);
@@ -914,17 +922,19 @@ var Components = class extends Node {
     return result;
   }
   async create(specialty, nodeElement, pc, proxies, value, index) {
-    if (!pc.src)
+    const { src, abortSignal, aborted, sections, repaint, ssr } = pc;
+    if (!src)
       return errorComponent(nodeElement.nodepath, 203);
-    const { src, abortSignal, aborted, sections, ssr } = pc;
+    if (repaint)
+      await nextRepaint();
     let container = null;
     if (!nodeElement.process) {
       nodeElement.process = true;
-      container = await mount(this.app, nodeElement, {
-        src,
+      container = await this.app.mount(src, nodeElement, {
         abortSignal,
         aborted,
         sections,
+        repaint,
         ssr,
         ...props_default.collect(pc, proxies, value, index)
       });
@@ -1088,7 +1098,7 @@ var Basic = class extends Components {
   }
   async init() {
     const mount2 = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, this.proxies(pc.proxies, this.nodeElement));
-    this.nodeElement.createComponent = mount2;
+    this.nodeElement.mount = mount2;
     if (this.node.component.induce) {
       if (typeof this.node.component.induce !== "function")
         return errorComponent(this.nodeElement.nodepath, 212);
@@ -1322,8 +1332,8 @@ async function lifecycle(component2, render, aborted) {
 }
 
 // packages/lesta/create/mount.js
-async function mount(app, container, props2) {
-  const { src, signal, aborted, params, methods, proxies, sections, section, ssr } = props2;
+async function mount(app, src, container, props2) {
+  const { signal, aborted, params, methods, proxies, sections, section, repaint, ssr } = props2;
   const nodepath = container.nodepath || "root";
   if (signal && !(signal instanceof AbortSignal))
     errorComponent(nodepath, 217);
@@ -1333,14 +1343,15 @@ async function mount(app, container, props2) {
   if (!options)
     return errorComponent(nodepath, 216);
   const component2 = new Init(mixins(options), app, signal, Nodes);
-  component2.context.options.inputs = { params, methods, proxies, sections };
+  component2.context.options.inputs = { params, methods, proxies, sections, repaint };
   const render = () => renderComponent(container, component2, section, ssr);
   return await lifecycle(component2, render, aborted);
 }
 
 // packages/lesta/create/app/index.js
 function createApp(app = {}) {
-  app.use = (plugin, options) => plugin.setup(app, options), app.mount = async (options, root) => await mount(app, root, options);
+  app.use = (plugin, options) => plugin.setup(app, options);
+  app.mount = async (component2, container, props2) => await mount(app, component2, container, props2);
   return app;
 }
 
@@ -1449,29 +1460,28 @@ var Store = class {
     return this.context.method[key];
   }
 };
-var store_default = {
-  setup(app, storesOptions) {
-    if (!storesOptions)
-      return errorStore(null, 401);
-    const stores = {};
-    app.store = {
-      create: async (key) => {
-        if (!stores.hasOwnProperty(key)) {
-          const options = await loadModule(storesOptions[key]);
-          if (!options)
-            return errorStore(key, 402);
-          const store2 = new Store(options, app, key);
-          stores[key] = store2;
-          await store2.loaded();
-          store2.create();
-          await store2.created();
-        }
-        return stores[key];
-      },
-      destroy: (key) => delete stores[key]
-    };
-  }
-};
+function createStores(app, storesOptions) {
+  if (!storesOptions)
+    return errorStore(null, 401);
+  const stores = {};
+  app.store = {
+    init: async (key) => {
+      if (!stores.hasOwnProperty(key)) {
+        const options = await loadModule(storesOptions[key]);
+        if (!options)
+          return errorStore(key, 402);
+        const store2 = new Store(options, app, key);
+        stores[key] = store2;
+        await store2.loaded();
+        store2.create();
+        await store2.created();
+      }
+      return stores[key];
+    },
+    destroy: (key) => delete stores[key]
+  };
+  return app.store;
+}
 
 // packages/utils/errors/router.js
 var errorRouter = (name = "", code, param = "") => {
@@ -1786,11 +1796,12 @@ var Router = class extends BasicRouter {
     this.app.router.go = (v) => history.go(v);
     this.app.router.render = this.render.bind(this);
     this.contaner = null;
-    this.init();
+    this.rootContainer = null;
   }
-  init() {
+  async init(container) {
+    this.rootContainer = container;
     window.addEventListener("popstate", () => this.update.bind(this)(window.location));
-    this.app.root.addEventListener("click", (event) => {
+    this.rootContainer.addEventListener("click", (event) => {
       const a = event.target.closest("a[link]");
       if (a) {
         event.preventDefault();
@@ -1799,7 +1810,7 @@ var Router = class extends BasicRouter {
         }
       }
     });
-    this.update(window.location);
+    await this.update(window.location);
   }
   setHistory(v, url) {
     v.replace ? history.replaceState(null, null, url) : history.pushState(null, null, url);
@@ -1819,24 +1830,24 @@ var Router = class extends BasicRouter {
         if (this.abortControllerLayout)
           this.abortControllerLayout.abort();
         this.abortControllerLayout = new AbortController();
-        this.currentLayout = await this.app.mount({ src: this.app.router.layouts[target.layout], signal: this.abortControllerLayout.signal, ssr }, this.app.root);
+        this.currentLayout = await this.app.mount(this.app.router.layouts[target.layout], this.rootContainer, { signal: this.abortControllerLayout.signal, ssr });
         this.abortControllerLayout = null;
         if (!this.currentLayout)
           return;
-        this.contaner = this.app.root.querySelector("[router]");
+        this.contaner = this.rootContainer.querySelector("[router]");
         if (!this.contaner) {
           errorRouter(null, 503);
           return;
         }
-        this.app.root.setAttribute("layout", target.layout);
+        this.rootContainer.setAttribute("layout", target.layout);
       } else
-        this.contaner = this.app.root;
+        this.contaner = this.rootContainer;
       document.title = target.title || "Lesta";
-      this.app.root.setAttribute("name", target.name || "");
+      this.rootContainer.setAttribute("name", target.name || "");
       if (this.abortController)
         this.abortController.abort();
       this.abortController = new AbortController();
-      this.current = await this.app.mount({ src: target.component, signal: this.abortController.signal, ssr }, this.contaner);
+      this.current = await this.app.mount(target.component, this.contaner, { signal: this.abortController.signal, ssr });
       this.abortController = null;
       if (!this.current)
         return;
@@ -1846,14 +1857,14 @@ var Router = class extends BasicRouter {
 };
 
 // packages/router/index.js
-var router_default = {
-  setup(app, options) {
-    new Router(app, options);
-  }
-};
+function createRouter(app, options) {
+  return new Router(app, options);
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   createApp,
+  createRouter,
+  createStores,
   createWidget,
   debounce,
   deepFreeze,
@@ -1862,10 +1873,9 @@ var router_default = {
   deliver,
   loadModule,
   mapProps,
+  nextRepaint,
   queue,
   replicate,
-  router,
-  store,
   throttling,
   uid
 });

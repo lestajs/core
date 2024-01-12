@@ -9,11 +9,12 @@ export default class Router extends BasicRouter {
     this.app.router.go = (v) => history.go(v)
     this.app.router.render = this.render.bind(this)
     this.contaner = null
-    this.init()
+    this.rootContainer = null
   }
-  init() {
+  async init(container) {
+    this.rootContainer = container
     window.addEventListener('popstate', () => this.update.bind(this)(window.location))
-    this.app.root.addEventListener('click', (event) => {
+    this.rootContainer.addEventListener('click', (event) => {
       const a = event.target.closest('a[link]')
       if (a) {
         event.preventDefault()
@@ -22,7 +23,7 @@ export default class Router extends BasicRouter {
         }
       }
     })
-    this.update(window.location)
+    await this.update(window.location)
   }
   setHistory(v, url) {
     v.replace ? history.replaceState(null, null, url) : history.pushState(null, null, url)
@@ -40,18 +41,18 @@ export default class Router extends BasicRouter {
       if (target.layout) {
         if (this.abortControllerLayout) this.abortControllerLayout.abort()
         this.abortControllerLayout = new AbortController()
-        this.currentLayout = await this.app.mount(this.app.router.layouts[target.layout], this.app.root, { signal: this.abortControllerLayout.signal, ssr })
+        this.currentLayout = await this.app.mount(this.app.router.layouts[target.layout], this.rootContainer, { signal: this.abortControllerLayout.signal, ssr })
         this.abortControllerLayout = null
         if (!this.currentLayout) return
-        this.contaner = this.app.root.querySelector('[router]')
+        this.contaner = this.rootContainer.querySelector('[router]')
         if (!this.contaner) {
           errorRouter(null, 503)
           return
         }
-        this.app.root.setAttribute('layout', target.layout)
-      } else this.contaner = this.app.root
+        this.rootContainer.setAttribute('layout', target.layout)
+      } else this.contaner = this.rootContainer
       document.title = target.title || 'Lesta'
-      this.app.root.setAttribute('name', target.name || '')
+      this.rootContainer.setAttribute('name', target.name || '')
       if (this.abortController) this.abortController.abort()
       this.abortController = new AbortController()
       this.current = await this.app.mount(target.component, this.contaner, { signal: this.abortController.signal, ssr })

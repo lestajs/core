@@ -3,7 +3,6 @@ import product from '../pages/product'
 import about from '../pages/about'
 
 export default {
-  root: document.querySelector('#root'),
   layouts: {
     main: () => import('../layouts/main'),
     empty: () => import('../layouts/empty'),

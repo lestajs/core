@@ -5,7 +5,6 @@ import collectorRoutes from '../collectorRoutes.js'
 export default class BasicRouter {
   constructor(app, options) {
     this.app = app
-    this.app.root = options.root
     this.app.router = {
       layouts: options.layouts || {},
       collection: [],
