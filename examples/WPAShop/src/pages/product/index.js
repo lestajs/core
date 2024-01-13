@@ -15,8 +15,8 @@ export default {
                 <div class="reviews"></div>
             </div>
             <div class="btns">
-                <div class="addToCartBtn">Add to Cart</div>
-                <div class="addToFavBtn">Add to Favourites</div>
+                <div class="addToCartBtn">Add to Cart 🛒</div>
+                <div class="addToFavBtn">Add to Favourites ❤️</div>
             </div>
             <div class="description"></div>
         </div>

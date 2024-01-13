@@ -1,7 +1,6 @@
 import Node from '../node.js'
 import props from '../../nodes/component/props'
 import sectionComponent from './sections/index.js'
-import { nextRepaint } from '../../../utils/index.js'
 import { errorComponent } from '../../../utils/errors/component'
 
 export default class Components extends Node {
@@ -29,9 +28,8 @@ export default class Components extends Node {
     return result
   }
   async create(specialty, nodeElement, pc, proxies, value, index) {
-    const { src, abortSignal, aborted, sections, repaint, ssr } = pc
+    const { src, abortSignal, aborted, sections, ssr } = pc
     if (!src) return errorComponent(nodeElement.nodepath, 203)
-    if (repaint) await nextRepaint()
     let container = null
     if (!nodeElement.process) {
       nodeElement.process = true
@@ -39,7 +37,6 @@ export default class Components extends Node {
         abortSignal,
         aborted,
         sections,
-        repaint,
         ssr,
         ...props.collect(pc, proxies, value, index)
       })

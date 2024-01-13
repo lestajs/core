@@ -20,11 +20,13 @@
     margin: 1vw 0;
 }
 
-/* .menu {
-    display: flex;
+.header {
+    .logo {
+        font-weight: bold;
+    }
 }
 
-.li {
+/* .li {
     padding: 1vw;
     margin-left: 2vw;
 } */
@@ -106,17 +108,21 @@
     }
 
     .right {
+        display: flex;
+        flex-direction: column;
         max-width: 400px;
 
         .title {
             font-weight: bold;
-            font-size: 1.7vw;
+            font-size: 2vw;
+            line-height: 1.2;
         }
 
         .price {
             margin-top: 10px;
             font-weight: bold;
             font-size: 1.3vw;
+            
         }
 
         .ratingBar {
@@ -126,6 +132,42 @@
 
             display: flex;
             gap: 5em;
+            margin: 10px 0;
         }
+
+        .btns {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 10px 0;
+
+            .addToCartBtn, .addToFavBtn {
+                font-weight: bold;
+                padding: 7px;
+                background-color: black;
+                border-radius: 50px;
+                width: 12em;
+                color: white;
+                text-align: center;
+                transition: .5s;
+            }
+
+            .addToCartBtn:hover, .addToFavBtn:hover {
+                transform: scale(1.1);
+                cursor: pointer;
+            }
+        }
+    }
+}
+
+.about-container {
+    max-width: 900px;
+    margin: 0 auto;
+
+    .title {
+        font-weight: bold;
+        font-size: var(--fs-m);
+        text-align: center;
+        margin-bottom: var(--xxs);
     }
 }

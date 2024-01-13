@@ -1,4 +1,4 @@
-import { debounce, throttling, delay, replicate, deliver, mapProps, deleteReactive, loadModule, uid, queue, deepFreeze } from '../packages/utils'
+import { debounce, throttling, delay, replicate, deliver, mapProps, deleteReactive, loadModule, uid, queue, deepFreeze, nextRepaint } from '../packages/utils'
 import { createApp } from '../packages/lesta/create/app'
 import { createWidget } from '../packages/lesta/create/widget'
 
@@ -15,5 +15,6 @@ window.lesta = {
   loadModule,
   uid,
   queue,
-  deepFreeze
+  deepFreeze,
+  nextRepaint
 }
