@@ -5,11 +5,6 @@ export default {
     <h3>Cart</h3>
     <div class="cart"></div>`,
     props: {
-        params: {
-            products: {
-                store: 'products',
-            },
-        },
         proxies: {
             cartProducts: {
                 store: 'products',

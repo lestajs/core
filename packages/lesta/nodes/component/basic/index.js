@@ -7,7 +7,7 @@ export default class Basic extends Components {
   }
   async init() {
     const mount = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, this.proxies(pc.proxies, this.nodeElement))
-    this.nodeElement.createComponent = mount
+    this.nodeElement.mount = mount
     if (this.node.component.induce) {
       if (typeof this.node.component.induce !== 'function') return errorComponent(this.nodeElement.nodepath, 212)
       this.impress.collect = true

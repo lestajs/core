@@ -48,10 +48,61 @@ export default {
     },
     nodes() {
         return {
+            categoryBar: {
+                component: {
+                    src: buttons,
+                    proxies: {
+                        active: () => false,
+                        buttons: this.param.categories,
+                    },
+                    methods: {
+                        change: async (value) => {
+                            this.proxy.hidden = false;
+                            this.proxy.products = await catalogApi.getProductsByCategory(value);
+                            this.proxy.hidden = true;
+                            this.proxy.activeCategory = value;
+                        }
+                    }
+                }
+            },
+            switchFilters: {
+                component: {
+                    src: button,
+                    proxies: {
+                        text: () => this.proxy.show ? 'Hide filters' : 'Show filters',
+                    },
+                    methods: {
+                        change: () => this.proxy.show = !this.proxy.show,
+                    },
+                }
+            },
+            category: {
+                textContent: () => this.proxy.activeCategory,
+            },
+            filtersBtn: {
+                component: {
+                    src: dropdown,
+                    proxies: {
+                        hidden: () => {},
+                    },
+                    // sections: {
+                    //     content: {
+                    //         src: groupcheckbox,
+                    //         proxies: {
+                    //             texts: ["10-50", "50-100", "all"]
+                    //         }
+                    //     }
+                    // }
+                }
+            },
+            preload: {
+                hidden: () => this.proxy.hidden,
+            },
             cards: {
                 component: {
                     src: card,
                     iterate: () => this.proxy.products,
+                    repaint: true,
                     params: {
                         index: (_, i) => i,
                     },
@@ -73,56 +124,6 @@ export default {
                     }
                 },
             },
-            switchFilters: {
-                component: {
-                    src: button,
-                    proxies: {
-                        text: () => this.proxy.show ? 'Hide filters' : 'Show filters',
-                    },
-                    methods: {
-                        change: () => this.proxy.show = !this.proxy.show,
-                    },
-                }
-            },
-            category: {
-                textContent: () => this.proxy.activeCategory,
-            },
-            categoryBar: {
-                component: {
-                    src: buttons,
-                    proxies: {
-                        active: () => false,
-                        buttons: this.param.categories,
-                    },
-                    methods: {
-                        change: async (value) => {
-                            this.proxy.hidden = false;
-                            this.proxy.products = await catalogApi.getProductsByCategory(value);
-                            this.proxy.hidden = true;
-                            this.proxy.activeCategory = value;
-                        }
-                    }
-                }
-            },
-            filtersBtn: {
-                component: {
-                    src: dropdown,
-                    proxies: {
-                        hidden: () => {},
-                    },
-                    // sections: {
-                    //     content: {
-                    //         src: groupcheckbox,
-                    //         proxies: {
-                    //             texts: ["10-50", "50-100", "all"]
-                    //         }
-                    //     }
-                    // }
-                }
-            },
-            preload: {
-                hidden: () => this.proxy.hidden,
-            }
         }
     },
     async created() {
@@ -130,11 +131,9 @@ export default {
         this.proxy.products = this.param.products;
         console.log(this.proxy.products);
         this.param.categories = await catalogApi.getAllCategories();
-        //await delay(1500);
+        // await delay(1500);
         this.proxy.hidden = true;
         console.dir(this.router.to.extras.sidebar)
-        this.router.to.extras.sidebar.section.content.mount({
-            src: cart,
-        })
+        await this.router.to.extras.sidebar.section.content.mount({ src: cart })
     }
 }

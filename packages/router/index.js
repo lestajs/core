@@ -1,7 +1,7 @@
 import Router from './init'
 
-export default {
-    setup(app, options) {
-        new Router(app, options)
-    }
+function createRouter (app, options) {
+    return new Router(app, options)
 }
+
+export { createRouter }
