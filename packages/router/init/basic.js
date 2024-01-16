@@ -54,7 +54,7 @@ export default class BasicRouter {
     let res = null
     if (await this.beforeHooks(this.beforeEach)) return
     const to = route.init(this.app.router.collection, url)
-    const target = to.route
+    const target = to?.route
     if (target) {
       this.app.router.from = this.form
       this.app.router.to = to

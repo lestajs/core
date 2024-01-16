@@ -102,7 +102,6 @@ export default {
                 component: {
                     src: card,
                     iterate: () => this.proxy.products,
-                    repaint: true,
                     params: {
                         index: (_, i) => i,
                     },
