@@ -1,7 +1,7 @@
 import button from '../../../../../../UI/components/button';
 
 export default {
-    template: `<div><a class="li" link></a></div>`,
+    template: `<a class="li" link></a>`,
     props: {
         params: {
             text: {},
@@ -12,7 +12,7 @@ export default {
         return {
             li: {
                 href: this.param.url,
-                textContent: this.param.text
+                _html: this.param.text,
             }
         }
     }
