@@ -1,3 +1,4 @@
+import button from '../../../UI/components/button';
 import header from '../../../UI/components/header';
 import sidebar from '../../../UI/components/sidebar';
 import left from './headerTemplates/left';
@@ -34,7 +35,7 @@ export default {
                         width: '400px',
                     },
                     proxies: {
-                        show: false,
+                        show: true,
                     },
                     sections: {
                         content: {
@@ -50,7 +51,8 @@ export default {
                             //         this.proxy.products = this.param.products.filter((el) => el.price >= from && el.price <= to);
                             //     }
                             // }
-                        }
+                        },
+                        bottom: {}
                     }
                 }
             },

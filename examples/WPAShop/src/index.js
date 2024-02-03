@@ -5,6 +5,7 @@ import routerOptions from './router'
 import '../UI/components/ui.css'
 import axios from 'axios'
 import filters from '../plugins/filters.js'
+import '../styles/index.css'
 
 const root = document.querySelector('#root')
 const app = createApp({

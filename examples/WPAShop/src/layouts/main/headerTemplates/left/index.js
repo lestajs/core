@@ -1,5 +1,6 @@
 export default {
-    template: `
+    template: 
+    `
         <div class="logo">Web Shop</div>
     `,
 }

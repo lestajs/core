@@ -133,6 +133,17 @@ export default {
         // await delay(1500);
         this.proxy.hidden = true;
         console.dir(this.router.to.extras.sidebar)
-        await this.router.to.extras.sidebar.section.content.mount({ src: cart })
+        const sidebarSections = this.router.to.extras.sidebar.section
+
+        await sidebarSections.content.mount({ src: cart })
+        await sidebarSections.bottom.mount({ 
+            src: button,
+            proxies: {
+                text: 'Go to Cart',
+            },
+            methods: {
+                change: () => this.router.push('/cart')
+            }
+        })
     }
 }

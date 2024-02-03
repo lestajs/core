@@ -1,7 +1,10 @@
 import checkbox from '../../../../../UI/components/checkbox';
 
 export default {
-    template: '<div class="groupcheckbox"></div>',
+    template: 
+    `
+        <div class="groupcheckbox"></div>
+    `,
     props: {
         params: {
             texts: {},
