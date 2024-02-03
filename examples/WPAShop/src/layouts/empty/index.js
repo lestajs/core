@@ -4,7 +4,8 @@ import right from '../main/headerTemplates/right';
 
 
 export default {
-    template: `
+    template: 
+    `
         <div class="header"></div>
         <div class="content main" router></div>
     `,

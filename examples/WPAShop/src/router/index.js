@@ -1,6 +1,6 @@
-import catalog from '../pages/catalog'
-import product from '../pages/product'
-import about from '../pages/about'
+// import catalog from '../pages/catalog'
+//import product from '../pages/product'
+// import about from '../pages/about'
 
 export default {
   layouts: {
@@ -11,44 +11,45 @@ export default {
     {
       path: '/catalog',
       layout: 'main',
-      component: catalog,
+      component: () => import('../pages/catalog'),
       name: 'catalog',
       extra: { sidebar: {} },
     },
     {
       path: '/product/:id',
-      layout: 'main',
-      component: product,
+      layout: 'empty',
+      component: () => import('../pages/product'),
       name: 'product',
     },
     {
       path: '/about',
       layout: 'empty',
-      component: about,
+      // component: about,
+      component: () => import('../pages/about'),
       name: 'about'
     },
     {
       path: '/cart',
       layout: 'main',
       //component: cart,
-      component: { template: 'Cart' },
+      component: () => import('../pages/cart'),
       name: 'cart',
-      beforeEnter(to, from) {
-        console.log(to, from)
+      // beforeEnter(to, from) {
+      //   console.log(to, from)
         
-        if (from.name === 'catalog') {
-          from.extras.sidebar.method.toggle()
-          return true
-        } else {
-          return false
-        }
-      }
+      //   if (from?.name === 'catalog') {
+      //     from.extras.sidebar.method.toggle()
+      //     return true
+      //   } else {
+      //     return false
+      //   }
+      // }
     },
     {
       path: '/account',
-      layout: '/empty',
+      layout: 'empty',
       component: { template: 'Account' },
       name: 'account',
-    }
+    },
   ],
 }

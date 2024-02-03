@@ -6,7 +6,7 @@
   min-width: 10ch;
   width: 100%;
   background-color: #ffffff10;
-  outline: 1px solid #00000020;
+  border: 1px solid #00000020;
   color: inherit;
 }
 .LstInput[type="search"] {

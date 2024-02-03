@@ -67,7 +67,7 @@ export default {
         oninput: debounce((event) => {
           this.param.value = event.target.value
           this.proxy.value = event.target.value
-          this.method.change && this.method.change(this.param)
+          this.method.change && this.method.change(event.target.value)
         }),
         onfocus: () => this.method.onfocus && this.method.onfocus(this.proxy.value),
         onblur: () => this.method.onblur && this.method.onblur(this.proxy.value)

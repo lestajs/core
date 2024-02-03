@@ -2,14 +2,17 @@ import button from '../../../../UI/components/button';
 import card from '../../../../UI/components/card';
 
 export default {
-    template: `
-    <div class="miniCard">
-        <div class="card"></div>
-        <div class="extra">
-            <div class="price"></div>
-            <div class="deleteBtn"></div>
+    template: 
+    `
+        <div class="miniCard">
+            <div class="card"></div>
+            <div section="content"></div>
+            <div class="extra">
+                <div class="price"></div>
+                <div class="deleteBtn"></div>
+            </div>
         </div>
-    </div>`,
+    `,
     props: {
         proxies: {
             _product: {}

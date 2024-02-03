@@ -2,7 +2,10 @@ import accordion from '../../../../UI/components/accordion/index.js';
 import groupcheckbox from './groupcheckbox/index.js';
 
 export default {
-    template: `<div class="accordion"></div>`,
+    template: 
+    `
+        <div class="accordion"></div>
+    `,
     props: {
         params: {
             header: {}
