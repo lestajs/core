@@ -2,9 +2,8 @@ import { createApp } from 'lesta'
 
 import component from './todoList'
 
-const app = createApp({
-    root: document.querySelector('#root')
-})
+const root = document.querySelector('#root')
+const app = createApp()
 
 
-app.mount(component)
+app.mount(component, root)

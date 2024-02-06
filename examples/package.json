@@ -10,13 +10,14 @@
     }
   },
   "scripts": {
+    "clean": "rimraf .parcel-cache",
     "CounterWidget": "parcel CounterWidget/index.html",
     "ToDoListSimple": "parcel ToDoListSimple/index.html",
     "ToDoListStore": "parcel ToDoListStore/index.html",
     "SSGi18n": "parcel SSGi18n/index.html",
     "livelyHooks": "parcel livelyHooks/index.html",
     "UI": "parcel UI/index.html",
-    "WPAShop": "parcel WPAShop/src/index.html",
+    "WPAShop": "npm run clean && parcel WPAShop/src/index.html",
     "formGenerator": "parcel formGenerator/index.html",
     "formBuild": "parcel build --target global",
     "UIB": "parcel build UI/index.html",

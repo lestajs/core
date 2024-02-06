@@ -9,15 +9,17 @@ export default function diveProxy(_value, handler, path = '') {
       return {target, instance: 'Proxy'}
     },
     get(target, prop, receiver) {
+      if (typeof prop === 'symbol') return Reflect.get(target, prop, receiver) // xp
       handler.get?.(target, `${path}${prop}`)
       return Reflect.get(target, prop, receiver)
     },
     set(target, prop, value, receiver) {
+      if (typeof prop === 'symbol') return Reflect.set(target, prop, value, receiver) // xp
       const reject = handler.beforeSet(value, `${path}${prop}`, (v) => value = v)
       if (reject) return true
       if (Reflect.get(target, prop, receiver) !== value || prop === 'length' || prop.startsWith('__')) {
         value = diveProxy(value, handler, `${path}${prop}.`)
-        Reflect.set(target, prop, value, receiver);
+        Reflect.set(target, prop, value, receiver)
         handler.set(target, value, `${path}${prop}`)
       }
       return true

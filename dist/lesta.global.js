@@ -336,10 +336,14 @@
         return { target, instance: "Proxy" };
       },
       get(target, prop, receiver) {
+        if (typeof prop === "symbol")
+          return Reflect.get(target, prop, receiver);
         handler.get?.(target, `${path}${prop}`);
         return Reflect.get(target, prop, receiver);
       },
       set(target, prop, value, receiver) {
+        if (typeof prop === "symbol")
+          return Reflect.set(target, prop, value, receiver);
         const reject = handler.beforeSet(value, `${path}${prop}`, (v) => value = v);
         if (reject)
           return true;
@@ -544,16 +548,23 @@
       this.container = context.container;
       this.app = app;
     }
-    async setup(componentProps) {
-      if (this.props.proxies && Object.keys(this.props.proxies).length && !componentProps?.proxies)
+    async setup(cp) {
+      if (this.props.proxies && Object.keys(this.props.proxies).length && !cp?.proxies)
         return errorProps(this.container.nodepath, 306);
       if (!this.container.proxy)
         this.container.proxy = {};
-      if (componentProps) {
-        await this.params(componentProps.params);
-        await this.methods(componentProps.methods);
-        return await this.proxies(componentProps.proxies);
+      if (cp) {
+        await this.params(cp.params);
+        await this.methods(cp.methods);
+        return await this.proxies(cp.proxies);
       }
+    }
+    validation(prop, key, v, name) {
+      let value = typeof prop.validation === "function" ? prop.validation(v) : v;
+      value = value ?? (prop.required && errorProps(this.container.nodepath, name, key, 303) || prop.default);
+      if (value && prop.type && (prop.type === "array" && !Array.isArray(value)) && typeof value !== prop.type)
+        return errorProps(this.container.nodepath, name, key, 304, prop.type);
+      return value;
     }
     async proxies(proxies) {
       if (proxies) {
@@ -566,33 +577,25 @@
           const prop = proxies[key];
           if (typeof prop !== "object")
             return errorProps(this.container.nodepath, "proxies", key, 302);
-          const validation = (v2) => {
-            if (prop.required && (v2 === null || v2 === void 0))
-              return errorProps(this.container.nodepath, "proxies", key, 303);
-            const value = v2 ?? prop.default ?? null;
-            if (value && prop.type && (prop.type === "array" && !Array.isArray(value)) && typeof value !== prop.type)
-              return errorProps(this.container.nodepath, "proxies", key, 304, prop.type);
-            return value;
-          };
           const context = this.context;
-          this.container.proxy[key] = (value, path) => {
+          this.container.proxy[key] = (value2, path) => {
             if (path && path.length !== 0) {
-              deliver(context.proxy[key], path, value);
+              deliver(context.proxy[key], path, value2);
             } else {
-              context.proxy[key] = validation(value);
+              context.proxy[key] = this.validation(prop, key, value2, "proxies");
             }
           };
-          let v = null;
+          let value = null;
           const { store } = prop;
           if (this.props.proxies && key in this.props.proxies) {
-            v = this.props.proxies[key];
+            value = this.props.proxies[key];
           } else if (store) {
             const storeModule = await this.context.store?.init(store);
             if (!storeModule)
               return errorProps(this.container.nodepath, "proxies", key, 307, store);
-            v = storeModule.proxies(key, this.container);
+            value = storeModule.proxies(key, this.container);
           }
-          proxiesData[key] = replicate(validation(v));
+          proxiesData[key] = this.validation(prop, key, replicate(value), "proxies");
         }
         return proxiesData;
       }
@@ -604,20 +607,18 @@
           return errorProps(this.container.nodepath, "params", key, 302);
         const paramValue = async () => {
           const { store } = prop;
+          let data = null;
           if (store) {
             const storeModule = await this.context.store?.init(store);
             if (!storeModule)
               return errorProps(this.container.nodepath, "params", key, 307, store);
-            const storeParams = storeModule.params(key);
-            return replicate(storeParams);
+            data = storeModule.params(key);
           } else {
-            const data = this.props?.params[key];
-            return key.startsWith("__") ? data : replicate(data);
+            data = this.props?.params[key];
           }
+          return prop.ignore ? data : replicate(data);
         };
-        const value = this.context.param[key] = await paramValue() ?? (prop.required && errorProps(this.container.nodepath, "params", key, 303) || prop.default);
-        if (value && prop.type && (prop.type === "array" && !Array.isArray(value)) && typeof value !== prop.type)
-          errorProps(this.container.nodepath, "params", key, 304, prop.type);
+        this.context.param[key] = this.validation(prop, key, await paramValue(), "params");
         if (prop.readonly)
           Object.defineProperty(this.context.param, key, { writable: false });
       }
@@ -854,11 +855,9 @@
       return result;
     }
     async create(specialty, nodeElement, pc, proxies, value, index) {
-      const { src, abortSignal, aborted, sections, repaint, ssr } = pc;
+      const { src, abortSignal, aborted, sections, ssr } = pc;
       if (!src)
         return errorComponent(nodeElement.nodepath, 203);
-      if (repaint)
-        await nextRepaint();
       let container = null;
       if (!nodeElement.process) {
         nodeElement.process = true;
@@ -866,7 +865,6 @@
           abortSignal,
           aborted,
           sections,
-          repaint,
           ssr,
           ...props_default.collect(pc, proxies, value, index)
         });
@@ -897,8 +895,12 @@
       if (typeof this.node.component.iterate !== "function")
         return errorComponent(this.nodeElement.nodepath, 205);
       this.createIterate = async (index) => {
+        if (!this.created)
+          this.nodeElement.style.visibility = "hidden";
         const proxies = this.proxies(this.node.component.proxies, this.nodeElement.children[index], index);
         await this.create(this.proxies.bind(this), this.nodeElement, this.node.component, proxies, this.data[index], index);
+        if (!this.created)
+          this.nodeElement.style.removeProperty("visibility");
         this.created = true;
       };
       this.impress.collect = true;
@@ -1099,7 +1101,7 @@
     }
     listeners(key) {
       if (typeof this.node[key] === "function") {
-        this.nodeElement[key] = (event) => this.node[key].bind(this.context)(event);
+        this.nodeElement[key] = (event) => this.node[key].bind(this.context)(event, this.nodeElement);
       }
     }
     general(key) {
@@ -1120,10 +1122,7 @@
         this.nodeElement[key] = this.node[key];
     }
     init(key) {
-      if (key.substr(0, 2) === "on") {
-        this.listeners(key);
-      } else
-        this.general(key);
+      key.startsWith("on") ? this.listeners(key) : this.general(key);
     }
   };
 
@@ -1188,17 +1187,10 @@
       return sectionNode;
     } else {
       if (nodeElement.hasAttribute("iterate")) {
-        if (!nodeElement.iterableElement) {
-          if (!options.template)
-            return errorComponent(nodeElement.nodepath, 209);
-          const template = stringToHTML(options.template);
-          if (template.children.length > 1)
-            return errorComponent(nodeElement.nodepath, 210);
-          nodeElement.iterableElement = template.children[0];
-          nodeElement.innerHTML = "";
-        }
+        if (!options.template)
+          return errorComponent(nodeElement.nodepath, 209);
         if (!ssr)
-          nodeElement.insertAdjacentElement("beforeEnd", nodeElement.iterableElement.cloneNode(true));
+          nodeElement.insertAdjacentHTML("beforeEnd", options.template);
         const iterableElement = nodeElement.children[nodeElement.children.length - 1];
         iterableElement.nodepath = nodeElement.nodepath;
         if (!nodeElement.unmount)
@@ -1260,8 +1252,8 @@
   }
 
   // packages/lesta/create/mount.js
-  async function mount(app, src, container, props2) {
-    const { signal, aborted, params, methods, proxies, sections, section, repaint, ssr } = props2;
+  async function mount(app, src, container, props2 = {}) {
+    const { signal, aborted, params, methods, proxies, sections, section, ssr } = props2;
     const nodepath = container.nodepath || "root";
     if (signal && !(signal instanceof AbortSignal))
       errorComponent(nodepath, 217);
@@ -1271,7 +1263,7 @@
     if (!options)
       return errorComponent(nodepath, 216);
     const component2 = new Init(mixins(options), app, signal, Nodes);
-    component2.context.options.inputs = { params, methods, proxies, sections, repaint };
+    component2.context.options.inputs = { params, methods, proxies, sections };
     const render = () => renderComponent(container, component2, section, ssr);
     return await lifecycle(component2, render, aborted);
   }
@@ -1320,6 +1312,7 @@
     loadModule,
     uid,
     queue,
-    deepFreeze
+    deepFreeze,
+    nextRepaint
   };
 })();

@@ -34,9 +34,7 @@ export default class BasicRouter {
     const path = this.link(v)
     if (typeof path !== 'string') return path
     const url = new URL((this.app.origin || window.location.origin) + path)
-    const res = await this.update(url)
-    if (res) this.setHistory && this.setHistory(v, path)
-    return res
+    return await this.update(url, v, path)
   }
   async beforeHooks(hook) {
     if (hook) {
@@ -50,7 +48,7 @@ export default class BasicRouter {
   async afterHooks(hook) {
     if (hook) await hook(this.app.router.to, this.app.router.from, this.app)
   }
-  async update(url) {
+  async update(url, v, path) {
     let res = null
     if (await this.beforeHooks(this.beforeEach)) return
     const to = route.init(this.app.router.collection, url)
@@ -66,7 +64,7 @@ export default class BasicRouter {
         typeof v === 'function' ? await this.push(await v(to, this.app.router.from)) : await this.push(v)
         return
       }
-      res = await this.app.router.render(this.app.router.to)
+      res = await this.app.router.render(this.app.router.to, v, path)
       if (!res) return
       this.form = this.app.router.to
       await this.afterHooks(this.afterEnter)

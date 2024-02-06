@@ -393,10 +393,14 @@ function diveProxy(_value, handler, path = "") {
     },
     get(target, prop, receiver) {
       var _a;
+      if (typeof prop === "symbol")
+        return Reflect.get(target, prop, receiver);
       (_a = handler.get) == null ? void 0 : _a.call(handler, target, `${path}${prop}`);
       return Reflect.get(target, prop, receiver);
     },
     set(target, prop, value, receiver) {
+      if (typeof prop === "symbol")
+        return Reflect.set(target, prop, value, receiver);
       const reject = handler.beforeSet(value, `${path}${prop}`, (v) => value = v);
       if (reject)
         return true;
@@ -603,16 +607,23 @@ var Props = class {
     this.container = context.container;
     this.app = app;
   }
-  async setup(componentProps) {
-    if (this.props.proxies && Object.keys(this.props.proxies).length && !(componentProps == null ? void 0 : componentProps.proxies))
+  async setup(cp) {
+    if (this.props.proxies && Object.keys(this.props.proxies).length && !(cp == null ? void 0 : cp.proxies))
       return errorProps(this.container.nodepath, 306);
     if (!this.container.proxy)
       this.container.proxy = {};
-    if (componentProps) {
-      await this.params(componentProps.params);
-      await this.methods(componentProps.methods);
-      return await this.proxies(componentProps.proxies);
+    if (cp) {
+      await this.params(cp.params);
+      await this.methods(cp.methods);
+      return await this.proxies(cp.proxies);
     }
+  }
+  validation(prop, key, v, name) {
+    let value = typeof prop.validation === "function" ? prop.validation(v) : v;
+    value = value != null ? value : prop.required && errorProps(this.container.nodepath, name, key, 303) || prop.default;
+    if (value && prop.type && (prop.type === "array" && !Array.isArray(value)) && typeof value !== prop.type)
+      return errorProps(this.container.nodepath, name, key, 304, prop.type);
+    return value;
   }
   async proxies(proxies) {
     var _a;
@@ -626,61 +637,49 @@ var Props = class {
         const prop = proxies[key];
         if (typeof prop !== "object")
           return errorProps(this.container.nodepath, "proxies", key, 302);
-        const validation = (v2) => {
-          var _a2;
-          if (prop.required && (v2 === null || v2 === void 0))
-            return errorProps(this.container.nodepath, "proxies", key, 303);
-          const value = (_a2 = v2 != null ? v2 : prop.default) != null ? _a2 : null;
-          if (value && prop.type && (prop.type === "array" && !Array.isArray(value)) && typeof value !== prop.type)
-            return errorProps(this.container.nodepath, "proxies", key, 304, prop.type);
-          return value;
-        };
         const context = this.context;
-        this.container.proxy[key] = (value, path) => {
+        this.container.proxy[key] = (value2, path) => {
           if (path && path.length !== 0) {
-            deliver(context.proxy[key], path, value);
+            deliver(context.proxy[key], path, value2);
           } else {
-            context.proxy[key] = validation(value);
+            context.proxy[key] = this.validation(prop, key, value2, "proxies");
           }
         };
-        let v = null;
+        let value = null;
         const { store: store2 } = prop;
         if (this.props.proxies && key in this.props.proxies) {
-          v = this.props.proxies[key];
+          value = this.props.proxies[key];
         } else if (store2) {
           const storeModule = await ((_a = this.context.store) == null ? void 0 : _a.init(store2));
           if (!storeModule)
             return errorProps(this.container.nodepath, "proxies", key, 307, store2);
-          v = storeModule.proxies(key, this.container);
+          value = storeModule.proxies(key, this.container);
         }
-        proxiesData[key] = replicate(validation(v));
+        proxiesData[key] = this.validation(prop, key, replicate(value), "proxies");
       }
       return proxiesData;
     }
   }
   async params(params) {
-    var _a;
     for (const key in params) {
       const prop = params[key];
       if (typeof prop !== "object")
         return errorProps(this.container.nodepath, "params", key, 302);
       const paramValue = async () => {
-        var _a2, _b;
+        var _a, _b;
         const { store: store2 } = prop;
+        let data = null;
         if (store2) {
-          const storeModule = await ((_a2 = this.context.store) == null ? void 0 : _a2.init(store2));
+          const storeModule = await ((_a = this.context.store) == null ? void 0 : _a.init(store2));
           if (!storeModule)
             return errorProps(this.container.nodepath, "params", key, 307, store2);
-          const storeParams = storeModule.params(key);
-          return replicate(storeParams);
+          data = storeModule.params(key);
         } else {
-          const data = (_b = this.props) == null ? void 0 : _b.params[key];
-          return key.startsWith("__") ? data : replicate(data);
+          data = (_b = this.props) == null ? void 0 : _b.params[key];
         }
+        return prop.ignore ? data : replicate(data);
       };
-      const value = this.context.param[key] = (_a = await paramValue()) != null ? _a : prop.required && errorProps(this.container.nodepath, "params", key, 303) || prop.default;
-      if (value && prop.type && (prop.type === "array" && !Array.isArray(value)) && typeof value !== prop.type)
-        errorProps(this.container.nodepath, "params", key, 304, prop.type);
+      this.context.param[key] = this.validation(prop, key, await paramValue(), "params");
       if (prop.readonly)
         Object.defineProperty(this.context.param, key, { writable: false });
     }
@@ -922,11 +921,9 @@ var Components = class extends Node {
     return result;
   }
   async create(specialty, nodeElement, pc, proxies, value, index) {
-    const { src, abortSignal, aborted, sections, repaint, ssr } = pc;
+    const { src, abortSignal, aborted, sections, ssr } = pc;
     if (!src)
       return errorComponent(nodeElement.nodepath, 203);
-    if (repaint)
-      await nextRepaint();
     let container = null;
     if (!nodeElement.process) {
       nodeElement.process = true;
@@ -934,7 +931,6 @@ var Components = class extends Node {
         abortSignal,
         aborted,
         sections,
-        repaint,
         ssr,
         ...props_default.collect(pc, proxies, value, index)
       });
@@ -965,8 +961,12 @@ var Iterate = class extends Components {
     if (typeof this.node.component.iterate !== "function")
       return errorComponent(this.nodeElement.nodepath, 205);
     this.createIterate = async (index) => {
+      if (!this.created)
+        this.nodeElement.style.visibility = "hidden";
       const proxies = this.proxies(this.node.component.proxies, this.nodeElement.children[index], index);
       await this.create(this.proxies.bind(this), this.nodeElement, this.node.component, proxies, this.data[index], index);
+      if (!this.created)
+        this.nodeElement.style.removeProperty("visibility");
       this.created = true;
     };
     this.impress.collect = true;
@@ -1170,7 +1170,7 @@ var Native = class extends Node {
   }
   listeners(key) {
     if (typeof this.node[key] === "function") {
-      this.nodeElement[key] = (event) => this.node[key].bind(this.context)(event);
+      this.nodeElement[key] = (event) => this.node[key].bind(this.context)(event, this.nodeElement);
     }
   }
   general(key) {
@@ -1191,10 +1191,7 @@ var Native = class extends Node {
       this.nodeElement[key] = this.node[key];
   }
   init(key) {
-    if (key.substr(0, 2) === "on") {
-      this.listeners(key);
-    } else
-      this.general(key);
+    key.startsWith("on") ? this.listeners(key) : this.general(key);
   }
 };
 
@@ -1259,17 +1256,10 @@ function renderComponent(nodeElement, component2, section, ssr) {
     return sectionNode;
   } else {
     if (nodeElement.hasAttribute("iterate")) {
-      if (!nodeElement.iterableElement) {
-        if (!options.template)
-          return errorComponent(nodeElement.nodepath, 209);
-        const template = stringToHTML(options.template);
-        if (template.children.length > 1)
-          return errorComponent(nodeElement.nodepath, 210);
-        nodeElement.iterableElement = template.children[0];
-        nodeElement.innerHTML = "";
-      }
+      if (!options.template)
+        return errorComponent(nodeElement.nodepath, 209);
       if (!ssr)
-        nodeElement.insertAdjacentElement("beforeEnd", nodeElement.iterableElement.cloneNode(true));
+        nodeElement.insertAdjacentHTML("beforeEnd", options.template);
       const iterableElement = nodeElement.children[nodeElement.children.length - 1];
       iterableElement.nodepath = nodeElement.nodepath;
       if (!nodeElement.unmount)
@@ -1332,8 +1322,8 @@ async function lifecycle(component2, render, aborted) {
 }
 
 // packages/lesta/create/mount.js
-async function mount(app, src, container, props2) {
-  const { signal, aborted, params, methods, proxies, sections, section, repaint, ssr } = props2;
+async function mount(app, src, container, props2 = {}) {
+  const { signal, aborted, params, methods, proxies, sections, section, ssr } = props2;
   const nodepath = container.nodepath || "root";
   if (signal && !(signal instanceof AbortSignal))
     errorComponent(nodepath, 217);
@@ -1343,7 +1333,7 @@ async function mount(app, src, container, props2) {
   if (!options)
     return errorComponent(nodepath, 216);
   const component2 = new Init(mixins(options), app, signal, Nodes);
-  component2.context.options.inputs = { params, methods, proxies, sections, repaint };
+  component2.context.options.inputs = { params, methods, proxies, sections };
   const render = () => renderComponent(container, component2, section, ssr);
   return await lifecycle(component2, render, aborted);
 }
@@ -1737,10 +1727,7 @@ var BasicRouter = class {
     if (typeof path !== "string")
       return path;
     const url = new URL((this.app.origin || window.location.origin) + path);
-    const res = await this.update(url);
-    if (res)
-      this.setHistory && this.setHistory(v, path);
-    return res;
+    return await this.update(url, v, path);
   }
   async beforeHooks(hook) {
     if (hook) {
@@ -1756,12 +1743,12 @@ var BasicRouter = class {
     if (hook)
       await hook(this.app.router.to, this.app.router.from, this.app);
   }
-  async update(url) {
+  async update(url, v, path) {
     let res = null;
     if (await this.beforeHooks(this.beforeEach))
       return;
     const to = route_default.init(this.app.router.collection, url);
-    const target = to.route;
+    const target = to == null ? void 0 : to.route;
     if (target) {
       this.app.router.from = this.form;
       this.app.router.to = to;
@@ -1771,11 +1758,11 @@ var BasicRouter = class {
       if (await this.beforeHooks(target.beforeEnter))
         return;
       if (target.redirect) {
-        let v = target.redirect;
-        typeof v === "function" ? await this.push(await v(to, this.app.router.from)) : await this.push(v);
+        let v2 = target.redirect;
+        typeof v2 === "function" ? await this.push(await v2(to, this.app.router.from)) : await this.push(v2);
         return;
       }
-      res = await this.app.router.render(this.app.router.to);
+      res = await this.app.router.render(this.app.router.to, v, path);
       if (!res)
         return;
       this.form = this.app.router.to;
@@ -1812,12 +1799,13 @@ var Router = class extends BasicRouter {
     });
     await this.update(window.location);
   }
-  setHistory(v, url) {
-    v.replace ? history.replaceState(null, null, url) : history.pushState(null, null, url);
+  setHistory(v, path) {
+    (v == null ? void 0 : v.replace) ? history.replaceState(null, null, path) : history.pushState(null, null, path);
   }
-  async render() {
+  async render(to, v, path) {
     var _a, _b;
-    const target = this.app.router.to.route;
+    this.setHistory(v, path);
+    const target = to.route;
     const from = this.app.router.from;
     const ssr = target.static;
     if (target.component && !(this.current && (from == null ? void 0 : from.route) === target)) {
@@ -1852,7 +1840,7 @@ var Router = class extends BasicRouter {
       if (!this.current)
         return;
     }
-    return this.app.router.to;
+    return to;
   }
 };
 
