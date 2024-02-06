@@ -6,7 +6,7 @@ import Nodes from '../nodes'
 import renderComponent from './renderComponent'
 import { lifecycle } from './lifecycle'
 
-async function mount(app, src, container, props) {
+async function mount(app, src, container, props = {}) {
   const { signal, aborted, params, methods, proxies, sections, section, ssr } = props
   const nodepath = container.nodepath || 'root'
   if (signal && !(signal instanceof AbortSignal)) errorComponent(nodepath, 217)

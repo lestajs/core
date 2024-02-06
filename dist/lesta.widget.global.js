@@ -165,10 +165,14 @@
         return { target, instance: "Proxy" };
       },
       get(target, prop, receiver) {
+        if (typeof prop === "symbol")
+          return Reflect.get(target, prop, receiver);
         handler.get?.(target, `${path}${prop}`);
         return Reflect.get(target, prop, receiver);
       },
       set(target, prop, value, receiver) {
+        if (typeof prop === "symbol")
+          return Reflect.set(target, prop, value, receiver);
         const reject = handler.beforeSet(value, `${path}${prop}`, (v) => value = v);
         if (reject)
           return true;
@@ -422,7 +426,7 @@
     }
     listeners(key) {
       if (typeof this.node[key] === "function") {
-        this.nodeElement[key] = (event) => this.node[key].bind(this.context)(event);
+        this.nodeElement[key] = (event) => this.node[key].bind(this.context)(event, this.nodeElement);
       }
     }
     general(key) {
@@ -443,10 +447,7 @@
         this.nodeElement[key] = this.node[key];
     }
     init(key) {
-      if (key.substr(0, 2) === "on") {
-        this.listeners(key);
-      } else
-        this.general(key);
+      key.startsWith("on") ? this.listeners(key) : this.general(key);
     }
   };
 

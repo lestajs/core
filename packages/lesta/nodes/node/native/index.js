@@ -7,7 +7,7 @@ export default class Native extends Node {
   }
   listeners(key) {
     if (typeof this.node[key] === 'function') {
-      this.nodeElement[key] = (event) => this.node[key].bind(this.context)(event)
+      this.nodeElement[key] = (event) => this.node[key].bind(this.context)(event, this.nodeElement)
     }
   }
   general(key) {
@@ -25,8 +25,6 @@ export default class Native extends Node {
     } else this.nodeElement[key] = this.node[key]
   }
   init(key) {
-    if (key.substr(0, 2) === 'on') {
-      this.listeners(key)
-    } else this.general(key)
+    key.startsWith('on') ? this.listeners(key) : this.general(key)
   }
 }

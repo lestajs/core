@@ -17,15 +17,10 @@ export default function renderComponent(nodeElement, component, section, ssr) {
     return sectionNode
   } else {
     if (nodeElement.hasAttribute('iterate')) {
-      if (!nodeElement.iterableElement) {
-        if (!options.template) return errorComponent(nodeElement.nodepath, 209)
-        const template = stringToHTML(options.template)
-        if (template.children.length > 1) return errorComponent(nodeElement.nodepath, 210)
-        nodeElement.iterableElement = template.children[0]
-        nodeElement.innerHTML = ''
-      }
-      if (!ssr) nodeElement.insertAdjacentElement('beforeEnd', nodeElement.iterableElement.cloneNode(true))
+      if (!options.template) return errorComponent(nodeElement.nodepath, 209)
+      if (!ssr) nodeElement.insertAdjacentHTML("beforeEnd", options.template)
       const iterableElement = nodeElement.children[nodeElement.children.length - 1]
+      //  if (nodeElement.children.length > 1) return errorComponent(nodeElement.nodepath, 210)
       iterableElement.nodepath = nodeElement.nodepath
       if (!nodeElement.unmount) nodeElement.unmount = () => {
         component.destroy(nodeElement)
