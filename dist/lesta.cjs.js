@@ -646,7 +646,7 @@ var Props = class {
           if (path && path.length !== 0) {
             deliver(context.proxy[key], path, value2);
           } else {
-            context.proxy[key] = this.validation(prop, key, value2, "proxies");
+            this.validation(context.proxy, prop, key, value2, "proxies");
           }
         };
         let value = null;
