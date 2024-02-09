@@ -84,7 +84,6 @@ export default class Iterate extends Components {
                 this.reactiveComponent(this.impress.define(pr), async (v, p) => {
                     this.queue.add(async () => {
                         if (p) {
-                            p.shift()
                             this.nodeElement.children[index]?.proxy[pr](v, p)
                             // this.sections(this.node.component.sections, this.nodeElement.children[index], index)
                         } else {
