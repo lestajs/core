@@ -15,13 +15,15 @@ export default function diveProxy(_value, handler, path = '') {
     },
     set(target, prop, value, receiver) {
       if (typeof prop === 'symbol') return Reflect.set(target, prop, value, receiver) // xp
-      const reject = handler.beforeSet(value, `${path}${prop}`, (v) => value = v)
-      if (reject) return true
-      if (Reflect.get(target, prop, receiver) !== value || prop === 'length' || prop.startsWith('__')) {
-        value = diveProxy(value, handler, `${path}${prop}.`)
-        Reflect.set(target, prop, value, receiver)
-        handler.set(target, value, `${path}${prop}`)
-      }
+      let fs = false
+      const reject = handler.beforeSet(value, `${path}${prop}`, (v) => {
+        value = v
+        fs = true
+      })
+      if (reject && !(Reflect.get(target, prop, receiver) !== value || prop === 'length' || fs)) return true
+      value = diveProxy(value, handler, `${path}${prop}.`)
+      Reflect.set(target, prop, value, receiver)
+      handler.set(target, value, `${path}${prop}`)
       return true
     },
     deleteProperty(target, prop) {

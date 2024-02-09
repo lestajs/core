@@ -27,7 +27,7 @@ const component = {
 }
 const props = {
   301: 'parent component passes proxies, you need to specify them in props.',
-  302: 'waiting for an object.',
+  302: 'value %s does not match enum',
   303: 'props is required.',
   304: 'value does not match type "%s".',
   305: 'method is not found in store "%s".',

@@ -282,7 +282,7 @@ var component = {
 };
 var props = {
   301: "parent component passes proxies, you need to specify them in props.",
-  302: "waiting for an object.",
+  302: "value %s does not match enum",
   303: "props is required.",
   304: 'value does not match type "%s".',
   305: 'method is not found in store "%s".',
@@ -401,14 +401,16 @@ function diveProxy(_value, handler, path = "") {
     set(target, prop, value, receiver) {
       if (typeof prop === "symbol")
         return Reflect.set(target, prop, value, receiver);
-      const reject = handler.beforeSet(value, `${path}${prop}`, (v) => value = v);
-      if (reject)
+      let fs = false;
+      const reject = handler.beforeSet(value, `${path}${prop}`, (v) => {
+        value = v;
+        fs = true;
+      });
+      if (reject && !(Reflect.get(target, prop, receiver) !== value || prop === "length" || fs))
         return true;
-      if (Reflect.get(target, prop, receiver) !== value || prop === "length" || prop.startsWith("__")) {
-        value = diveProxy(value, handler, `${path}${prop}.`);
-        Reflect.set(target, prop, value, receiver);
-        handler.set(target, value, `${path}${prop}`);
-      }
+      value = diveProxy(value, handler, `${path}${prop}.`);
+      Reflect.set(target, prop, value, receiver);
+      handler.set(target, value, `${path}${prop}`);
       return true;
     },
     deleteProperty(target, prop) {
@@ -428,25 +430,15 @@ function diveProxy(_value, handler, path = "") {
 // packages/lesta/reactivity/active.js
 function active(reactivity, ref, value) {
   const match = (str1, str2) => {
-    const arr1 = str1.split(".");
-    const arr2 = str2.split(".");
-    for (let i = 0; i < arr2.length; i++) {
-      if (arr1[i] !== arr2[i]) {
-        return false;
-      }
-    }
-    return true;
+    const min = Math.min(str1.length, str2.length);
+    return str1.slice(0, min) === str2.slice(0, min);
   };
   for (let [fn, refs] of reactivity) {
     if (Array.isArray(refs)) {
       if (refs.includes(ref))
         fn(value);
-    } else {
-      if (match(ref, refs)) {
-        const p = [...ref.split(".") || []];
-        p.shift();
-        fn(value, p);
-      }
+    } else if (match(ref, refs)) {
+      fn(value, ref.length > refs.length ? ref.replace(refs + ".", "").split(".") : void 0);
     }
   }
 }
@@ -508,9 +500,8 @@ var impress_default = {
     return v;
   },
   define(pr) {
-    if (pr && pr.startsWith("_")) {
-      return this.refs[0];
-    }
+    if (pr == null ? void 0 : pr.startsWith("_"))
+      return this.refs.at(-1);
     return [...this.refs];
   },
   clear() {
@@ -618,12 +609,27 @@ var Props = class {
       return await this.proxies(cp.proxies);
     }
   }
-  validation(prop, key, v, name) {
-    let value = typeof prop.validation === "function" ? prop.validation(v) : v;
-    value = value != null ? value : prop.required && errorProps(this.container.nodepath, name, key, 303) || prop.default;
-    if (value && prop.type && (prop.type === "array" && !Array.isArray(value)) && typeof value !== prop.type)
-      return errorProps(this.container.nodepath, name, key, 304, prop.type);
-    return value;
+  validation(target, prop, key, value, name) {
+    var _a;
+    const nodepath = this.container.nodepath;
+    const checkType = (v, t) => t && !(typeof v === t || t === "array" && Array.isArray(v)) && errorProps(nodepath, name, key, 304, t);
+    const checkEnum = (v, p) => Array.isArray(p.enum) && (!p.enum.includes(v) && errorProps(nodepath, name, key, 302, v));
+    const checkValue = (v, p) => v != null ? v : p.required && errorProps(nodepath, name, key, 303) || p.default;
+    const validate = (v, p) => {
+      checkType(v, p.type);
+      checkEnum(v, p);
+      return checkValue(v, p);
+    };
+    const variant = {
+      string: () => checkType(value, prop),
+      object: () => value = validate(value, prop),
+      function: () => {
+        var _a2;
+        return value = (_a2 = prop(value, validate)) != null ? _a2 : value;
+      }
+    };
+    (_a = variant[typeof prop]) == null ? void 0 : _a.call(variant);
+    target[key] = value;
   }
   async proxies(proxies) {
     var _a;
@@ -635,8 +641,6 @@ var Props = class {
       const proxiesData = {};
       for (const key in proxies) {
         const prop = proxies[key];
-        if (typeof prop !== "object")
-          return errorProps(this.container.nodepath, "proxies", key, 302);
         const context = this.context;
         this.container.proxy[key] = (value2, path) => {
           if (path && path.length !== 0) {
@@ -655,7 +659,7 @@ var Props = class {
             return errorProps(this.container.nodepath, "proxies", key, 307, store2);
           value = storeModule.proxies(key, this.container);
         }
-        proxiesData[key] = this.validation(prop, key, replicate(value), "proxies");
+        this.validation(proxiesData, prop, key, replicate(value), "proxies");
       }
       return proxiesData;
     }
@@ -663,8 +667,6 @@ var Props = class {
   async params(params) {
     for (const key in params) {
       const prop = params[key];
-      if (typeof prop !== "object")
-        return errorProps(this.container.nodepath, "params", key, 302);
       const paramValue = async () => {
         var _a, _b;
         const { store: store2 } = prop;
@@ -677,9 +679,9 @@ var Props = class {
         } else {
           data = (_b = this.props) == null ? void 0 : _b.params[key];
         }
-        return prop.ignore ? data : replicate(data);
+        return (prop == null ? void 0 : prop.ignore) ? data : replicate(data);
       };
-      this.context.param[key] = this.validation(prop, key, await paramValue(), "params");
+      this.validation(this.context.param, prop, key, await paramValue(), "params");
       if (prop.readonly)
         Object.defineProperty(this.context.param, key, { writable: false });
     }
@@ -688,8 +690,6 @@ var Props = class {
     var _a;
     for (const key in methods) {
       const prop = methods[key];
-      if (typeof prop !== "object")
-        return errorProps(this.container.nodepath, "methods", key, 302);
       const { store: store2 } = prop;
       if (store2) {
         const storeModule = await ((_a = this.context.store) == null ? void 0 : _a.init(store2));
@@ -701,7 +701,7 @@ var Props = class {
         this.context.method[key] = async (...args) => await method(...replicate(args));
       } else {
         const isMethodValid = this.props.methods && key in this.props.methods;
-        if (prop.required && !isMethodValid)
+        if ((prop == null ? void 0 : prop.required) && !isMethodValid)
           return errorProps(this.container.nodepath, "methods", key, 303);
         if (isMethodValid)
           this.context.method[key] = async (...args) => await this.props.methods[key](...replicate(args));
@@ -1040,7 +1040,6 @@ var Iterate = class extends Components {
           this.queue.add(async () => {
             var _a, _b;
             if (p) {
-              p.shift();
               (_a = this.nodeElement.children[index]) == null ? void 0 : _a.proxy[pr](v, p);
             } else {
               this.data = this.node.component.iterate();
