@@ -552,8 +552,8 @@
     }
     validation(target, prop, key, value, name) {
       const nodepath = this.container.nodepath;
-      const checkType = (v, t) => t && !(typeof v === t || t === "array" && Array.isArray(v)) && errorProps(nodepath, name, key, 304, t);
-      const checkEnum = (v, p) => Array.isArray(p.enum) && (!p.enum.includes(v) && errorProps(nodepath, name, key, 302, v));
+      const checkType = (v, t) => v && t && !(typeof v === t || t === "array" && Array.isArray(v)) && errorProps(nodepath, name, key, 304, t);
+      const checkEnum = (v, p) => v && Array.isArray(p.enum) && (!p.enum.includes(v) && errorProps(nodepath, name, key, 302, v));
       const checkValue = (v, p) => v ?? (p.required && errorProps(nodepath, name, key, 303) || p.default);
       const validate = (v, p) => {
         checkType(v, p.type);
