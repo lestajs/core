@@ -42,7 +42,7 @@ export default {
     nodes() {
         return {
             subtotalPrice: {
-                _text: () => '$' + sum()
+                _text: () => '$' + this.method.subSum()
             },
             promo: {
                 component: {
@@ -55,9 +55,8 @@ export default {
                             src: input,
                             methods: {
                                 change: (v) => {
-                                    console.log(v)
+                                    // console.log(v)
                                     if (v === 'lesta') {
-                                        debugger
                                         this.proxy.promo = 0.9
                                     }
                                 }
@@ -67,7 +66,7 @@ export default {
                 }
             },
             totalPrice: {
-                _text: () => '$' + (subSum() - 10 + 7)
+                _text: () => '$' + (this.method.subSum() - 10 + 7)
             },
             checkoutBtn: {
                 component: {
