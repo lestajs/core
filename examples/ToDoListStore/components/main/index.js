@@ -19,7 +19,9 @@ export default {
         <div class="cards"></div>`,
   props: {
     params: {
-      popup: {}
+      popup: {
+        ignore: true
+      }
     },
     proxies: {
       // tasks: { store: 'tasks' },

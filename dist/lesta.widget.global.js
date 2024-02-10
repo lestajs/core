@@ -165,18 +165,24 @@
         return { target, instance: "Proxy" };
       },
       get(target, prop, receiver) {
+        if (typeof prop === "symbol")
+          return Reflect.get(target, prop, receiver);
         handler.get?.(target, `${path}${prop}`);
         return Reflect.get(target, prop, receiver);
       },
       set(target, prop, value, receiver) {
-        const reject = handler.beforeSet(value, `${path}${prop}`, (v) => value = v);
-        if (reject)
+        if (typeof prop === "symbol")
+          return Reflect.set(target, prop, value, receiver);
+        let fs = false;
+        const reject = handler.beforeSet(value, `${path}${prop}`, (v) => {
+          value = v;
+          fs = true;
+        });
+        if (reject && !(Reflect.get(target, prop, receiver) !== value || prop === "length" || fs))
           return true;
-        if (Reflect.get(target, prop, receiver) !== value || prop === "length" || prop.startsWith("__")) {
-          value = diveProxy(value, handler, `${path}${prop}.`);
-          Reflect.set(target, prop, value, receiver);
-          handler.set(target, value, `${path}${prop}`);
-        }
+        value = diveProxy(value, handler, `${path}${prop}.`);
+        Reflect.set(target, prop, value, receiver);
+        handler.set(target, value, `${path}${prop}`);
         return true;
       },
       deleteProperty(target, prop) {
@@ -196,25 +202,15 @@
   // packages/lesta/reactivity/active.js
   function active(reactivity, ref, value) {
     const match = (str1, str2) => {
-      const arr1 = str1.split(".");
-      const arr2 = str2.split(".");
-      for (let i = 0; i < arr2.length; i++) {
-        if (arr1[i] !== arr2[i]) {
-          return false;
-        }
-      }
-      return true;
+      const min = Math.min(str1.length, str2.length);
+      return str1.slice(0, min) === str2.slice(0, min);
     };
     for (let [fn, refs] of reactivity) {
       if (Array.isArray(refs)) {
         if (refs.includes(ref))
           fn(value);
-      } else {
-        if (match(ref, refs)) {
-          const p = [...ref.split(".") || []];
-          p.shift();
-          fn(value, p);
-        }
+      } else if (match(ref, refs)) {
+        fn(value, ref.length > refs.length ? ref.replace(refs + ".", "").split(".") : void 0);
       }
     }
   }
@@ -276,9 +272,8 @@
       return v;
     },
     define(pr) {
-      if (pr && pr.startsWith("_")) {
-        return this.refs[0];
-      }
+      if (pr?.startsWith("_"))
+        return this.refs.at(-1);
       return [...this.refs];
     },
     clear() {
@@ -422,7 +417,7 @@
     }
     listeners(key) {
       if (typeof this.node[key] === "function") {
-        this.nodeElement[key] = (event) => this.node[key].bind(this.context)(event);
+        this.nodeElement[key] = (event) => this.node[key].bind(this.context)(event, this.nodeElement);
       }
     }
     general(key) {
@@ -443,10 +438,7 @@
         this.nodeElement[key] = this.node[key];
     }
     init(key) {
-      if (key.substr(0, 2) === "on") {
-        this.listeners(key);
-      } else
-        this.general(key);
+      key.startsWith("on") ? this.listeners(key) : this.general(key);
     }
   };
 

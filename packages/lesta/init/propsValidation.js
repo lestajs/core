@@ -9,14 +9,32 @@ class Props {
     this.container = context.container
     this.app = app
   }
-  async setup(componentProps) {
-    if (this.props.proxies && Object.keys(this.props.proxies).length && !componentProps?.proxies) return errorProps(this.container.nodepath, 306)
+  async setup(cp) {
+    if (this.props.proxies && Object.keys(this.props.proxies).length && !cp?.proxies) return errorProps(this.container.nodepath, 306)
     if (!this.container.proxy) this.container.proxy = {}
-    if (componentProps) {
-      await this.params(componentProps.params)
-      await this.methods(componentProps.methods)
-      return await this.proxies(componentProps.proxies)
+    if (cp) {
+      await this.params(cp.params)
+      await this.methods(cp.methods)
+      return await this.proxies(cp.proxies)
     }
+  }
+  validation(target, prop, key, value, name) {
+    const nodepath = this.container.nodepath
+    const checkType = (v, t) => v && t && !(typeof v === t || (t === 'array' && Array.isArray(v))) && errorProps(nodepath, name, key, 304, t)
+    const checkEnum = (v, p) => v && Array.isArray(p.enum) && (!p.enum.includes(v) && errorProps(nodepath, name, key, 302, v))
+    const checkValue = (v, p) => v ?? (p.required && errorProps(nodepath, name, key, 303) || p.default)
+    const validate = (v, p) => {
+      checkType(v, p.type)
+      checkEnum(v, p)
+      return checkValue(v, p)
+    }
+    const variant = {
+      string: () => checkType(value, prop),
+      object: () => value = validate(value, prop),
+      function: () => value = prop(value, validate) ?? value
+    }
+    variant[typeof prop]?.()
+    target[key] = value
   }
   async proxies(proxies) {
     if (proxies) {
@@ -26,31 +44,24 @@ class Props {
       const proxiesData = {}
       for (const key in proxies) {
         const prop = proxies[key]
-        if (typeof prop !== 'object') return errorProps(this.container.nodepath, 'proxies', key, 302)
-        const validation = (v) => {
-          if (prop.required && (v === null || v === undefined)) return errorProps(this.container.nodepath, 'proxies', key, 303)
-          const value = v ?? prop.default ?? null
-          if (value && prop.type && (prop.type === 'array' && !Array.isArray(value)) && typeof value !== prop.type) return errorProps(this.container.nodepath, 'proxies', key, 304, prop.type)
-          return value
-        }
         const context = this.context
         this.container.proxy[key] = (value, path) => {
           if (path && path.length !== 0) {
             deliver(context.proxy[key], path, value)
           } else {
-            context.proxy[key] = validation(value)
+            this.validation(context.proxy, prop, key, value, 'proxies')
           }
         }
-        let v = null
+        let value = null
         const { store } = prop
         if (this.props.proxies && key in this.props.proxies) {
-          v = this.props.proxies[key]
+          value = this.props.proxies[key]
         } else if (store) {
           const storeModule = await this.context.store?.init(store)
           if (!storeModule) return errorProps(this.container.nodepath, 'proxies', key, 307, store)
-          v = storeModule.proxies(key, this.container)
+          value = storeModule.proxies(key, this.container)
         }
-        proxiesData[key] = replicate(validation(v))
+        this.validation(proxiesData, prop, key, replicate(value), 'proxies')
       }
       return proxiesData
     }
@@ -58,32 +69,25 @@ class Props {
   async params(params) {
     for (const key in params) {
       const prop = params[key]
-      if (typeof prop !== 'object') return errorProps(this.container.nodepath, 'params', key, 302)
       const paramValue = async () => {
         const { store } = prop
+        let data = null
         if (store) {
           const storeModule = await this.context.store?.init(store)
           if (!storeModule) return errorProps(this.container.nodepath, 'params', key, 307, store)
-          const storeParams = storeModule.params(key)
-          return replicate(storeParams)
+          data = storeModule.params(key)
         } else {
-          const data = this.props?.params[key]
-          return key.startsWith('__') ? data : replicate(data)
+          data = this.props?.params[key]
         }
+        return prop?.ignore ? data : replicate(data)
       }
-      const value = this.context.param[key] = await paramValue() ??
-        ((prop.required && errorProps(this.container.nodepath, 'params', key, 303)) ||
-          prop.default)
-      if (value && prop.type && (prop.type === 'array' && !Array.isArray(value)) && typeof value !== prop.type)
-        errorProps(this.container.nodepath, 'params', key, 304, prop.type)
-      if (prop.readonly)
-        Object.defineProperty(this.context.param, key, { writable: false })
+      this.validation(this.context.param, prop, key, await paramValue(), 'params')
+      if (prop.readonly) Object.defineProperty(this.context.param, key, { writable: false })
     }
   }
   async methods(methods) {
     for (const key in methods) {
       const prop = methods[key]
-      if (typeof prop !== 'object') return errorProps(this.container.nodepath, 'methods', key, 302)
       const { store } = prop
       if (store) {
         const storeModule = await this.context.store?.init(store)
@@ -93,7 +97,7 @@ class Props {
         this.context.method[key] = async (...args) => await method(...replicate(args))
       } else {
         const isMethodValid = this.props.methods && (key in this.props.methods)
-        if (prop.required && !(isMethodValid)) return errorProps(this.container.nodepath, 'methods', key, 303)
+        if (prop?.required && !(isMethodValid)) return errorProps(this.container.nodepath, 'methods', key, 303)
         if (isMethodValid) this.context.method[key] = async (...args) => await this.props.methods[key](...replicate(args))
       }
     }

@@ -39,8 +39,10 @@
   },
   "scripts": {
     "build": "node scripts/build.js --define:process.env.NODE_ENV='production'",
-    "test": "cypress run",
-    "cypress": "cypress open"
+    "test": "cypress run"
+  },
+  "alias": {
+    "lesta": "scripts/lesta.js"
   },
   "author": "Sasha Kosyak",
   "license": "MIT",
@@ -50,5 +52,8 @@
     "path": "^0.12.7",
     "zlib": "^1.0.5"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "parcel": "^2.11.0"
+  }
 }

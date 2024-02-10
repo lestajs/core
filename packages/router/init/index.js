@@ -25,11 +25,12 @@ export default class Router extends BasicRouter {
     })
     await this.update(window.location)
   }
-  setHistory(v, url) {
-    v.replace ? history.replaceState(null, null, url) : history.pushState(null, null, url)
+  setHistory(v, path) {
+    v?.replace ? history.replaceState(null, null, path) : history.pushState(null, null, path)
   }
-  async render() {
-    const target = this.app.router.to.route
+  async render(to, v, path) {
+    this.setHistory(v, path)
+    const target = to.route
     const from = this.app.router.from
     const ssr = target.static
     if (target.component && !(this.current && from?.route === target)) {
@@ -59,6 +60,6 @@ export default class Router extends BasicRouter {
       this.abortController = null
       if (!this.current) return
     }
-    return this.app.router.to
+    return to
   }
 }

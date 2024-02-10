@@ -1,5 +1,5 @@
 import Components from '../index'
-import { deleteReactive, queue, nextRepaint } from '../../../../utils'
+import { deleteReactive, queue } from '../../../../utils'
 import { errorComponent } from '../../../../utils/errors/component'
 
 export default class Iterate extends Components {
@@ -16,7 +16,7 @@ export default class Iterate extends Components {
             if (!this.created) this.nodeElement.style.visibility = 'hidden'
             const proxies = this.proxies(this.node.component.proxies, this.nodeElement.children[index], index)
             await this.create(this.proxies.bind(this), this.nodeElement, this.node.component, proxies, this.data[index], index)
-            if (!this.created) this.nodeElement.style.visibility = 'visible'
+            if (!this.created) this.nodeElement.style.removeProperty('visibility')
             this.created = true
         }
         this.impress.collect = true
@@ -84,7 +84,6 @@ export default class Iterate extends Components {
                 this.reactiveComponent(this.impress.define(pr), async (v, p) => {
                     this.queue.add(async () => {
                         if (p) {
-                            p.shift()
                             this.nodeElement.children[index]?.proxy[pr](v, p)
                             // this.sections(this.node.component.sections, this.nodeElement.children[index], index)
                         } else {
