@@ -23,15 +23,19 @@ class Props {
     const checkType = (v, t) => v && t && !(typeof v === t || (t === 'array' && Array.isArray(v))) && errorProps(nodepath, name, key, 304, t)
     const checkEnum = (v, p) => v && Array.isArray(p.enum) && (!p.enum.includes(v) && errorProps(nodepath, name, key, 302, v))
     const checkValue = (v, p) => v ?? (p.required && errorProps(nodepath, name, key, 303) || p.default)
-    const validate = (v, p) => {
+    const check = (v, p) => {
+      if (typeof p === 'string') return checkType(v, p)
       checkType(v, p.type)
       checkEnum(v, p)
       return checkValue(v, p)
     }
     const variant = {
       string: () => checkType(value, prop),
-      object: () => value = validate(value, prop),
-      function: () => value = prop(value, validate) ?? value
+      object: () => {
+        value = check(value, prop)
+        prop.validate?.(value, check)
+      },
+      function: () => value = prop(value, check) ?? value
     }
     variant[typeof prop]?.()
     target[key] = value
