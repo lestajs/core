@@ -281,7 +281,7 @@ var component = {
   218: '"aborted" property expects a function as a value.'
 };
 var props = {
-  301: "parent component passes proxies, you need to specify them in props.",
+  // 301: 'parent component passes proxies, you need to specify them in props.',
   302: "value %s does not match enum",
   303: "props is required.",
   304: 'value does not match type "%s".',
@@ -310,7 +310,7 @@ var router = {
 // packages/utils/errors/component.js
 var errorComponent = (name = "root", code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
-    console.error(`Lesta | Error creating component "${name}": ${component[code]}`, param);
+    console.error(`Lesta |${code}| Error creating component "${name}": ${component[code]}`, param);
   }
 };
 
@@ -485,7 +485,7 @@ var _text = {
 // packages/utils/errors/node.js
 var errorNode = (name, code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
-    console.error(`Lesta | Error in node "${name}": ${node[code]}`, param);
+    console.error(`Lesta |${code}| Error in node "${name}": ${node[code]}`, param);
   }
 };
 
@@ -500,7 +500,7 @@ var impress_default = {
     return v;
   },
   define(pr) {
-    if (pr == null ? void 0 : pr.startsWith("_"))
+    if (pr && this.refs.every((e) => e.startsWith(this.refs.at(0))))
       return this.refs.at(-1);
     return [...this.refs];
   },
@@ -586,7 +586,7 @@ var InitBasic = class extends InitComponent {
 // packages/utils/errors/props.js
 var errorProps = (name = "root", type, prop, code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
-    console.error(`Lesta | Error in props ${type} "${prop}" in component "${name}": ${props[code]}`, param);
+    console.error(`Lesta |${code}| Error in props ${type} "${prop}" in component "${name}": ${props[code]}`, param);
   }
 };
 
@@ -613,38 +613,41 @@ var Props = class {
     var _a;
     const nodepath = this.container.nodepath;
     const checkType = (v, t) => v && t && !(typeof v === t || t === "array" && Array.isArray(v)) && errorProps(nodepath, name, key, 304, t);
-    const checkEnum = (v, p) => v && Array.isArray(p.enum) && (!p.enum.includes(v) && errorProps(nodepath, name, key, 302, v));
+    const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(nodepath, name, key, 302, v));
     const checkValue = (v, p) => v != null ? v : p.required && errorProps(nodepath, name, key, 303) || p.default;
-    const validate = (v, p) => {
+    const check = (v, p) => {
+      if (typeof p === "string")
+        return checkType(v, p);
       checkType(v, p.type);
-      checkEnum(v, p);
+      checkEnum(v, p.enum);
       return checkValue(v, p);
     };
     const variant = {
       string: () => checkType(value, prop),
-      object: () => value = validate(value, prop),
-      function: () => {
+      object: () => {
         var _a2;
-        return value = (_a2 = prop(value, validate)) != null ? _a2 : value;
-      }
+        value = check(value, prop);
+        (_a2 = prop.validate) == null ? void 0 : _a2.call(prop, value, check);
+      },
+      function: () => prop(value, check)
     };
     (_a = variant[typeof prop]) == null ? void 0 : _a.call(variant);
     target[key] = value;
+    return check;
   }
   async proxies(proxies) {
     var _a;
     if (proxies) {
-      for (const key in this.props.proxies) {
-        if (!proxies.hasOwnProperty(key))
-          return errorProps(this.container.nodepath, "proxies", key, 301);
-      }
       const proxiesData = {};
       for (const key in proxies) {
         const prop = proxies[key];
         const context = this.context;
+        let check = null;
         this.container.proxy[key] = (value2, path) => {
-          if (path && path.length !== 0) {
+          var _a2;
+          if (path == null ? void 0 : path.length) {
             deliver(context.proxy[key], path, value2);
+            (_a2 = prop.validate) == null ? void 0 : _a2.call(prop, context.proxy[key], check);
           } else {
             this.validation(context.proxy, prop, key, value2, "proxies");
           }
@@ -659,7 +662,7 @@ var Props = class {
             return errorProps(this.container.nodepath, "proxies", key, 307, store2);
           value = storeModule.proxies(key, this.container);
         }
-        this.validation(proxiesData, prop, key, replicate(value), "proxies");
+        check = this.validation(proxiesData, prop, key, replicate(value), "proxies");
       }
       return proxiesData;
     }
@@ -982,13 +985,14 @@ var Iterate = class extends Components {
           this.data = this.node.component.iterate();
           if (v.length)
             this.queue.add(async () => {
+              var _a, _b;
               if (this.node.component.proxies) {
                 for (const [pr, fn] of Object.entries(this.node.component.proxies)) {
                   if (typeof fn === "function" && fn.name) {
                     if (fn.length) {
                       for (let i = 0; i < Math.min(this.nodeElement.children.length, v.length); i++) {
                         const v2 = fn(this.data[i], i);
-                        this.nodeElement.children[i].proxy[pr](v2);
+                        (_b = (_a = this.nodeElement.children[i].proxy)[pr]) == null ? void 0 : _b.call(_a, v2);
                         this.sections(this.node.component.sections, this.nodeElement.children[i], i);
                       }
                     }
@@ -1019,13 +1023,13 @@ var Iterate = class extends Components {
     }
   }
   sections(sections, target, index) {
-    var _a;
+    var _a, _b, _c;
     if (sections) {
       for (const [section, options] of Object.entries(sections)) {
         for (const [p, f] of Object.entries(options.proxies)) {
           if (typeof f === "function" && f.name) {
             if (f.length) {
-              (_a = target.section[section]) == null ? void 0 : _a.proxy[p](f(this.data[index], index));
+              (_c = (_a = target.section[section]) == null ? void 0 : (_b = _a.proxy)[p]) == null ? void 0 : _c.call(_b, f(this.data[index], index));
               this.sections(options.sections, target.section[section], index);
             }
           }
@@ -1038,14 +1042,14 @@ var Iterate = class extends Components {
       if (this.impress.refs.some((ref) => ref.includes(this.name))) {
         this.reactiveComponent(this.impress.define(pr), async (v, p) => {
           this.queue.add(async () => {
-            var _a, _b;
+            var _a, _b, _c, _d, _e, _f;
             if (p) {
-              (_a = this.nodeElement.children[index]) == null ? void 0 : _a.proxy[pr](v, p);
+              (_c = (_a = this.nodeElement.children[index]) == null ? void 0 : (_b = _a.proxy)[pr]) == null ? void 0 : _c.call(_b, v, p);
             } else {
               this.data = this.node.component.iterate();
               if (index < this.data.length) {
                 const val = fn(this.data[index], index);
-                (_b = this.nodeElement.children[index]) == null ? void 0 : _b.proxy[pr](val);
+                (_f = (_d = this.nodeElement.children[index]) == null ? void 0 : (_e = _d.proxy)[pr]) == null ? void 0 : _f.call(_e, val);
               }
             }
           });
@@ -1054,8 +1058,9 @@ var Iterate = class extends Components {
         if (!this.created) {
           this.reactiveComponent(this.impress.define(pr), async (v, p) => {
             !this.nodeElement.process && this.queue.add(async () => {
+              var _a, _b, _c, _d;
               for (let i = 0; i < this.nodeElement.children.length; i++) {
-                p ? this.nodeElement.children[i].proxy[pr](v, p) : this.nodeElement.children[i].proxy[pr](fn(this.data[i], i));
+                p ? (_b = (_a = this.nodeElement.children[i].proxy)[pr]) == null ? void 0 : _b.call(_a, v, p) : (_d = (_c = this.nodeElement.children[i].proxy)[pr]) == null ? void 0 : _d.call(_c, fn(this.data[i], i));
               }
             });
           }, target);
@@ -1118,9 +1123,8 @@ var Basic = class extends Components {
   }
   proxies(proxies, target) {
     const reactive = (pr, fn) => this.reactiveComponent(this.impress.define(pr), (v, p) => {
-      if (target.proxy && target.proxy[pr]) {
-        p ? target.proxy[pr](v, p) : target.proxy[pr](fn());
-      }
+      var _a, _b, _c, _d;
+      return p ? (_b = (_a = target.proxy)[pr]) == null ? void 0 : _b.call(_a, v, p) : (_d = (_c = target.proxy)[pr]) == null ? void 0 : _d.call(_c, fn());
     }, target);
     return this.reactivate(proxies, reactive, null, null, target);
   }
@@ -1370,7 +1374,7 @@ async function createWidget(src, root, signal, aborted) {
 // packages/utils/errors/store.js
 var errorStore = (name, code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
-    console.error(`Lesta | Error in store "${name}": ${store[code]}`, param);
+    console.error(`Lesta |${code}| Error in store "${name}": ${store[code]}`, param);
   }
 };
 
@@ -1475,12 +1479,12 @@ function createStores(app, storesOptions) {
 // packages/utils/errors/router.js
 var errorRouter = (name = "", code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
-    console.error(`Lesta | Error in route "${name}": ${router[code]}`, param);
+    console.error(`Lesta |${code}| Error in route "${name}": ${router[code]}`, param);
   }
 };
 var warnRouter = (code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
-    console.warn(`Lesta | ${router[code]}`, param);
+    console.warn(`Lesta |${code}| ${router[code]}`, param);
   }
 };
 

@@ -23,11 +23,7 @@ export default class Basic extends Components {
     }
   }
   proxies(proxies, target) {
-    const reactive = (pr, fn) => this.reactiveComponent(this.impress.define(pr), (v, p) => {
-      if (target.proxy && target.proxy[pr]) {
-        p ? target.proxy[pr](v, p) : target.proxy[pr](fn())
-      }
-    }, target)
+    const reactive = (pr, fn) => this.reactiveComponent(this.impress.define(pr), (v, p) => p ? target.proxy[pr]?.(v, p) : target.proxy[pr]?.(fn()), target)
     return this.reactivate(proxies, reactive, null, null, target)
   }
 }

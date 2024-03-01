@@ -36,7 +36,7 @@ export default class Iterate extends Components {
                                     if (fn.length) {
                                         for (let i = 0; i < Math.min(this.nodeElement.children.length, v.length); i++) {
                                             const v = fn(this.data[i], i)
-                                            this.nodeElement.children[i].proxy[pr](v)
+                                            this.nodeElement.children[i].proxy[pr]?.(v)
                                             this.sections(this.node.component.sections, this.nodeElement.children[i], i)
                                         }
                                     }
@@ -70,7 +70,7 @@ export default class Iterate extends Components {
                 for (const [p, f] of Object.entries(options.proxies)) {
                     if (typeof f === 'function' && f.name) {
                         if (f.length) {
-                            target.section[section]?.proxy[p](f(this.data[index], index))
+                            target.section[section]?.proxy[p]?.(f(this.data[index], index))
                             this.sections(options.sections, target.section[section], index)
                         }
                     }
@@ -84,13 +84,13 @@ export default class Iterate extends Components {
                 this.reactiveComponent(this.impress.define(pr), async (v, p) => {
                     this.queue.add(async () => {
                         if (p) {
-                            this.nodeElement.children[index]?.proxy[pr](v, p)
+                            this.nodeElement.children[index]?.proxy[pr]?.(v, p)
                             // this.sections(this.node.component.sections, this.nodeElement.children[index], index)
                         } else {
                             this.data = this.node.component.iterate()
                             if (index < this.data.length) {
                                 const val = fn(this.data[index], index)
-                                this.nodeElement.children[index]?.proxy[pr](val)
+                                this.nodeElement.children[index]?.proxy[pr]?.(val)
                                 // this.sections(this.node.component.sections, this.nodeElement.children[index], index)
                             }
                         }
@@ -101,7 +101,7 @@ export default class Iterate extends Components {
                     this.reactiveComponent(this.impress.define(pr), async (v, p) => {
                         !this.nodeElement.process && this.queue.add(async () => {
                             for (let i = 0; i < this.nodeElement.children.length; i++) {
-                                p ? this.nodeElement.children[i].proxy[pr](v, p) : this.nodeElement.children[i].proxy[pr](fn(this.data[i], i))
+                                p ? this.nodeElement.children[i].proxy[pr]?.(v, p) : this.nodeElement.children[i].proxy[pr]?.(fn(this.data[i], i))
                                 // this.sections(this.node.component.sections, this.nodeElement.children[i], i)
                             }
                         })
