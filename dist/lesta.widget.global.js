@@ -83,7 +83,7 @@
   // packages/utils/errors/component.js
   var errorComponent = (name = "root", code, param = "") => {
     if (true) {
-      console.error(`Lesta | Error creating component "${name}": ${component[code]}`, param);
+      console.error(`Lesta |${code}| Error creating component "${name}": ${component[code]}`, param);
     }
   };
 
@@ -257,7 +257,7 @@
   // packages/utils/errors/node.js
   var errorNode = (name, code, param = "") => {
     if (true) {
-      console.error(`Lesta | Error in node "${name}": ${node[code]}`, param);
+      console.error(`Lesta |${code}| Error in node "${name}": ${node[code]}`, param);
     }
   };
 
@@ -272,7 +272,7 @@
       return v;
     },
     define(pr) {
-      if (pr?.startsWith("_"))
+      if (pr && this.refs.every((e) => e.startsWith(this.refs.at(0))))
         return this.refs.at(-1);
       return [...this.refs];
     },

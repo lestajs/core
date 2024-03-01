@@ -8,7 +8,7 @@ export default {
     return v
   },
   define(pr) {
-    if (pr?.startsWith('_')) return this.refs.at(-1)
+    if (pr && this.refs.every(e => e.startsWith(this.refs.at(0)))) return this.refs.at(-1)
     return [...this.refs]
   },
   clear() {
