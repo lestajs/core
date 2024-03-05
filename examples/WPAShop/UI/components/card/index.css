@@ -28,15 +28,16 @@
 .LstCard {
   max-width: 30rem;
   position: relative;
-  outline: 1px solid var(--gray);
+  /* outline: 1px solid var(--gray); */
   border-radius: 2px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-width: 11em;
 }
 .LstCard h4 {
   font-size: var(--fs-s);
-  margin-top: .5em;
+  /* margin-top: .5em; */
   line-height: 1.1;
   font-weight: normal;
 }
@@ -54,7 +55,7 @@
   font-size: var(--fs-xs);
   z-index: 2;
   gap: .5em;
-  padding: .5em;
+  /* padding: .5em; */
 }
 .LstCardWr:empty {
   display: none !important;
@@ -97,5 +98,5 @@
   flex: 1 1 0;
 }
 .LstCardStandard > div {
-  padding: .5em;
+  /* padding: .5em; */
 }

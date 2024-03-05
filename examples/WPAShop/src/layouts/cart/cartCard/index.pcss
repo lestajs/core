@@ -1,0 +1,31 @@
+.miniCard {
+    border-bottom: 1px solid var(--gray100);
+    line-height: 1.1;
+
+    .card {
+        flex: 1;
+        .LstCard {
+            outline: none;
+            .LstCardContent {
+                font-weight: bold;
+                color: var(--black)
+            }
+        }
+        h4 {
+            font-size: var(--fs-xs);
+            /* min-height: 2em; */
+            margin-bottom: .5em;
+        }
+    }
+    /*.changeBtns {
+        display: flex;
+    } */
+    .extra {
+        display: flex;
+        flex-direction: column;
+        /* padding: .5em; */
+        min-width: 10ch;
+        gap: .5em;
+        margin-top: .5em;
+    }
+}

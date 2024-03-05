@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "buffer": "^5.7.1",
+    "eslint": "^8.57.0",
     "marked": "^5.0.2",
     "mustache": "^4.2.0",
     "parcel": "^2.10.0",

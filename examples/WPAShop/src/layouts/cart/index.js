@@ -1,30 +1,30 @@
-import cartCard from './cartCard/index.js';
+import cartCard from './cartCard/index.js'
 
 export default {
-    template: 
+  template:
     `
-        <h3>Cart</h3>
-        <div class="cart"></div>
+      <h3>Cart</h3>
+      <div class="cart"></div>
     `,
-    props: {
-        proxies: {
-            cartProducts: {
-                store: 'products',
-            }
-        }
-    },
-    nodes() {
-        return {
-            cart: {
-                _text: () => !this.proxy.cartProducts.length ? 'There is nothing in your cart yet...' : '',
-                component: {
-                    src: cartCard,
-                    iterate: () => this.proxy.cartProducts,
-                    proxies: {
-                        _product: (product) => product,
-                    }
-                },
-            }
-        }
+  props: {
+    proxies: {
+      cartProducts: {
+        store: 'products'
+      }
     }
+  },
+  nodes() {
+    return {
+      cart: {
+        _text: () => !this.proxy.cartProducts.length ? 'There is nothing in your cart yet...' : '',
+        component: {
+          src: cartCard,
+          iterate: () => this.proxy.cartProducts,
+          proxies: {
+            _product: (product) => product
+          }
+        }
+      }
+    }
+  }
 }

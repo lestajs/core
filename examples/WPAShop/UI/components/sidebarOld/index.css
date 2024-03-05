@@ -1,63 +1,64 @@
-.lstSidebar {
+.LstSidebar {
+  width: var(--sidebar-width);
   position: sticky;
-  top: 0;
+  top: var(--sidebar-top);
+  overflow-y: auto;
   display: none;
-  z-index: 100;
-  width: 280px;
+  height: 100%;
+  padding: var(--xxs);
 }
 
-.lstSidebarWr {
+.LstSidebarWr {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  max-height: 100vh;
-  overflow-y: auto;
 }
 
-.lstSidebarWr [section="content"] {
+.LstSidebarWr [section="content"] {
   padding: var(--xs) 0;
 }
 
-.lstSidebarWr::-webkit-scrollbar {
+.LstSidebar::-webkit-scrollbar {
   width: 7px;
 }
 
-.lstSidebarWr::-webkit-scrollbar-track {
+.LstSidebar::-webkit-scrollbar-track {
   background-color: transparent;
 }
 
-.lstSidebarWr::-webkit-scrollbar-thumb {
+.LstSidebar::-webkit-scrollbar-thumb {
   background-color: var(--gray300);
   border-radius: 1px;
 }
 
-.lstSidebar .content {
+.LstSidebar .content {
   width: 100%;
   transition: width .3s .2s;
   right: 0;
   display: grid;
 }
-.lstSidebar.show {
+.LstSidebar.show {
   display: block;
 }
 
-.lstSidebar .lstClose {
+.LstSidebar .LstClose {
   display: none;
   height: var(--s);
   width: var(--s);
+  background-color: var(--gray200);
   border-radius: 50%;
   margin-top: var(--xxs);
   font-weight: 600;
 }
 
-.lstSidebar.mini {
-  width: 56px;
+.LstSidebar.mini {
+  width: var(--sidebar-minWidth);
   padding: 0;
   overflow: hidden;
 }
 
 /* tablet */
-.tablet.lstSidebar {
+.tablet.LstSidebar {
   position: fixed;
   width: 100vw;
   max-height: 100vh !important;
@@ -67,26 +68,13 @@
   padding: var(--s) var(--xs);
 }
 
-.tablet.lstSidebar .lstClose {
+.tablet.LstSidebar .LstClose {
   margin: var(--xs) var(--xs);
   display: flex;
   position: fixed;
   right: 0;
   top: 0;
 }
-.tablet .lstSidebarWr {
+.tablet .LstSidebarWr {
   margin-top: var(--s);
-}
-[section="extension"] {
-  background-color: white;
-  height: 100%;
-  position: absolute;
-  overflow: auto;
-  top: 0;
-  left: 100%;
-  border-left: 1px solid var(--gray200);
-  border-right: 1px solid var(--gray200);
-}
-[section="extension"]:empty {
-  display: none;
 }
