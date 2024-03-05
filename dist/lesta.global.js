@@ -242,7 +242,7 @@
     218: '"aborted" property expects a function as a value.'
   };
   var props = {
-    301: "parent component passes proxies, you need to specify them in props.",
+    // 301: 'parent component passes proxies, you need to specify them in props.',
     302: "value %s does not match enum",
     303: "props is required.",
     304: 'value does not match type "%s".',
@@ -254,7 +254,7 @@
   // packages/utils/errors/component.js
   var errorComponent = (name = "root", code, param = "") => {
     if (true) {
-      console.error(`Lesta | Error creating component "${name}": ${component[code]}`, param);
+      console.error(`Lesta |${code}| Error creating component "${name}": ${component[code]}`, param);
     }
   };
 
@@ -428,7 +428,7 @@
   // packages/utils/errors/node.js
   var errorNode = (name, code, param = "") => {
     if (true) {
-      console.error(`Lesta | Error in node "${name}": ${node[code]}`, param);
+      console.error(`Lesta |${code}| Error in node "${name}": ${node[code]}`, param);
     }
   };
 
@@ -443,7 +443,7 @@
       return v;
     },
     define(pr) {
-      if (pr?.startsWith("_"))
+      if (pr && this.refs.every((e) => e.startsWith(this.refs.at(0))))
         return this.refs.at(-1);
       return [...this.refs];
     },
@@ -527,7 +527,7 @@
   // packages/utils/errors/props.js
   var errorProps = (name = "root", type, prop, code, param = "") => {
     if (true) {
-      console.error(`Lesta | Error in props ${type} "${prop}" in component "${name}": ${props[code]}`, param);
+      console.error(`Lesta |${code}| Error in props ${type} "${prop}" in component "${name}": ${props[code]}`, param);
     }
   };
 
@@ -553,34 +553,38 @@
     validation(target, prop, key, value, name) {
       const nodepath = this.container.nodepath;
       const checkType = (v, t) => v && t && !(typeof v === t || t === "array" && Array.isArray(v)) && errorProps(nodepath, name, key, 304, t);
-      const checkEnum = (v, p) => v && Array.isArray(p.enum) && (!p.enum.includes(v) && errorProps(nodepath, name, key, 302, v));
+      const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(nodepath, name, key, 302, v));
       const checkValue = (v, p) => v ?? (p.required && errorProps(nodepath, name, key, 303) || p.default);
-      const validate = (v, p) => {
+      const check = (v, p) => {
+        if (typeof p === "string")
+          return checkType(v, p);
         checkType(v, p.type);
-        checkEnum(v, p);
+        checkEnum(v, p.enum);
         return checkValue(v, p);
       };
       const variant = {
         string: () => checkType(value, prop),
-        object: () => value = validate(value, prop),
-        function: () => value = prop(value, validate) ?? value
+        object: () => {
+          value = check(value, prop);
+          prop.validate?.(value, check);
+        },
+        function: () => prop(value, check)
       };
       variant[typeof prop]?.();
       target[key] = value;
+      return check;
     }
     async proxies(proxies) {
       if (proxies) {
-        for (const key in this.props.proxies) {
-          if (!proxies.hasOwnProperty(key))
-            return errorProps(this.container.nodepath, "proxies", key, 301);
-        }
         const proxiesData = {};
         for (const key in proxies) {
           const prop = proxies[key];
           const context = this.context;
+          let check = null;
           this.container.proxy[key] = (value2, path) => {
-            if (path && path.length !== 0) {
+            if (path?.length) {
               deliver(context.proxy[key], path, value2);
+              prop.validate?.(context.proxy[key], check);
             } else {
               this.validation(context.proxy, prop, key, value2, "proxies");
             }
@@ -595,7 +599,7 @@
               return errorProps(this.container.nodepath, "proxies", key, 307, store);
             value = storeModule.proxies(key, this.container);
           }
-          this.validation(proxiesData, prop, key, replicate(value), "proxies");
+          check = this.validation(proxiesData, prop, key, replicate(value), "proxies");
         }
         return proxiesData;
       }
@@ -918,7 +922,7 @@
                       if (fn.length) {
                         for (let i = 0; i < Math.min(this.nodeElement.children.length, v.length); i++) {
                           const v2 = fn(this.data[i], i);
-                          this.nodeElement.children[i].proxy[pr](v2);
+                          this.nodeElement.children[i].proxy[pr]?.(v2);
                           this.sections(this.node.component.sections, this.nodeElement.children[i], i);
                         }
                       }
@@ -954,7 +958,7 @@
           for (const [p, f] of Object.entries(options.proxies)) {
             if (typeof f === "function" && f.name) {
               if (f.length) {
-                target.section[section]?.proxy[p](f(this.data[index], index));
+                target.section[section]?.proxy[p]?.(f(this.data[index], index));
                 this.sections(options.sections, target.section[section], index);
               }
             }
@@ -968,12 +972,12 @@
           this.reactiveComponent(this.impress.define(pr), async (v, p) => {
             this.queue.add(async () => {
               if (p) {
-                this.nodeElement.children[index]?.proxy[pr](v, p);
+                this.nodeElement.children[index]?.proxy[pr]?.(v, p);
               } else {
                 this.data = this.node.component.iterate();
                 if (index < this.data.length) {
                   const val = fn(this.data[index], index);
-                  this.nodeElement.children[index]?.proxy[pr](val);
+                  this.nodeElement.children[index]?.proxy[pr]?.(val);
                 }
               }
             });
@@ -983,7 +987,7 @@
             this.reactiveComponent(this.impress.define(pr), async (v, p) => {
               !this.nodeElement.process && this.queue.add(async () => {
                 for (let i = 0; i < this.nodeElement.children.length; i++) {
-                  p ? this.nodeElement.children[i].proxy[pr](v, p) : this.nodeElement.children[i].proxy[pr](fn(this.data[i], i));
+                  p ? this.nodeElement.children[i].proxy[pr]?.(v, p) : this.nodeElement.children[i].proxy[pr]?.(fn(this.data[i], i));
                 }
               });
             }, target);
@@ -1044,11 +1048,7 @@
       }
     }
     proxies(proxies, target) {
-      const reactive = (pr, fn) => this.reactiveComponent(this.impress.define(pr), (v, p) => {
-        if (target.proxy && target.proxy[pr]) {
-          p ? target.proxy[pr](v, p) : target.proxy[pr](fn());
-        }
-      }, target);
+      const reactive = (pr, fn) => this.reactiveComponent(this.impress.define(pr), (v, p) => p ? target.proxy[pr]?.(v, p) : target.proxy[pr]?.(fn()), target);
       return this.reactivate(proxies, reactive, null, null, target);
     }
   };

@@ -21,33 +21,37 @@ class Props {
   validation(target, prop, key, value, name) {
     const nodepath = this.container.nodepath
     const checkType = (v, t) => v && t && !(typeof v === t || (t === 'array' && Array.isArray(v))) && errorProps(nodepath, name, key, 304, t)
-    const checkEnum = (v, p) => v && Array.isArray(p.enum) && (!p.enum.includes(v) && errorProps(nodepath, name, key, 302, v))
+    const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(nodepath, name, key, 302, v))
     const checkValue = (v, p) => v ?? (p.required && errorProps(nodepath, name, key, 303) || p.default)
-    const validate = (v, p) => {
+    const check = (v, p) => {
+      if (typeof p === 'string') return checkType(v, p)
       checkType(v, p.type)
-      checkEnum(v, p)
+      checkEnum(v, p.enum)
       return checkValue(v, p)
     }
     const variant = {
       string: () => checkType(value, prop),
-      object: () => value = validate(value, prop),
-      function: () => value = prop(value, validate) ?? value
+      object: () => {
+        value = check(value, prop)
+        prop.validate?.(value, check)
+      },
+      function: () => prop(value, check)
     }
     variant[typeof prop]?.()
     target[key] = value
+    return check
   }
   async proxies(proxies) {
     if (proxies) {
-      for (const key in this.props.proxies) {
-        if (!(proxies.hasOwnProperty(key))) return errorProps(this.container.nodepath, 'proxies', key, 301)
-      }
       const proxiesData = {}
       for (const key in proxies) {
         const prop = proxies[key]
         const context = this.context
+        let check = null
         this.container.proxy[key] = (value, path) => {
-          if (path && path.length !== 0) {
+          if (path?.length) {
             deliver(context.proxy[key], path, value)
+            prop.validate?.(context.proxy[key], check)
           } else {
             this.validation(context.proxy, prop, key, value, 'proxies')
           }
@@ -61,7 +65,7 @@ class Props {
           if (!storeModule) return errorProps(this.container.nodepath, 'proxies', key, 307, store)
           value = storeModule.proxies(key, this.container)
         }
-        this.validation(proxiesData, prop, key, replicate(value), 'proxies')
+        check = this.validation(proxiesData, prop, key, replicate(value), 'proxies')
       }
       return proxiesData
     }
