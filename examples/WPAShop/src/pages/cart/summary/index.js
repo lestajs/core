@@ -14,9 +14,7 @@ export default {
                 <div>Subtotal</div>
                 <div class="subtotalPrice"></div>
             </div>
-            <div class="discounts">
-
-            </div>
+            <div class="discounts"></div>
             <div class="total">
                 <div>Total</div>
                 <div class="totalPrice"></div>
@@ -42,7 +40,7 @@ export default {
     nodes() {
         return {
             subtotalPrice: {
-                _text: () => '$' + this.method.subSum()
+                _text: () => '$' + this.method.subSum().toFixed(2)
             },
             promo: {
                 component: {
@@ -54,12 +52,7 @@ export default {
                         content: {
                             src: input,
                             methods: {
-                                change: (v) => {
-                                    // console.log(v)
-                                    if (v === 'lesta') {
-                                        this.proxy.promo = 0.9
-                                    }
-                                }
+                                change: (v) => this.proxy.promo = v === 'lesta' ? 0.9 : 1
                             }
                         }
                     }

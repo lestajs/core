@@ -12,7 +12,7 @@ export default {
     </a>`,
   props: {
     params: {
-      index: {}
+      index: 'number'
     },
     proxies: {
       image: {},

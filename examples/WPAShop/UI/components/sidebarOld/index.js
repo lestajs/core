@@ -1,35 +1,37 @@
 import './index.css'
+import { throttling } from 'lesta'
 
 export default {
   template: `
-    <div class="lstSidebar">
-      <div class="lstSidebarWr">
-        <div class="lstClose"></div>
+    <div class="LstSidebar">
+      <div class="LstClose"></div>
+      <div class="LstSidebarWr">
         <div>
           <div section="top"></div>
           <div section="content"></div>
         </div>
         <div section="bottom"></div>
       </div>
-      <div section="extension"></div>
     </div>`,
   props: {
     params:{
+      close: {},
+      top: {},
+      width: {},
+      minWidth: {},
       tabletWidth: {},
-      scrollContainer: {
-        ignore: true
-      },
+      scrollContainer: {},
     },
     proxies: {
-      opened: {
-        default: false
+      show: {
+        default: true
       },
-      minimize: {
+      mini: {
         default: false
       }
     },
     methods: {
-      onclose: {}
+      close: {}
     }
   },
   params: {
@@ -41,13 +43,13 @@ export default {
   },
   nodes() {
     return {
-      lstClose: {
-        onclick: () => this.method.close()
+      LstClose: {
+        onclick: () => this.method.close && this.method.close()
       },
-      lstSidebar: {
+      LstSidebar: {
         _class: {
-          mini: () => this.proxy.minimize,
-          show: () => this.proxy.opened,
+          mini: () => this.proxy.mini,
+          show: () => this.proxy.show,
           tablet: () => this.proxy.tablet
         },
       }
@@ -55,39 +57,38 @@ export default {
   },
   methods: {
     resize() {
-      const top = this.node.lstSidebar.getBoundingClientRect().top
-      this.node.lstSidebar.style.maxHeight = this.param.scrollContainer.clientHeight - top + 'px'
+      const top = this.node.LstSidebar.getBoundingClientRect().top
+      this.node.LstSidebar.style.maxHeight = this.param.scrollContainer.clientHeight - top + 'px'
     },
     tabletChange(v) {
       this.proxy.tablet = v.matches
-      if (this.proxy.tablet && this.proxy.opened) this.method.close()
+      if (this.proxy.tablet && this.proxy.show) this.method.close && this.method.close()
     },
     isTablet() {
       return this.proxy.tablet
     },
-    open() {
-      this.proxy.opened = true
-    },
-    close() {
-      this.proxy.opened = false
-      this.method.onclose && this.method.onclose()
+    show(v) {
+      this.proxy.show = v
     },
     toggle() {
-      this.proxy.opened = !this.proxy.opened
+      this.proxy.show = !this.proxy.show
     }
   },
   mounted() {
     if (this.param.scrollContainer) {
       this.method.resize()
-      this.param.scrollHandler = this.throttling(() => this.method.resize(), 100)
+      this.param.scrollHandler = throttling(() => this.method.resize(), 100)
       this.param.scrollContainer.addEventListener('scroll', this.param.scrollHandler)
     }
+    this.node.LstSidebar.style.setProperty('--sidebar-width', this.param.width || '210px')
+    this.node.LstSidebar.style.setProperty('--sidebar-top', this.param.top || '0')
+    this.node.LstSidebar.style.setProperty('--sidebar-minWidth', this.param.minWidth || '56px')
     this.param.matchMedia = window.matchMedia(`(max-width: ${ this.param.tabletWidth || '560px' })`)
     this.method.tabletChange(this.param.matchMedia)
     this.param.matchMedia.addListener(this.method.tabletChange)
   },
   unmounted() {
-    this.param.scrollContainer && this.param.scrollContainer.removeEventListener('scroll', this.param.scrollHandler)
+    this.param.scrollContainer && this.root.removeEventListener('scroll', this.param.scrollHandler)
     this.param.matchMedia.removeListener(this.method.tabletChange)
   }
 }
