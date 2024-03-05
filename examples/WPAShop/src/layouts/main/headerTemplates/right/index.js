@@ -3,7 +3,7 @@ import menu from './menu'
 export default {
     template: 
     `
-        <div class="menu fx gap"></div>
+        <div class="menu l-fx l-gap"></div>
     `,
     params: {
         lis: [{text: 'Catalog', url: '/catalog'}, {text: 'About us', url: '/about'}, {text: `<svg class="cart-icon" xmlns="http://www.w3.org/2000/svg" width="800px" height="800px" viewBox="0 0 24 24" fill="none">

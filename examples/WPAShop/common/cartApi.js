@@ -36,5 +36,19 @@ export default {
         })
 
         return await response.json()
+    },
+    async updateProduct(product, quantity) {
+        const response = await fetch('https://fakestoreapi.com/carts/' + cartId, {
+            method:"PATCH",
+            body:JSON.stringify(
+                {
+                    userId,
+                    date: new Date(),
+                    products:[{productId: product.id, quantity}]
+                }
+            )
+        })
+            
+        return await response.json()
     }
 }
