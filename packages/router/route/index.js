@@ -40,7 +40,7 @@ export default {
   mapping(path) {
     const value = path.replace(/:\w+/g, '(\\w+)').replace(/\*$/, '(.*)')
     const regex = new RegExp(`^${value}$`)
-    const url = decodeURI(this.url.pathname).toString().replace(/\/$/, '')
+    const url = decodeURI(this.url.pathname).toString().replace(/\/$/, '') || '/'
     return url.match(regex)
   },
   find(target, path) {
