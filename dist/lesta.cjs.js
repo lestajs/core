@@ -401,12 +401,12 @@ function diveProxy(_value, handler, path = "") {
     set(target, prop, value, receiver) {
       if (typeof prop === "symbol")
         return Reflect.set(target, prop, value, receiver);
-      let fs = false;
+      let upd = false;
       const reject = handler.beforeSet(value, `${path}${prop}`, (v) => {
         value = v;
-        fs = true;
+        upd = true;
       });
-      if (reject && !(Reflect.get(target, prop, receiver) !== value || prop === "length" || fs))
+      if (reject || !(Reflect.get(target, prop, receiver) !== value || prop === "length" || upd))
         return true;
       value = diveProxy(value, handler, `${path}${prop}.`);
       Reflect.set(target, prop, value, receiver);
@@ -816,7 +816,7 @@ var Node = class {
     this.nodeElement.reactivity = { node: /* @__PURE__ */ new Map() };
   }
   reactive(refs, active2, reactivity) {
-    if (refs.length)
+    if (refs == null ? void 0 : refs.length)
       reactivity.set(active2, refs);
     this.impress.clear();
   }
@@ -1530,7 +1530,7 @@ var route_default = {
   mapping(path) {
     const value = path.replace(/:\w+/g, "(\\w+)").replace(/\*$/, "(.*)");
     const regex = new RegExp(`^${value}$`);
-    const url = decodeURI(this.url.pathname).toString().replace(/\/$/, "");
+    const url = decodeURI(this.url.pathname).toString().replace(/\/$/, "") || "/";
     return url.match(regex);
   },
   find(target, path) {
