@@ -9,7 +9,7 @@ export default class Node {
         this.nodeElement.reactivity = { node: new Map() }
     }
     reactive(refs, active, reactivity) {
-        if (refs.length) reactivity.set(active, refs)
+        if (refs?.length) reactivity.set(active, refs)
         this.impress.clear()
     }
     reactiveNode(refs, active) {

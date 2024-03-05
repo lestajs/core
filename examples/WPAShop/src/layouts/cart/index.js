@@ -16,7 +16,7 @@ export default {
   nodes() {
     return {
       cart: {
-        _text: () => !this.proxy.cartProducts.length ? 'There is nothing in your cart yet...' : '',
+        // _text: () => !this.proxy.cartProducts.length ? 'There is nothing in your cart yet...' : '',
         component: {
           src: cartCard,
           iterate: () => this.proxy.cartProducts,
@@ -26,5 +26,8 @@ export default {
         }
       }
     }
+  },
+  mounted() {
+    console.log(this.node.cart.reactivity)
   }
 }
