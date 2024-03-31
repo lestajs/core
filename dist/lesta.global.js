@@ -112,15 +112,13 @@
     }
   }
 
-  // packages/utils/stringToHTML.js
-  function stringToHTML(str) {
-    const table = document.createElement("table");
-    table.innerHTML = str;
-    return table;
-  }
-
   // packages/utils/cleanHTML.js
   function cleanHTML(str) {
+    function stringToHTML(str2) {
+      const capsule = document.createElement("capsule");
+      capsule.innerHTML = str2;
+      return capsule;
+    }
     function removeScripts(html2) {
       const scripts = html2.querySelectorAll("script");
       for (let script of scripts) {
@@ -388,41 +386,25 @@
 
   // packages/lesta/init/directives/_html.js
   var _html = {
-    update: async (node2, options) => {
-      const value = typeof options === "function" ? await options(node2) : options;
-      if (value !== void 0) {
-        node2.innerHTML = "";
-        node2.append(...cleanHTML(value));
-      }
+    update: (node2, value) => {
+      node2.innerHTML = "";
+      value && node2.append(...cleanHTML(value));
     }
   };
 
   // packages/lesta/init/directives/_evalHTML.js
   var _evalHTML = {
-    update: async (node2, options) => {
-      const value = typeof options === "function" ? await options(node2) : options;
-      if (value !== void 0) {
-        node2.innerHTML = value;
-      }
-    }
+    update: (node2, value) => value !== void 0 ? node2.innerHTML = value : ""
   };
 
   // packages/lesta/init/directives/_class.js
   var _class = {
-    update: (node2, options, key) => {
-      const value = typeof options[key] === "function" ? options[key](node2) : options[key];
-      value ? node2.classList.add(key) : node2.classList.remove(key);
-    }
+    update: (node2, value, key) => value ? node2.classList.add(key) : node2.classList.remove(key)
   };
 
   // packages/lesta/init/directives/_text.js
   var _text = {
-    update: async (node2, options) => {
-      const value = typeof options === "function" ? await options(node2) : options;
-      if (value !== void 0) {
-        node2.textContent = value;
-      }
-    }
+    update: (node2, value) => node2.textContent = value !== Object(value) ? value : JSON.stringify(value)
   };
 
   // packages/utils/errors/node.js
@@ -436,12 +418,6 @@
   var impress_default = {
     refs: [],
     collect: false,
-    exclude(p) {
-      this.collect = false;
-      const v = p();
-      this.collect = true;
-      return v;
-    },
     define(pr) {
       if (pr && this.refs.every((e) => e.startsWith(this.refs.at(0))))
         return this.refs.at(-1);
@@ -461,7 +437,6 @@
       this.impress = impress_default;
       this.context = {
         ...this.context,
-        exclude: this.impress.exclude.bind(this.impress),
         directives: { _html, _evalHTML, _class, _text, ...app.directives, ...component2.directives }
       };
     }
@@ -503,7 +478,8 @@
         const nodes = this.component.nodes.bind(this.context)();
         const container = this.context.container;
         for await (const [keyNode, options] of Object.entries(nodes)) {
-          const selector = this.component.selectors && this.component.selectors[keyNode] || `.${keyNode}`;
+          const s = options.selector || this.context.selector || `.${keyNode}`;
+          const selector = typeof s === "function" ? s(keyNode) : s;
           const nodeElement = container.querySelector(selector) || container.classList.contains(keyNode) && container;
           const nodepath = container.nodepath ? container.nodepath + "." + keyNode : keyNode;
           if (nodeElement) {
@@ -663,6 +639,8 @@
       this.proxiesData = await propsValidation_default.init(this.context.options.inputs, this.component.props, this.context, this.app) || {};
     }
     destroy(container) {
+      if (container.reactivity)
+        container.reactivity.component.clear();
       delete container.proxy;
       delete container.method;
       for (const key in container.unstore) {
@@ -685,6 +663,8 @@
               directive.destroy && directive.destroy();
             }
           }
+          if (node2.reactivity)
+            node2.reactivity.node.clear();
         }
       }
       this.component.unmounted && this.component.unmounted.bind(this.context)();
@@ -710,10 +690,7 @@
         hooks.forEach((key) => {
           const resultHook = result[key];
           result[key] = async function() {
-            let data = await resultHook?.bind(this)();
-            if (!data)
-              data = await options[key]?.bind(this)();
-            return data;
+            return options[key]?.bind(this)() || resultHook?.bind(this)();
           };
         });
         props2.forEach((key) => {
@@ -759,18 +736,12 @@
 
   // packages/lesta/nodes/component/props.js
   var props_default = {
-    collect(propertyComponent, proxies, val, index) {
+    collect(propertyComponent, val, index) {
       return {
         params: this.params(propertyComponent.params, val, index),
         methods: this.methods(propertyComponent.methods),
-        proxies: this.proxies(proxies),
         section: propertyComponent.section
       };
-    },
-    proxies(proxies) {
-      if (proxies) {
-        return proxies || {};
-      }
     },
     methods(methods) {
       const result = {};
@@ -808,7 +779,7 @@
         nodeElement.section[section].unmount?.();
         if (options.src) {
           options.section = section;
-          await create(specialty, nodeElement, options, proxies(options.proxies, nodeElement.section[section], section));
+          await create(specialty, nodeElement, options, () => proxies(options.proxies, nodeElement.section[section], section));
         }
       };
       nodeElement.section = {};
@@ -866,7 +837,8 @@
           aborted,
           sections,
           ssr,
-          ...props_default.collect(pc, proxies, value, index)
+          ...props_default.collect(pc, value, index),
+          proxies: proxies() || {}
         });
         delete nodeElement.process;
       }
@@ -897,10 +869,13 @@
       this.createIterate = async (index) => {
         if (!this.created)
           this.nodeElement.style.visibility = "hidden";
-        const proxies = this.proxies(this.node.component.proxies, this.nodeElement.children[index], index);
+        const proxies = () => this.proxies(this.node.component.proxies, this.nodeElement.children[index], index);
         await this.create(this.proxies.bind(this), this.nodeElement, this.node.component, proxies, this.data[index], index);
-        if (!this.created)
+        if (!this.created) {
+          if (this.nodeElement.children.length > 1)
+            return errorComponent(this.nodeElement.nodepath, 210);
           this.nodeElement.style.removeProperty("visibility");
+        }
         this.created = true;
       };
       this.impress.collect = true;
@@ -1028,7 +1003,7 @@
       super(...args);
     }
     async init() {
-      const mount2 = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, this.proxies(pc.proxies, this.nodeElement));
+      const mount2 = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, () => this.proxies(pc.proxies, this.nodeElement));
       this.nodeElement.mount = mount2;
       if (this.node.component.induce) {
         if (typeof this.node.component.induce !== "function")
@@ -1059,32 +1034,31 @@
       super(...args);
     }
     init(key) {
-      if (key[0] !== "_")
-        return errorNode(this.nodeElement.nodepath, 102, key);
+      const node2 = this.nodeElement;
+      if (!key.startsWith("_"))
+        return errorNode(node2.nodepath, 102, key);
       const directive = this.context.directives[key];
       const options = this.node[key];
       const { create, update, destroy } = directive;
-      if (!("directives" in this.nodeElement))
-        Object.assign(this.nodeElement, { directives: {} });
-      Object.assign(this.nodeElement.directives, { [key]: {
-        create: () => create ? create(this.nodeElement, options, directive) : {},
-        destroy: () => destroy ? destroy(this.nodeElement, options, directive) : {}
+      if (!node2.hasOwnProperty("directives"))
+        Object.assign(node2, { directives: {} });
+      Object.assign(node2.directives, { [key]: {
+        create: () => create ? create.bind(directive)(node2, options) : {},
+        destroy: () => destroy ? destroy.bind(directive)(node2, options) : {}
       } });
-      create && this.nodeElement.directives[key].create();
-      const active2 = (v, o, k) => {
-        if (typeof v === "function") {
-          this.impress.collect = true;
-          update.bind(directive)(this.nodeElement, o, k);
-          this.reactiveNode(this.impress.define(), () => update(this.nodeElement, o, k));
-        } else
-          update.bind(directive)(this.nodeElement, o, k);
+      create && node2.directives[key].create();
+      const active2 = (v, k, o) => {
+        const upd = () => update.bind(directive)(node2, typeof v === "function" ? v(node2) : v, k, o);
+        this.impress.collect = true;
+        upd();
+        this.reactiveNode(this.impress.define(), upd);
       };
-      if (update != null) {
+      if (update) {
         if (typeof options === "object") {
           for (const k in options)
-            active2(options[k], options, k);
+            active2(options[k], k, options);
         } else
-          active2(options, options);
+          active2(options);
       }
     }
   };
@@ -1108,7 +1082,7 @@
           if (this.nodeElement[key] !== null && typeof this.nodeElement[key] === "object") {
             val !== null && typeof val === "object" ? Object.assign(this.nodeElement[key], val) : errorNode(this.nodeElement.nodepath, 103, key);
           } else
-            this.nodeElement[key] = val !== Object(val) ? val : JSON.stringify(val);
+            this.nodeElement[key] = val;
         };
         this.impress.collect = true;
         active2();
@@ -1140,7 +1114,7 @@
         this.directive.init(key);
       } else if (key === "component" && this.component) {
         await this.component();
-      } else {
+      } else if (key !== "selector") {
         errorNode(this.nodeElement.nodepath, 104, key);
       }
     }

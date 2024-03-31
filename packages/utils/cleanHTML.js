@@ -1,7 +1,11 @@
-import { stringToHTML } from './stringToHTML.js'
-
 // HTML Sanitizer API
 function cleanHTML(str) {
+  
+  function stringToHTML(str) {
+    const capsule = document.createElement('capsule')
+    capsule.innerHTML = str
+    return capsule
+  }
   
   function removeScripts(html) {
     const scripts = html.querySelectorAll('script')

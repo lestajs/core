@@ -1,5 +1,4 @@
 import { errorComponent } from '../../utils/errors/component'
-import { stringToHTML } from '../../utils'
 
 export default function renderComponent(nodeElement, component, section, ssr) {
   const options = { ...component.context.options }
@@ -18,9 +17,8 @@ export default function renderComponent(nodeElement, component, section, ssr) {
   } else {
     if (nodeElement.hasAttribute('iterate')) {
       if (!options.template) return errorComponent(nodeElement.nodepath, 209)
-      if (!ssr) nodeElement.insertAdjacentHTML("beforeEnd", options.template)
+      if (!ssr) nodeElement.insertAdjacentHTML('beforeEnd', options.template)
       const iterableElement = nodeElement.children[nodeElement.children.length - 1]
-      //  if (nodeElement.children.length > 1) return errorComponent(nodeElement.nodepath, 210)
       iterableElement.nodepath = nodeElement.nodepath
       if (!nodeElement.unmount) nodeElement.unmount = () => {
         component.destroy(nodeElement)

@@ -17,7 +17,7 @@ export default class Native extends Node {
         const val = this.node[key].bind(this.context)(this.nodeElement)
         if (this.nodeElement[key] !== null && typeof this.nodeElement[key] === 'object') {
           val !== null && typeof val === 'object' ? Object.assign(this.nodeElement[key], val) : errorNode(this.nodeElement.nodepath, 103, key)
-        } else this.nodeElement[key] = (val !== Object(val)) ? val : JSON.stringify(val)
+        } else this.nodeElement[key] = val
       }
       this.impress.collect = true
       active()

@@ -20,7 +20,7 @@ export default class NodesBasic {
       this.directive.init(key)
     } else if (key === 'component' && this.component) {
       await this.component()
-    } else {
+    } else if (key !== 'selector') {
       errorNode(this.nodeElement.nodepath, 104, key)
     }
   }

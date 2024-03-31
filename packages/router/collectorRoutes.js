@@ -5,13 +5,13 @@ function collectorRoutes(routes, collection, parentPath = '', parentParams = {},
     if (!route.hasOwnProperty('path')) return errorRouter(route.name, 557)
     const params = { ...parentParams, ...route.params }
     route.params = params
-    const extras = { ...parentExtras, ...route.extra }
-    route.extras = extras
+    const extra = { ...parentExtras, ...route.extra }
+    route.extra = extra
     const collectorRoute = (path) => {
       if (!route.children) {
         collection.push({name: route.name, path: path.replace(/\/$/, '') || '/', route })
       } else {
-        collectorRoutes(route.children, collection, path, params, extras)
+        collectorRoutes(route.children, collection, path, params, extra)
       }
     }
     collectorRoute(parentPath + '/' + route.path.replace(/^\/|\/$/g, ''))

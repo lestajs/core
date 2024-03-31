@@ -151,15 +151,13 @@ function deleteReactive(reactivity, path) {
   }
 }
 
-// packages/utils/stringToHTML.js
-function stringToHTML(str) {
-  const table = document.createElement("table");
-  table.innerHTML = str;
-  return table;
-}
-
 // packages/utils/cleanHTML.js
 function cleanHTML(str) {
+  function stringToHTML(str2) {
+    const capsule = document.createElement("capsule");
+    capsule.innerHTML = str2;
+    return capsule;
+  }
   function removeScripts(html2) {
     const scripts = html2.querySelectorAll("script");
     for (let script of scripts) {
@@ -445,41 +443,25 @@ function active(reactivity, ref, value) {
 
 // packages/lesta/init/directives/_html.js
 var _html = {
-  update: async (node2, options) => {
-    const value = typeof options === "function" ? await options(node2) : options;
-    if (value !== void 0) {
-      node2.innerHTML = "";
-      node2.append(...cleanHTML(value));
-    }
+  update: (node2, value) => {
+    node2.innerHTML = "";
+    value && node2.append(...cleanHTML(value));
   }
 };
 
 // packages/lesta/init/directives/_evalHTML.js
 var _evalHTML = {
-  update: async (node2, options) => {
-    const value = typeof options === "function" ? await options(node2) : options;
-    if (value !== void 0) {
-      node2.innerHTML = value;
-    }
-  }
+  update: (node2, value) => value !== void 0 ? node2.innerHTML = value : ""
 };
 
 // packages/lesta/init/directives/_class.js
 var _class = {
-  update: (node2, options, key) => {
-    const value = typeof options[key] === "function" ? options[key](node2) : options[key];
-    value ? node2.classList.add(key) : node2.classList.remove(key);
-  }
+  update: (node2, value, key) => value ? node2.classList.add(key) : node2.classList.remove(key)
 };
 
 // packages/lesta/init/directives/_text.js
 var _text = {
-  update: async (node2, options) => {
-    const value = typeof options === "function" ? await options(node2) : options;
-    if (value !== void 0) {
-      node2.textContent = value;
-    }
-  }
+  update: (node2, value) => node2.textContent = value !== Object(value) ? value : JSON.stringify(value)
 };
 
 // packages/utils/errors/node.js
@@ -493,12 +475,6 @@ var errorNode = (name, code, param = "") => {
 var impress_default = {
   refs: [],
   collect: false,
-  exclude(p) {
-    this.collect = false;
-    const v = p();
-    this.collect = true;
-    return v;
-  },
   define(pr) {
     if (pr && this.refs.every((e) => e.startsWith(this.refs.at(0))))
       return this.refs.at(-1);
@@ -518,7 +494,6 @@ var InitBasic = class extends InitComponent {
     this.impress = impress_default;
     this.context = {
       ...this.context,
-      exclude: this.impress.exclude.bind(this.impress),
       directives: { _html, _evalHTML, _class, _text, ...app.directives, ...component2.directives }
     };
   }
@@ -562,7 +537,8 @@ var InitBasic = class extends InitComponent {
       const nodes = this.component.nodes.bind(this.context)();
       const container = this.context.container;
       for await (const [keyNode, options] of Object.entries(nodes)) {
-        const selector = this.component.selectors && this.component.selectors[keyNode] || `.${keyNode}`;
+        const s = options.selector || this.context.selector || `.${keyNode}`;
+        const selector = typeof s === "function" ? s(keyNode) : s;
         const nodeElement = container.querySelector(selector) || container.classList.contains(keyNode) && container;
         const nodepath = container.nodepath ? container.nodepath + "." + keyNode : keyNode;
         if (nodeElement) {
@@ -728,6 +704,8 @@ var Init = class extends InitBasic {
     this.proxiesData = await propsValidation_default.init(this.context.options.inputs, this.component.props, this.context, this.app) || {};
   }
   destroy(container) {
+    if (container.reactivity)
+      container.reactivity.component.clear();
     delete container.proxy;
     delete container.method;
     for (const key in container.unstore) {
@@ -750,6 +728,8 @@ var Init = class extends InitBasic {
             directive.destroy && directive.destroy();
           }
         }
+        if (node2.reactivity)
+          node2.reactivity.node.clear();
       }
     }
     this.component.unmounted && this.component.unmounted.bind(this.context)();
@@ -777,10 +757,7 @@ function mixins(target) {
         const resultHook = result[key];
         result[key] = async function() {
           var _a2;
-          let data = await (resultHook == null ? void 0 : resultHook.bind(this)());
-          if (!data)
-            data = await ((_a2 = options[key]) == null ? void 0 : _a2.bind(this)());
-          return data;
+          return ((_a2 = options[key]) == null ? void 0 : _a2.bind(this)()) || (resultHook == null ? void 0 : resultHook.bind(this)());
         };
       });
       props2.forEach((key) => {
@@ -827,18 +804,12 @@ var Node = class {
 
 // packages/lesta/nodes/component/props.js
 var props_default = {
-  collect(propertyComponent, proxies, val, index) {
+  collect(propertyComponent, val, index) {
     return {
       params: this.params(propertyComponent.params, val, index),
       methods: this.methods(propertyComponent.methods),
-      proxies: this.proxies(proxies),
       section: propertyComponent.section
     };
-  },
-  proxies(proxies) {
-    if (proxies) {
-      return proxies || {};
-    }
   },
   methods(methods) {
     const result = {};
@@ -877,7 +848,7 @@ async function sections_default(pc, specialty, nodeElement, proxies, create) {
       (_b = (_a = nodeElement.section[section]).unmount) == null ? void 0 : _b.call(_a);
       if (options.src) {
         options.section = section;
-        await create(specialty, nodeElement, options, proxies(options.proxies, nodeElement.section[section], section));
+        await create(specialty, nodeElement, options, () => proxies(options.proxies, nodeElement.section[section], section));
       }
     };
     nodeElement.section = {};
@@ -935,7 +906,8 @@ var Components = class extends Node {
         aborted,
         sections,
         ssr,
-        ...props_default.collect(pc, proxies, value, index)
+        ...props_default.collect(pc, value, index),
+        proxies: proxies() || {}
       });
       delete nodeElement.process;
     }
@@ -966,10 +938,13 @@ var Iterate = class extends Components {
     this.createIterate = async (index) => {
       if (!this.created)
         this.nodeElement.style.visibility = "hidden";
-      const proxies = this.proxies(this.node.component.proxies, this.nodeElement.children[index], index);
+      const proxies = () => this.proxies(this.node.component.proxies, this.nodeElement.children[index], index);
       await this.create(this.proxies.bind(this), this.nodeElement, this.node.component, proxies, this.data[index], index);
-      if (!this.created)
+      if (!this.created) {
+        if (this.nodeElement.children.length > 1)
+          return errorComponent(this.nodeElement.nodepath, 210);
         this.nodeElement.style.removeProperty("visibility");
+      }
       this.created = true;
     };
     this.impress.collect = true;
@@ -1101,7 +1076,7 @@ var Basic = class extends Components {
     super(...args);
   }
   async init() {
-    const mount2 = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, this.proxies(pc.proxies, this.nodeElement));
+    const mount2 = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, () => this.proxies(pc.proxies, this.nodeElement));
     this.nodeElement.mount = mount2;
     if (this.node.component.induce) {
       if (typeof this.node.component.induce !== "function")
@@ -1136,32 +1111,31 @@ var Directives = class extends Node {
     super(...args);
   }
   init(key) {
-    if (key[0] !== "_")
-      return errorNode(this.nodeElement.nodepath, 102, key);
+    const node2 = this.nodeElement;
+    if (!key.startsWith("_"))
+      return errorNode(node2.nodepath, 102, key);
     const directive = this.context.directives[key];
     const options = this.node[key];
     const { create, update, destroy } = directive;
-    if (!("directives" in this.nodeElement))
-      Object.assign(this.nodeElement, { directives: {} });
-    Object.assign(this.nodeElement.directives, { [key]: {
-      create: () => create ? create(this.nodeElement, options, directive) : {},
-      destroy: () => destroy ? destroy(this.nodeElement, options, directive) : {}
+    if (!node2.hasOwnProperty("directives"))
+      Object.assign(node2, { directives: {} });
+    Object.assign(node2.directives, { [key]: {
+      create: () => create ? create.bind(directive)(node2, options) : {},
+      destroy: () => destroy ? destroy.bind(directive)(node2, options) : {}
     } });
-    create && this.nodeElement.directives[key].create();
-    const active2 = (v, o, k) => {
-      if (typeof v === "function") {
-        this.impress.collect = true;
-        update.bind(directive)(this.nodeElement, o, k);
-        this.reactiveNode(this.impress.define(), () => update(this.nodeElement, o, k));
-      } else
-        update.bind(directive)(this.nodeElement, o, k);
+    create && node2.directives[key].create();
+    const active2 = (v, k, o) => {
+      const upd = () => update.bind(directive)(node2, typeof v === "function" ? v(node2) : v, k, o);
+      this.impress.collect = true;
+      upd();
+      this.reactiveNode(this.impress.define(), upd);
     };
-    if (update != null) {
+    if (update) {
       if (typeof options === "object") {
         for (const k in options)
-          active2(options[k], options, k);
+          active2(options[k], k, options);
       } else
-        active2(options, options);
+        active2(options);
     }
   }
 };
@@ -1185,7 +1159,7 @@ var Native = class extends Node {
         if (this.nodeElement[key] !== null && typeof this.nodeElement[key] === "object") {
           val !== null && typeof val === "object" ? Object.assign(this.nodeElement[key], val) : errorNode(this.nodeElement.nodepath, 103, key);
         } else
-          this.nodeElement[key] = val !== Object(val) ? val : JSON.stringify(val);
+          this.nodeElement[key] = val;
       };
       this.impress.collect = true;
       active2();
@@ -1217,7 +1191,7 @@ var NodesBasic = class {
       this.directive.init(key);
     } else if (key === "component" && this.component) {
       await this.component();
-    } else {
+    } else if (key !== "selector") {
       errorNode(this.nodeElement.nodepath, 104, key);
     }
   }
@@ -1510,10 +1484,10 @@ var route_default = {
         path: this.result.map.at(0) || "/",
         params,
         fullPath: this.url.href,
-        hash: this.url.hash.slice(1),
+        hash: this.url.hash,
         query: Object.fromEntries(new URLSearchParams(this.url.search)),
         name: target.name,
-        extras: target.extras,
+        extra: target.extra,
         route: {}
       };
       if (target.path.slice(-1) === "*")
@@ -1658,8 +1632,10 @@ function link(v, t, l) {
     }
   } else if (typeof v === "string" && v.startsWith("/")) {
     res = v;
-  } else
-    return v;
+  } else {
+    const url = new URL(v, t.fullPath);
+    return url.pathname;
+  }
   res = res.replace(/\/$/, "").replace(/^([^/])/, "/$1");
   return res || "/";
 }
@@ -1671,13 +1647,13 @@ function collectorRoutes(routes, collection, parentPath = "", parentParams = {},
       return errorRouter(route.name, 557);
     const params = { ...parentParams, ...route.params };
     route.params = params;
-    const extras = { ...parentExtras, ...route.extra };
-    route.extras = extras;
+    const extra = { ...parentExtras, ...route.extra };
+    route.extra = extra;
     const collectorRoute = (path) => {
       if (!route.children) {
         collection.push({ name: route.name, path: path.replace(/\/$/, "") || "/", route });
       } else {
-        collectorRoutes(route.children, collection, path, params, extras);
+        collectorRoutes(route.children, collection, path, params, extra);
       }
     };
     collectorRoute(parentPath + "/" + route.path.replace(/^\/|\/$/g, ""));
@@ -1707,6 +1683,8 @@ var BasicRouter = class {
       from: null,
       to: null,
       render: () => {
+      },
+      update: () => {
       }
     };
     this.routes = options.routes;
@@ -1722,15 +1700,20 @@ var BasicRouter = class {
   }
   async push(v) {
     const vs = v.path || v;
-    if (typeof vs === "string" && !vs.startsWith("/")) {
-      window.open(vs, v.target || "_blank", v.windowFeatures);
-      return;
+    if (typeof vs === "string" && vs !== "") {
+      if (vs.startsWith("#"))
+        return history[v.replace ? "replaceState" : "pushState"](null, null, v.path);
+      try {
+        if (new URL(vs).hostname !== location.hostname)
+          return window.open(vs, v.target || "_self", v.windowFeatures);
+      } catch {
+      }
     }
     const path = this.link(v);
     if (typeof path !== "string")
       return path;
-    const url = new URL((this.app.origin || window.location.origin) + path);
-    return await this.update(url, v, path);
+    const url = new URL((this.app.origin || location.origin) + path);
+    return await this.update(url, true, typeof v === "object" ? v.replace : false);
   }
   async beforeHooks(hook) {
     if (hook) {
@@ -1746,26 +1729,28 @@ var BasicRouter = class {
     if (hook)
       await hook(this.app.router.to, this.app.router.from, this.app);
   }
-  async update(url, v, path) {
+  async update(url, pushed = false, replace = false) {
     let res = null;
     if (await this.beforeHooks(this.beforeEach))
       return;
     const to = route_default.init(this.app.router.collection, url);
+    to.pushed = pushed;
+    to.replace = replace;
     const target = to == null ? void 0 : to.route;
     if (target) {
       this.app.router.from = this.form;
       this.app.router.to = to;
-      this.app.router.to.route.static = this.app.router.type === "static" && document.querySelector("html").getAttribute("static");
+      this.app.router.to.route.ssr = this.app.router.type === "ssr" && document.querySelector("html").getAttribute("ssr");
       if (await this.beforeHooks(this.beforeEnter))
         return;
       if (await this.beforeHooks(target.beforeEnter))
         return;
       if (target.redirect) {
-        let v2 = target.redirect;
-        typeof v2 === "function" ? await this.push(await v2(to, this.app.router.from)) : await this.push(v2);
+        let v = target.redirect;
+        typeof v === "function" ? await this.push(await v(to, this.app.router.from)) : await this.push(v);
         return;
       }
-      res = await this.app.router.render(this.app.router.to, v, path);
+      res = await this.app.router.render(this.app.router.to);
       if (!res)
         return;
       this.form = this.app.router.to;
@@ -1783,45 +1768,60 @@ var Router = class extends BasicRouter {
     super(...args);
     this.currentLayout = null;
     this.current = null;
-    this.app.router.go = (v) => history.go(v);
     this.app.router.render = this.render.bind(this);
+    this.app.router.update = this.on.bind(this);
     this.contaner = null;
     this.rootContainer = null;
+    this.events = /* @__PURE__ */ new Set();
   }
   async init(container) {
     this.rootContainer = container;
     window.addEventListener("popstate", () => this.update.bind(this)(window.location));
     this.rootContainer.addEventListener("click", (event) => {
-      const a = event.target.closest("a[link]");
+      const a = event.target.closest("[link]");
       if (a) {
         event.preventDefault();
-        if (a && a.href && !a.hash) {
-          this.push({ path: a.getAttribute("href"), replace: a.hasAttribute("replace") });
-        }
+        this.push(a.getAttribute("href"));
       }
     });
     await this.update(window.location);
   }
-  setHistory(v, path) {
-    (v == null ? void 0 : v.replace) ? history.replaceState(null, null, path) : history.pushState(null, null, path);
+  async emit(...args) {
+    const callbacks = this.events;
+    for await (const callback of callbacks) {
+      await callback(...args);
+    }
   }
-  async render(to, v, path) {
+  on(callback) {
+    const callbacks = this.events;
+    if (!callbacks.has(callback))
+      callbacks.add(callback);
+    return () => callbacks.delete(callback);
+  }
+  async render(to) {
     var _a, _b;
-    this.setHistory(v, path);
+    if (to.pushed)
+      history[to.replace ? "replaceState" : "pushState"](null, null, to.fullPath);
     const target = to.route;
     const from = this.app.router.from;
-    const ssr = target.static;
-    if (target.component && !(this.current && (from == null ? void 0 : from.route) === target)) {
+    const ssr = target.ssr;
+    if (this.current && (from == null ? void 0 : from.route.component) !== target.component) {
       (_b = (_a = this.current) == null ? void 0 : _a.unmount) == null ? void 0 : _b.call(_a);
-      if (this.currentLayout) {
-        this.currentLayout.unmount();
-        this.currentLayout = null;
-      }
-      if (target.layout) {
+      this.current = null;
+    }
+    if (this.currentLayout && (from == null ? void 0 : from.route.layout) !== target.layout) {
+      this.currentLayout.unmount();
+      this.currentLayout = null;
+    }
+    if (target.layout) {
+      if ((from == null ? void 0 : from.route.layout) !== target.layout) {
         if (this.abortControllerLayout)
           this.abortControllerLayout.abort();
         this.abortControllerLayout = new AbortController();
-        this.currentLayout = await this.app.mount(this.app.router.layouts[target.layout], this.rootContainer, { signal: this.abortControllerLayout.signal, ssr });
+        this.currentLayout = await this.app.mount(this.app.router.layouts[target.layout], this.rootContainer, {
+          signal: this.abortControllerLayout.signal,
+          ssr
+        });
         this.abortControllerLayout = null;
         if (!this.currentLayout)
           return;
@@ -1830,19 +1830,23 @@ var Router = class extends BasicRouter {
           errorRouter(null, 503);
           return;
         }
-        this.rootContainer.setAttribute("layout", target.layout);
-      } else
-        this.contaner = this.rootContainer;
-      document.title = target.title || "Lesta";
-      this.rootContainer.setAttribute("name", target.name || "");
+      }
+    } else
+      this.contaner = this.rootContainer;
+    this.rootContainer.setAttribute("layout", target.layout || "");
+    document.title = target.title || "Lesta";
+    this.rootContainer.setAttribute("page", target.name || "");
+    if ((from == null ? void 0 : from.route.component) !== target.component) {
       if (this.abortController)
         this.abortController.abort();
       this.abortController = new AbortController();
+      window.scrollTo(0, 0);
       this.current = await this.app.mount(target.component, this.contaner, { signal: this.abortController.signal, ssr });
       this.abortController = null;
       if (!this.current)
         return;
-    }
+    } else
+      await this.emit(to, from, this.app);
     return to;
   }
 };
