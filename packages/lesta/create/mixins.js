@@ -14,10 +14,8 @@ function mixins(target) {
       })
       hooks.forEach((key) => {
         const resultHook = result[key]
-        result[key] = async function () {
-          let data = await resultHook?.bind(this)()
-          if (!data) data = await options[key]?.bind(this)()
-          return data
+        result[key] = async function() {
+          return options[key]?.bind(this)() || resultHook?.bind(this)()
         }
       })
       props.forEach((key) => {

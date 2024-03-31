@@ -18,7 +18,7 @@ export default class Components extends Node {
       for (const [pr, fn] of Object.entries(proxies)) {
         if (typeof fn === 'function' && fn.name) {
           this.impress.collect = true
-          const value = (arr && fn.length) ? fn(arr[index], index) : fn(target)
+          const value = arr && fn.length ? fn(arr[index], index) : fn(target)
           Object.assign(result, {[pr]: value})
           reactive(pr, fn)
           this.impress.clear()
@@ -38,7 +38,8 @@ export default class Components extends Node {
         aborted,
         sections,
         ssr,
-        ...props.collect(pc, proxies, value, index)
+        ...props.collect(pc, value, index),
+        proxies: proxies() || {}
       })
       delete nodeElement.process
     }

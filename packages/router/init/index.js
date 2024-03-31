@@ -6,43 +6,56 @@ export default class Router extends BasicRouter {
     super(...args)
     this.currentLayout = null
     this.current = null
-    this.app.router.go = (v) => history.go(v)
     this.app.router.render = this.render.bind(this)
+    this.app.router.update = this.on.bind(this)
     this.contaner = null
     this.rootContainer = null
+    this.events = new Set()
   }
   async init(container) {
     this.rootContainer = container
     window.addEventListener('popstate', () => this.update.bind(this)(window.location))
     this.rootContainer.addEventListener('click', (event) => {
-      const a = event.target.closest('a[link]')
+      const a = event.target.closest('[link]')
       if (a) {
         event.preventDefault()
-        if (a && a.href && !a.hash) {
-          this.push({ path: a.getAttribute('href'), replace: a.hasAttribute('replace') })
-        }
+        this.push(a.getAttribute('href'))
       }
     })
     await this.update(window.location)
   }
-  setHistory(v, path) {
-    v?.replace ? history.replaceState(null, null, path) : history.pushState(null, null, path)
+  async emit(...args) {
+    const callbacks = this.events
+    for await (const callback of callbacks) {
+      await callback(...args)
+    }
   }
-  async render(to, v, path) {
-    this.setHistory(v, path)
+  on(callback) {
+    const callbacks = this.events
+    if (!callbacks.has(callback)) callbacks.add(callback)
+    return () => callbacks.delete(callback)
+  }
+  async render(to) {
+    if (to.pushed) history[to.replace ? 'replaceState' : 'pushState'](null, null, to.fullPath)
     const target = to.route
     const from = this.app.router.from
-    const ssr = target.static
-    if (target.component && !(this.current && from?.route === target)) {
-      this.current?.unmount?.()
-      if (this.currentLayout) {
-        this.currentLayout.unmount()
-        this.currentLayout = null
-      }
-      if (target.layout) {
+    const ssr = target.ssr
+    if (this.current && from?.route.component !== target.component) {
+      this.current?.unmount?.();
+      this.current = null
+    }
+    if (this.currentLayout && from?.route.layout !== target.layout) {
+      this.currentLayout.unmount()
+      this.currentLayout = null
+    }
+    if (target.layout) {
+      if (from?.route.layout !== target.layout) {
         if (this.abortControllerLayout) this.abortControllerLayout.abort()
         this.abortControllerLayout = new AbortController()
-        this.currentLayout = await this.app.mount(this.app.router.layouts[target.layout], this.rootContainer, { signal: this.abortControllerLayout.signal, ssr })
+        this.currentLayout = await this.app.mount(this.app.router.layouts[target.layout], this.rootContainer, {
+          signal: this.abortControllerLayout.signal,
+          ssr
+        })
         this.abortControllerLayout = null
         if (!this.currentLayout) return
         this.contaner = this.rootContainer.querySelector('[router]')
@@ -50,16 +63,21 @@ export default class Router extends BasicRouter {
           errorRouter(null, 503)
           return
         }
-        this.rootContainer.setAttribute('layout', target.layout)
-      } else this.contaner = this.rootContainer
-      document.title = target.title || 'Lesta'
-      this.rootContainer.setAttribute('name', target.name || '')
+      }
+    } else this.contaner = this.rootContainer
+      //
+    this.rootContainer.setAttribute('layout', target.layout || '')
+    document.title = target.title || 'Lesta'
+    this.rootContainer.setAttribute('page', target.name || '')
+    
+    if (from?.route.component !== target.component) {
       if (this.abortController) this.abortController.abort()
       this.abortController = new AbortController()
+      window.scrollTo(0, 0)
       this.current = await this.app.mount(target.component, this.contaner, { signal: this.abortController.signal, ssr })
       this.abortController = null
       if (!this.current) return
-    }
+    } else await this.emit(to, from, this.app)
     return to
   }
 }

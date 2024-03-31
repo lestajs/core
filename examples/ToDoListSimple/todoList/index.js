@@ -38,7 +38,6 @@ export default {
               this.method.setDB()
             },
             check: (index) => {
-              console.log(index)
               this.proxy.todoList[index].checked = !this.proxy.todoList[index].checked
               this.method.setDB()
             },

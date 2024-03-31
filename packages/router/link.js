@@ -70,7 +70,10 @@ export default function link(v, t, l) {
     }
   } else if (typeof v === 'string' && v.startsWith('/')) {
     res = v
-  } else return v
+  } else {
+    const url = new URL(v, t.fullPath)
+    return url.pathname
+  }
   res = res.replace(/\/$/, '').replace(/^([^/])/, '/$1')
   return res || '/'
 }

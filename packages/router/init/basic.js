@@ -12,7 +12,8 @@ export default class BasicRouter {
       link: this.link.bind(this),
       from: null,
       to: null,
-      render: () => {}
+      render: () => {},
+      update: () => {}
     }
     this.routes = options.routes
     this.afterEach = options.afterEach
@@ -27,14 +28,16 @@ export default class BasicRouter {
   }
   async push(v) {
     const vs = v.path || v
-    if (typeof vs === 'string' && !vs.startsWith('/')) {
-      window.open(vs, v.target || '_blank', v.windowFeatures)
-      return
+    if (typeof vs === 'string' && vs !== '') {
+      if (vs.startsWith("#")) return history[v.replace ? 'replaceState' : 'pushState'](null, null, v.path)
+      try {
+        if (new URL(vs).hostname !== location.hostname) return window.open(vs, v.target || '_self', v.windowFeatures)
+      } catch {}
     }
     const path = this.link(v)
     if (typeof path !== 'string') return path
-    const url = new URL((this.app.origin || window.location.origin) + path)
-    return await this.update(url, v, path)
+    const url = new URL((this.app.origin || location.origin) + path)
+    return await this.update(url, true, typeof v === 'object' ? v.replace : false)
   }
   async beforeHooks(hook) {
     if (hook) {
@@ -48,15 +51,17 @@ export default class BasicRouter {
   async afterHooks(hook) {
     if (hook) await hook(this.app.router.to, this.app.router.from, this.app)
   }
-  async update(url, v, path) {
+  async update(url, pushed = false, replace = false ) {
     let res = null
     if (await this.beforeHooks(this.beforeEach)) return
     const to = route.init(this.app.router.collection, url)
+    to.pushed = pushed
+    to.replace = replace
     const target = to?.route
     if (target) {
       this.app.router.from = this.form
       this.app.router.to = to
-      this.app.router.to.route.static = this.app.router.type === 'static' && document.querySelector('html').getAttribute('static')
+      this.app.router.to.route.ssr = this.app.router.type === 'ssr' && document.querySelector('html').getAttribute('ssr')
       if (await this.beforeHooks(this.beforeEnter)) return
       if (await this.beforeHooks(target.beforeEnter)) return
       if (target.redirect) {
@@ -64,7 +69,7 @@ export default class BasicRouter {
         typeof v === 'function' ? await this.push(await v(to, this.app.router.from)) : await this.push(v)
         return
       }
-      res = await this.app.router.render(this.app.router.to, v, path)
+      res = await this.app.router.render(this.app.router.to)
       if (!res) return
       this.form = this.app.router.to
       await this.afterHooks(this.afterEnter)

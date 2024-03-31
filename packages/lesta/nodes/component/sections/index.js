@@ -7,7 +7,7 @@ export default async function(pc, specialty, nodeElement, proxies, create) {
       nodeElement.section[section].unmount?.()
       if (options.src) {
         options.section = section
-        await create(specialty, nodeElement, options, proxies(options.proxies, nodeElement.section[section], section))
+        await create(specialty, nodeElement, options, () => proxies(options.proxies, nodeElement.section[section], section))
       }
     }
     nodeElement.section = {}
