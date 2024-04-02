@@ -1,7 +1,7 @@
 import InitComponent from '../init/initComponent'
 import diveProxy from '../reactivity/diveProxy'
 import active from '../reactivity/active'
-import { _html, _evalHTML, _class, _text } from './directives'
+import * as directives from './directives'
 import { errorNode } from '../../utils/errors/node'
 import impress from './impress'
 
@@ -12,7 +12,7 @@ class InitBasic extends InitComponent {
     this.impress = impress
     this.context = {
       ...this.context,
-      directives: { _html, _evalHTML, _class, _text, ...app.directives, ...component.directives }
+      directives: { ...directives, ...app.directives, ...component.directives }
     }
   }
   async props() {}
