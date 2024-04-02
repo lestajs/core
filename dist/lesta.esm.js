@@ -1,3 +1,9 @@
+var __defProp = Object.defineProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
 // packages/utils/replicate.js
 function replicate(data) {
   if (!data)
@@ -400,6 +406,17 @@ function active(reactivity, ref, value) {
   }
 }
 
+// packages/lesta/init/directives/index.js
+var directives_exports = {};
+__export(directives_exports, {
+  _attr: () => _attr,
+  _class: () => _class,
+  _evalHTML: () => _evalHTML,
+  _event: () => _event,
+  _html: () => _html,
+  _text: () => _text
+});
+
 // packages/lesta/init/directives/_html.js
 var _html = {
   update: (node2, value) => {
@@ -421,6 +438,33 @@ var _class = {
 // packages/lesta/init/directives/_text.js
 var _text = {
   update: (node2, value) => node2.textContent = value !== Object(value) ? value : JSON.stringify(value)
+};
+
+// packages/lesta/init/directives/_attr.js
+var _attr = {
+  update: (node2, value, key) => {
+    if (typeof value === "boolean") {
+      if (value) {
+        node2.setAttribute(key, "");
+      } else
+        node2.removeAttribute(key);
+    } else if (value)
+      node2.setAttribute(key, value);
+  }
+};
+
+// packages/lesta/init/directives/_event.js
+var _event = {
+  create: (node2, options) => {
+    for (const key in options) {
+      node2.addEventListener(key, options[key]);
+    }
+  },
+  destroy: (node2, options) => {
+    for (const key in options) {
+      node2.removeEventListener(key, options[key]);
+    }
+  }
 };
 
 // packages/utils/errors/node.js
@@ -453,7 +497,7 @@ var InitBasic = class extends InitComponent {
     this.impress = impress_default;
     this.context = {
       ...this.context,
-      directives: { _html, _evalHTML, _class, _text, ...app.directives, ...component2.directives }
+      directives: { ...directives_exports, ...app.directives, ...component2.directives }
     };
   }
   async props() {
