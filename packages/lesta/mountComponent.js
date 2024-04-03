@@ -1,12 +1,12 @@
-import { errorComponent } from '../../utils/errors/component'
-import { loadModule } from '../../utils'
-import { Init } from '../init'
+import { errorComponent } from '../utils/errors/component'
+import { loadModule } from '../utils'
+import { Init } from './init'
 import { mixins } from './mixins'
-import Nodes from '../nodes'
+import Nodes from './nodes'
 import renderComponent from './renderComponent'
 import { lifecycle } from './lifecycle'
 
-async function mount(app, src, container, props = {}) {
+async function mountComponent(src, container, props = {}, app = {}) {
   const { signal, aborted, params, methods, proxies, sections, section, ssr } = props
   const nodepath = container.nodepath || 'root'
   if (signal && !(signal instanceof AbortSignal)) errorComponent(nodepath, 217)
@@ -19,4 +19,4 @@ async function mount(app, src, container, props = {}) {
   return await lifecycle(component, render, aborted)
 }
 
-export { mount }
+export { mountComponent }

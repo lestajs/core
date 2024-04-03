@@ -257,11 +257,8 @@
   var _attr = {
     update: (node2, value, key) => {
       if (typeof value === "boolean") {
-        if (value) {
-          node2.setAttribute(key, "");
-        } else
-          node2.removeAttribute(key);
-      } else if (value)
+        value ? node2.setAttribute(key, "") : node2.removeAttribute(key);
+      } else
         node2.setAttribute(key, value);
     }
   };
@@ -486,7 +483,7 @@
     }
   };
 
-  // packages/lesta/create/lifecycle.js
+  // packages/lesta/lifecycle.js
   async function lifecycle(component2, render, aborted) {
     const hooks = [
       async () => await component2.loaded(),
@@ -519,8 +516,8 @@
     return component2.context.container;
   }
 
-  // packages/lesta/create/widget/index.js
-  async function createWidget(src, root, signal, aborted) {
+  // packages/lesta/mountWidget.js
+  async function mountWidget(src, root, signal, aborted) {
     if (!src)
       return errorComponent("root", 216);
     if (signal && !(signal instanceof AbortSignal))
@@ -542,6 +539,6 @@
     };
   }
 
-  // scripts/lesta.widget.global.js
-  window.lesta = { createWidget };
+  // scripts/lesta.mountWidget.global.js
+  window.lesta = { mountWidget };
 })();

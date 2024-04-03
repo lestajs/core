@@ -8,7 +8,7 @@ export default class Iterate extends Components {
         this.queue = queue()
         this.name = null
         this.created = false
-        this.nodeElement.removeChildren = () => this.remove.bind(this)(0)
+        this.nodeElement.toEmpty = () => this.remove.bind(this)(0)
     }
     async init() {
         if (typeof this.node.component.iterate !== 'function') return errorComponent(this.nodeElement.nodepath, 205)
@@ -59,7 +59,7 @@ export default class Iterate extends Components {
                 this.impress.collect = true
                 const permit = this.node.component.induce()
                 this.reactiveNode(this.impress.define(), async () => {
-                    !this.node.component.induce() ? this.nodeElement.removeChildren() : await mount()
+                    !this.node.component.induce() ? this.nodeElement.toEmpty() : await mount()
                 })
                 if (permit) await mount()
             } else {

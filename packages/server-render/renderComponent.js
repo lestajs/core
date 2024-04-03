@@ -1,6 +1,6 @@
 import { Init } from './init/index.js'
-import { mixins } from '../lesta/create/mixins.js'
-import { lifecycle } from '../lesta/create/lifecycle.js'
+import { mixins } from '../lesta/mixins.js'
+import { lifecycle } from '../lesta/lifecycle.js'
 import { loadModule } from "../utils/loadModule.js"
 import { errorComponent } from "../utils/errors/component.js"
 

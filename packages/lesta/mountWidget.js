@@ -1,9 +1,9 @@
-import { lifecycle } from '../lifecycle'
-import { InitBasic } from '../../init/basic'
-import NodesBasic from '../../nodes/basic'
-import { errorComponent } from '../../../utils/errors/component'
+import { lifecycle } from './lifecycle'
+import { InitBasic } from './init/basic'
+import NodesBasic from './nodes/basic'
+import { errorComponent } from '../utils/errors/component'
 
-async function createWidget(src, root, signal, aborted) {
+async function mountWidget(src, root, signal, aborted) {
   if (!src) return errorComponent('root', 216)
   if (signal && !(signal instanceof AbortSignal)) errorComponent('root', 217)
   if (aborted && typeof aborted !== 'function') errorComponent('root', 218)
@@ -22,4 +22,4 @@ async function createWidget(src, root, signal, aborted) {
   }
 }
 
-export { createWidget }
+export { mountWidget }
