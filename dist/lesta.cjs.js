@@ -19,10 +19,10 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // scripts/lesta.js
 var lesta_exports = {};
 __export(lesta_exports, {
+  cleanHTML: () => cleanHTML,
   createApp: () => createApp,
   createRouter: () => createRouter,
   createStores: () => createStores,
-  createWidget: () => createWidget,
   debounce: () => debounce,
   deepFreeze: () => deepFreeze,
   delay: () => delay,
@@ -30,6 +30,8 @@ __export(lesta_exports, {
   deliver: () => deliver,
   loadModule: () => loadModule,
   mapProps: () => mapProps,
+  mountComponent: () => mountComponent,
+  mountWidget: () => mountWidget,
   nextRepaint: () => nextRepaint,
   queue: () => queue,
   replicate: () => replicate,
@@ -479,11 +481,8 @@ var _text = {
 var _attr = {
   update: (node2, value, key) => {
     if (typeof value === "boolean") {
-      if (value) {
-        node2.setAttribute(key, "");
-      } else
-        node2.removeAttribute(key);
-    } else if (value)
+      value ? node2.setAttribute(key, "") : node2.removeAttribute(key);
+    } else
       node2.setAttribute(key, value);
   }
 };
@@ -742,8 +741,8 @@ var Init = class extends InitBasic {
     this.proxiesData = await propsValidation_default.init(this.context.options.inputs, this.component.props, this.context, this.app) || {};
   }
   destroy(container) {
-    if (container.reactivity)
-      container.reactivity.component.clear();
+    var _a, _b;
+    (_b = (_a = container.reactivity) == null ? void 0 : _a.component) == null ? void 0 : _b.clear();
     delete container.proxy;
     delete container.method;
     for (const key in container.unstore) {
@@ -751,6 +750,7 @@ var Init = class extends InitBasic {
     }
   }
   unmount(container) {
+    var _a, _b;
     if (this.context.node) {
       for (const node2 of Object.values(this.context.node)) {
         if (node2.unmount && !node2.hasAttribute("iterable")) {
@@ -766,8 +766,7 @@ var Init = class extends InitBasic {
             directive.destroy && directive.destroy();
           }
         }
-        if (node2.reactivity)
-          node2.reactivity.node.clear();
+        (_b = (_a = node2.reactivity) == null ? void 0 : _a.node) == null ? void 0 : _b.clear();
       }
     }
     this.component.unmounted && this.component.unmounted.bind(this.context)();
@@ -775,7 +774,7 @@ var Init = class extends InitBasic {
   }
 };
 
-// packages/lesta/create/mixins.js
+// packages/lesta/mixins.js
 function mixins(target) {
   var _a;
   if ((_a = target.mixins) == null ? void 0 : _a.length) {
@@ -879,7 +878,7 @@ var props_default = {
 // packages/lesta/nodes/component/sections/index.js
 async function sections_default(pc, specialty, nodeElement, proxies, create) {
   if (pc.sections) {
-    const mount2 = async (section, options) => {
+    const mount = async (section, options) => {
       var _a, _b;
       if (pc.iterate)
         return errorComponent(nodeElement.section[section].nodepath, 204);
@@ -900,8 +899,8 @@ async function sections_default(pc, specialty, nodeElement, proxies, create) {
         sectionNode.reactivity = { component: /* @__PURE__ */ new Map() };
       Object.assign(nodeElement.section, { [section]: sectionNode });
       if (options.src)
-        await mount2(section, options);
-      sectionNode.mount = async (v) => await mount2(section, v || options);
+        await mount(section, options);
+      sectionNode.mount = async (v) => await mount(section, v || options);
     }
   }
 }
@@ -968,7 +967,7 @@ var Iterate = class extends Components {
     this.queue = queue();
     this.name = null;
     this.created = false;
-    this.nodeElement.removeChildren = () => this.remove.bind(this)(0);
+    this.nodeElement.toEmpty = () => this.remove.bind(this)(0);
   }
   async init() {
     if (typeof this.node.component.iterate !== "function")
@@ -1019,19 +1018,19 @@ var Iterate = class extends Components {
           this.queue.add(async () => await this.length(v));
         });
       }
-      const mount2 = async () => await this.add(this.data.length);
+      const mount = async () => await this.add(this.data.length);
       if (this.node.component.induce) {
         if (typeof this.node.component.induce !== "function")
           return errorComponent(this.nodeElement.nodepath, 212);
         this.impress.collect = true;
         const permit = this.node.component.induce();
         this.reactiveNode(this.impress.define(), async () => {
-          !this.node.component.induce() ? this.nodeElement.removeChildren() : await mount2();
+          !this.node.component.induce() ? this.nodeElement.toEmpty() : await mount();
         });
         if (permit)
-          await mount2();
+          await mount();
       } else {
-        await mount2();
+        await mount();
       }
     }
   }
@@ -1114,8 +1113,8 @@ var Basic = class extends Components {
     super(...args);
   }
   async init() {
-    const mount2 = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, () => this.proxies(pc.proxies, this.nodeElement));
-    this.nodeElement.mount = mount2;
+    const mount = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, () => this.proxies(pc.proxies, this.nodeElement));
+    this.nodeElement.mount = mount;
     if (this.node.component.induce) {
       if (typeof this.node.component.induce !== "function")
         return errorComponent(this.nodeElement.nodepath, 212);
@@ -1126,12 +1125,12 @@ var Basic = class extends Components {
         if (!this.node.component.induce()) {
           (_b = (_a = this.nodeElement).unmount) == null ? void 0 : _b.call(_a);
         } else if (!this.nodeElement.unmount)
-          await mount2(this.node.component);
+          await mount(this.node.component);
       });
       if (permit)
-        await mount2(this.node.component);
+        await mount(this.node.component);
     } else {
-      this.node.component.src && await mount2(this.node.component);
+      this.node.component.src && await mount(this.node.component);
     }
   }
   proxies(proxies, target) {
@@ -1239,20 +1238,24 @@ var NodesBasic = class {
 var Nodes = class extends NodesBasic {
   constructor(...args) {
     super(...args);
-    const { node: node2, context, nodeElement, impress, app, keyNode } = this;
-    this.basic = new Basic(node2, context, nodeElement, impress, app, keyNode);
-    this.iterate = new Iterate(node2, context, nodeElement, impress, app, keyNode);
   }
   async component() {
     if (this.nodeElement.hasAttribute("section"))
       return errorComponent(this.nodeElement.nodepath, 207);
     if (this.nodeElement.hasAttribute("iterable"))
       return errorComponent(this.nodeElement.nodepath, 208);
-    this.node.component.iterate ? await this.iterate.init() : await this.basic.init();
+    const { node: node2, context, nodeElement, impress, app, keyNode } = this;
+    if (this.node.component.iterate) {
+      this.iterate = new Iterate(node2, context, nodeElement, impress, app, keyNode);
+      await this.iterate.init();
+    } else {
+      this.basic = new Basic(node2, context, nodeElement, impress, app, keyNode);
+      await this.basic.init();
+    }
   }
 };
 
-// packages/lesta/create/renderComponent.js
+// packages/lesta/renderComponent.js
 function renderComponent(nodeElement, component2, section, ssr) {
   const options = { ...component2.context.options };
   if (section) {
@@ -1280,7 +1283,7 @@ function renderComponent(nodeElement, component2, section, ssr) {
       if (!nodeElement.unmount)
         nodeElement.unmount = () => {
           component2.destroy(nodeElement);
-          nodeElement.removeChildren();
+          nodeElement.toEmpty();
           delete nodeElement.unmount;
         };
       iterableElement.setAttribute("iterable", "");
@@ -1302,7 +1305,7 @@ function renderComponent(nodeElement, component2, section, ssr) {
   }
 }
 
-// packages/lesta/create/lifecycle.js
+// packages/lesta/lifecycle.js
 async function lifecycle(component2, render, aborted) {
   var _a;
   const hooks = [
@@ -1336,8 +1339,8 @@ async function lifecycle(component2, render, aborted) {
   return component2.context.container;
 }
 
-// packages/lesta/create/mount.js
-async function mount(app, src, container, props2 = {}) {
+// packages/lesta/mountComponent.js
+async function mountComponent(src, container, props2 = {}, app = {}) {
   const { signal, aborted, params, methods, proxies, sections, section, ssr } = props2;
   const nodepath = container.nodepath || "root";
   if (signal && !(signal instanceof AbortSignal))
@@ -1353,34 +1356,11 @@ async function mount(app, src, container, props2 = {}) {
   return await lifecycle(component2, render, aborted);
 }
 
-// packages/lesta/create/app/index.js
+// packages/lesta/createApp.js
 function createApp(app = {}) {
   app.use = (plugin, options) => plugin.setup(app, options);
-  app.mount = async (component2, container, props2) => await mount(app, component2, container, props2);
+  app.mount = async (component2, container, props2) => await mountComponent(component2, container, props2, app);
   return app;
-}
-
-// packages/lesta/create/widget/index.js
-async function createWidget(src, root, signal, aborted) {
-  if (!src)
-    return errorComponent("root", 216);
-  if (signal && !(signal instanceof AbortSignal))
-    errorComponent("root", 217);
-  if (aborted && typeof aborted !== "function")
-    errorComponent("root", 218);
-  const component2 = new InitBasic(src, {}, signal, NodesBasic);
-  const render = () => {
-    root.innerHTML = src.template;
-    component2.context.container = root;
-  };
-  await lifecycle(component2, render, aborted);
-  return {
-    destroy() {
-      delete root.reactivity;
-      delete root.method;
-      root.innerHTML = "";
-    }
-  };
 }
 
 // packages/utils/errors/store.js
@@ -1893,12 +1873,35 @@ var Router = class extends BasicRouter {
 function createRouter(app, options) {
   return new Router(app, options);
 }
+
+// packages/lesta/mountWidget.js
+async function mountWidget(src, root, signal, aborted) {
+  if (!src)
+    return errorComponent("root", 216);
+  if (signal && !(signal instanceof AbortSignal))
+    errorComponent("root", 217);
+  if (aborted && typeof aborted !== "function")
+    errorComponent("root", 218);
+  const component2 = new InitBasic(src, {}, signal, NodesBasic);
+  const render = () => {
+    root.innerHTML = src.template;
+    component2.context.container = root;
+  };
+  await lifecycle(component2, render, aborted);
+  return {
+    destroy() {
+      delete root.reactivity;
+      delete root.method;
+      root.innerHTML = "";
+    }
+  };
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  cleanHTML,
   createApp,
   createRouter,
   createStores,
-  createWidget,
   debounce,
   deepFreeze,
   delay,
@@ -1906,6 +1909,8 @@ function createRouter(app, options) {
   deliver,
   loadModule,
   mapProps,
+  mountComponent,
+  mountWidget,
   nextRepaint,
   queue,
   replicate,

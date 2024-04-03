@@ -44,7 +44,6 @@ function cleanHTML(str) {
   removeScripts(html)
   clean(html)
   return html.childNodes
-  
 }
 
 export { cleanHTML }

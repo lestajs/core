@@ -1,4 +1,4 @@
-import { errorComponent } from '../../utils/errors/component'
+import { errorComponent } from '../utils/errors/component'
 
 export default function renderComponent(nodeElement, component, section, ssr) {
   const options = { ...component.context.options }
@@ -22,7 +22,7 @@ export default function renderComponent(nodeElement, component, section, ssr) {
       iterableElement.nodepath = nodeElement.nodepath
       if (!nodeElement.unmount) nodeElement.unmount = () => {
         component.destroy(nodeElement)
-        nodeElement.removeChildren()
+        nodeElement.toEmpty()
         delete nodeElement.unmount
       }
       iterableElement.setAttribute('iterable', '')
