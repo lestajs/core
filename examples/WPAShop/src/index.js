@@ -13,10 +13,8 @@ const app = createApp({
   directives: {
     _attr, _classes
   },
-  plugins: {
-    axios,
-    filters
-  }
+  axios,
+  filters
 })
 
 createStores(app, { products })

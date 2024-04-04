@@ -1,0 +1,20 @@
+.lstTabs {
+  border-bottom: 1px solid var(--gray100);
+}
+.lstTabs .lstBtn {
+  border-radius: 0;
+  position: relative;
+  color: var(--gray500);
+}
+.lstTabs .lstBtn.l-active {
+  color: inherit;
+}
+.lstTabs .lstBtn.l-active:after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background-color: var(--black);
+  bottom: -2px;
+  left: 0;
+}

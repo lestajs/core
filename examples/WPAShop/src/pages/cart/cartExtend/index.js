@@ -11,20 +11,23 @@ export default {
           src: card,
           proxies: {
             header: () => this.proxy._product.title,
-            content: () => '$' + this.proxy._product.price
+            content: () => this.filters.currencyUSD(this.proxy._product.price)
           }
         }
       },
       toggle: {
         component: {
           src: toggle,
+          params: {
+            id: () => this.proxy._product.id
+          },
           proxies: {
             quantity: () => this.proxy._product.quantity
           }
         }
       },
       price: {
-        textContent: () => '$' + (this.proxy._product.price * this.proxy._product.quantity)
+        textContent: () => this.filters.currencyUSD(this.proxy._product.price * this.proxy._product.quantity)
       }
     }
   }

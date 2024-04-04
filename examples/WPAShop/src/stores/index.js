@@ -54,10 +54,17 @@ const products = {
         }
       }
     },
-    changeQuantity(id, v) {
-      const product = this.proxy.cartProducts.find((el) => el.id === id)
-      product.quantity += v
+    async changeQuantity({ id, value }) {
+      console.log(id, value)
+      const response = await cartApi.updateProduct(id, value)
+      console.log(response)
+
+      if (response) {
+        const product = this.proxy.cartProducts.find((el) => el.id === id)
+        product.quantity = value
+      }
     }
   }
 }
+
 export { products }

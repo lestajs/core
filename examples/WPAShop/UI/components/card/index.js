@@ -1,4 +1,4 @@
-import btn from '../button'
+import btn from '../buttonOld'
 import image from '../image'
 import './index.css'
 

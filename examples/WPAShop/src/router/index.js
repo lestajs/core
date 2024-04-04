@@ -51,5 +51,11 @@ export default {
       component: { template: 'Account' },
       name: 'account',
     },
+    {
+      path: '/checkout',
+      layout: 'main',
+      component: () => import('../pages/checkout'),
+      name: 'checkout'
+    }
   ],
 }

@@ -40,7 +40,7 @@ export default {
     nodes() {
         return {
             subtotalPrice: {
-                _text: () => '$' + this.method.subSum().toFixed(2)
+                _text: () => this.filters.currencyUSD(this.method.subSum())
             },
             promo: {
                 component: {
@@ -59,13 +59,16 @@ export default {
                 }
             },
             totalPrice: {
-                _text: () => '$' + (this.method.subSum() - 10 + 7)
+                _text: () => this.filters.currencyUSD(this.method.subSum())
             },
             checkoutBtn: {
                 component: {
                     src: button,
                     proxies: {
-                        text: 'Checkout'
+                        value: 'Checkout'
+                    },
+                    methods: {
+                        action: () => this.router.push('/checkout')
                     }
                 }
             },
