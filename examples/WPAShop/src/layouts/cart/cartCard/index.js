@@ -1,4 +1,4 @@
-import button from '../../../../UI/components/button'
+import button from '../../../../UI/components/buttonOld'
 import card from '../../../../UI/components/card'
 import './index.pcss'
 

@@ -1,37 +1,79 @@
-.LstButton {
-  display: flex;
-  line-height: 1;
-  font-size: var(--fs-xs);
-  background-color: var(--gray100);
-  color: inherit;
-  overflow: hidden;
-  align-items: center;
-  cursor: pointer;
-  gap: 0.5em;
-}
-.LstButton.active {
-  background-color: var(--gray300);
-}
-.LstButtonText {
-  min-height: 1em;
-  min-width: 1em;
-  font-weight: 400;
-}
-.LstButtonText:empty {
-  padding: 0;
-  min-width: 0;
-}
-.LstButtonIcon {
-  display: contents;
-}
-.LstButtonIcon:empty{
-  width: 0;
-  height: 0;
-}
-.LstButtonIcon:empty ~ .LstButtonText {
-  padding: 0;
+.lstEl:has(.lstBtn) {
+  margin-top: auto;
 }
 
-.LstButton[type="text"] {
+.lstBtn {
+  line-height: 1;
+  gap: .5em;
+  font-weight: 400;
+  transition: gap .2s .2s;
+}
+.lstBtn:has(.lstBtnIcon:not(.lstSpinner):empty) {
+  gap: 0;
+}
+.lstBtn:has(.lstBtnText:empty) {
+  gap: 0;
+}
+
+.lstBtnText {
+  min-height: 1em;
+  padding: 0 .2em;
+}
+.lstBtnText:before {
+  content: '\200B';
+}
+
+.lstBtnText:empty {
+  padding: 0;
+}
+.lstBtnIcon {
+  position: relative;
+  width: 1em;
+  height: 1em;
+  scale: 1.2;
+  line-height: 1;
+}
+.lstBtnIcon > * {
+  position: absolute;
+  height: 1em;
+  width: 1em;
+}
+.lstBtnIcon.lstSpinner > * {
+  display: none;
+}
+.lstBtnIcon:empty{
+  width: 0;
+  height: 0;
+  transition: width .2s .2s, height .2s .2s;
+}
+.lstBtnIcon.lstSpinner {
+  width: 1em;
+  height: 1em;
+}
+.lstBtnIcon:empty ~ .lstBtnText {
+  padding: 0;
+}
+.lstBtn:enabled:active span {
+  position: relative;
+  top: 1px;
+}
+
+.lstBtn[type="primary"] {
+  background-color: var(--gray700);
+  color: white;
+}
+.lstBtn[type="accent"] {
+  background-color: var(--green);
+}
+.lstBtn[type="warn"] {
+  background-color: var(--red);
+}
+.lstBtn[type="text"] {
   background-color: transparent;
+}
+.lstBtn[type="text"]:active {
+
+}
+.lstBtn[type="primary"] .lstSpinner:before {
+  background-color: white;
 }

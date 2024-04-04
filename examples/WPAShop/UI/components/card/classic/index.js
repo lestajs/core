@@ -1,4 +1,4 @@
-import btn from '../../button'
+import btn from '../../buttonOld'
 import miniava from '../../miniava'
 
 export default {

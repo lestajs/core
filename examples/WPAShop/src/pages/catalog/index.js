@@ -4,7 +4,7 @@ import card from '../../../UI/components/card/'
 import catalogApi from '../../../common/catalogApi.js'
 import './index.pcss'
 // import filter from './filters/index.js'
-import button from '../../../UI/components/button'
+import button from '../../../UI/components/buttonOld/index.js'
 import buttons from '../../../UI/components/buttons'
 import '../../../UI/components/spinner/index.css'
 import dropdown from '../../../UI/components/dropdown'
@@ -132,8 +132,8 @@ export default {
     this.param.categories = await catalogApi.getAllCategories()
     // await delay(1500);
     this.proxy.hidden = true
-    console.dir(this.router.to.extras.sidebar)
-    const sidebarSections = this.router.to.extras.sidebar.section
+    console.dir(this.router.to.extra.sidebar)
+    const sidebarSections = this.router.to.extra.sidebar.section
 
     await sidebarSections.content.mount({ src: cart })
     await sidebarSections.bottom.mount({

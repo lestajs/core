@@ -1,58 +1,61 @@
 import { _attr } from '../directives'
 import './index.css'
+import '../spinner/index.css'
 
 export default {
   template: `
-  <button class="LstButton fx-b br pn">
-    <span class="LstButtonIcon"></span>
-    <span class="LstButtonText"></span>
+  <button class="lstBtn l-fx-b l-br">
+    <span class="lstBtnIcon l-fx l-jc-center"></span>
+    <span class="lstBtnText"></span>
   </button>`,
   directives: { _attr },
   props: {
     proxies: {
-      color: {},
-      text: {},
-      active: {},
+      value: {},
       disabled: {},
-      hide: {}
+      error: {}
     },
     params: {
       name: { default: '' },
-      text: {},
-      type: { default: '' },
-      size: { default: 'small' },
-      autofocus: {},
-      icon: {
-        default: ''
-      },
-      iconPosition: {}
+      type: { default: 'button' },
+      size: { default: 'medium' },
+      options: { default: {}}
     },
     methods: {
-      change: {}
+      action: {}
     }
   },
   nodes() {
     return {
-      LstButton: {
+      lstBtn: {
         _class: {
-          hide: () => this.proxy.hide,
-          active: () => this.proxy.active,
-          filled: this.param.type && this.param.type !== 'text',
-          'fx-rev': this.param.iconPosition
+          'l-fx-rev': this.param.options.iconPosition === 'end'
         },
         _attr: {
-          size: this.param.size,
+          size: this.param.size
         },
         name: this.param.name,
         type: this.param.type,
-        onclick: () => this.method.change && this.method.change(this.param)
+        disabled: () => this.proxy.disabled,
+        onclick: (event) => this.method.action?.({ name: this.param.name, value: this.proxy.value, icon: event.target.closest('.lstBtnIcon') })
       },
-      LstButtonIcon: {
-        _html: () => this.param.icon
+      lstBtnIcon: {
+        _class: {
+          lstSpinner: () => this.proxy.error
+        },
+        _html: () => this.param.options.icon
       },
-      LstButtonText: {
-        textContent: () => this.proxy.text ?? this.param.text ?? ''
+      lstBtnText: {
+        _text: () => this.proxy.value
       }
+    }
+  },
+  methods: {
+    set(v) {
+      this.proxy.value = v
+    },
+    spinner(v) {
+      this.proxy.error = v
     }
   }
 }
