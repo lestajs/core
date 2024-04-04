@@ -24,7 +24,7 @@ export default {
             event.preventDefault()
             event.stopPropagation()
 
-            this.router.to.extras.sidebar.method.toggle()
+            this.router.to.extra.sidebar.method.toggle()
           }
 
           // console.log(this.param.text)
