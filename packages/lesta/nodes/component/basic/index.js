@@ -6,7 +6,7 @@ export default class Basic extends Components {
     super(...args)
   }
   async init() {
-    const mount = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, this.proxies(pc.proxies, this.nodeElement))
+    const mount = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, () => this.proxies(pc.proxies, this.nodeElement))
     this.nodeElement.mount = mount
     if (this.node.component.induce) {
       if (typeof this.node.component.induce !== 'function') return errorComponent(this.nodeElement.nodepath, 212)

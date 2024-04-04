@@ -9,7 +9,7 @@ class Init extends InitBasic {
     this.proxiesData = await propsValidation.init(this.context.options.inputs, this.component.props, this.context, this.app) || {}
   }
   destroy(container) {
-    // if (container.reactivity) container.reactivity.component.clear() // !!
+    container.reactivity?.component?.clear()
     delete container.proxy
     delete container.method
     for (const key in container.unstore) {
@@ -32,7 +32,7 @@ class Init extends InitBasic {
             directive.destroy && directive.destroy()
           }
         }
-        // if (node.reactivity) node.reactivity.node.clear() // !!
+        node.reactivity?.node?.clear()
       }
     }
     this.component.unmounted && this.component.unmounted.bind(this.context)()

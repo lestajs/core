@@ -1,7 +1,7 @@
 import InitComponent from '../init/initComponent'
 import diveProxy from '../reactivity/diveProxy'
 import active from '../reactivity/active'
-import { _html, _evalHTML, _class, _text } from './directives'
+import * as directives from './directives'
 import { errorNode } from '../../utils/errors/node'
 import impress from './impress'
 
@@ -12,8 +12,7 @@ class InitBasic extends InitComponent {
     this.impress = impress
     this.context = {
       ...this.context,
-      exclude: this.impress.exclude.bind(this.impress),
-      directives: { _html, _evalHTML, _class, _text, ...app.directives, ...component.directives }
+      directives: { ...directives, ...app.directives, ...component.directives }
     }
   }
   async props() {}
@@ -52,7 +51,8 @@ class InitBasic extends InitComponent {
       const nodes = this.component.nodes.bind(this.context)()
       const container = this.context.container
       for await (const [keyNode, options] of Object.entries(nodes)) {
-        const selector = (this.component.selectors && this.component.selectors[keyNode] ) || `.${keyNode}`
+        const s = options.selector || this.context.selector || `.${keyNode}`
+        const selector = typeof s === "function" ? s(keyNode) : s
         const nodeElement = container.querySelector(selector) || container.classList.contains(keyNode) && container
         const nodepath = container.nodepath ? container.nodepath + '.' + keyNode : keyNode
         if (nodeElement) {

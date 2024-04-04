@@ -26,59 +26,6 @@
     }
   }
 
-  // packages/utils/mapProps.js
-  function mapProps(arr, options) {
-    const res = {};
-    arr.forEach((key) => Object.assign(res, { [key]: options }));
-    return res;
-  }
-
-  // packages/utils/debounce.js
-  function debounce(fn, timeout = 120) {
-    return function perform(...args) {
-      let previousCall = this.lastCall;
-      this.lastCall = Date.now();
-      if (previousCall && this.lastCall - previousCall <= timeout) {
-        clearTimeout(this.lastCallTimer);
-      }
-      this.lastCallTimer = setTimeout(() => fn(...args), timeout);
-    };
-  }
-
-  // packages/utils/throttling.js
-  function throttling(fn, timeout = 50) {
-    let timer;
-    return function perform(...args) {
-      if (timer)
-        return;
-      timer = setTimeout(() => {
-        fn(...args);
-        clearTimeout(timer);
-        timer = null;
-      }, timeout);
-    };
-  }
-
-  // packages/utils/delay.js
-  function delay(delay2) {
-    let timer, stop;
-    const promise = new Promise((resolve, reject) => {
-      stop = () => {
-        promise.delaying = false;
-        clearTimeout(timer);
-        reject();
-      };
-      timer = setTimeout(() => {
-        promise.delaying = false;
-        clearTimeout(timer);
-        resolve();
-      }, delay2 || 0);
-    });
-    promise.stop = stop;
-    promise.delaying = true;
-    return promise;
-  }
-
   // packages/utils/loadModule.js
   async function loadModule(src, signal) {
     if (typeof src === "function") {
@@ -161,19 +108,6 @@
     return html.childNodes;
   }
 
-  // packages/utils/uid.js
-  function uid() {
-    const buf = new Uint32Array(4);
-    window.crypto.getRandomValues(buf);
-    let idx = -1;
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-      idx++;
-      const r = buf[idx >> 3] >> idx % 8 * 4 & 15;
-      const v = c === "x" ? r : r & 3 | 8;
-      return v.toString(16);
-    });
-  }
-
   // packages/utils/queue.js
   var queue = () => {
     const funcQueue = [];
@@ -199,23 +133,6 @@
     };
     return { add, isEmpty, size };
   };
-
-  // packages/utils/deepFreeze.js
-  function deepFreeze(obj) {
-    Object.freeze(obj);
-    Object.getOwnPropertyNames(obj).forEach((prop) => {
-      const propVal = obj[prop];
-      if (propVal !== null && (typeof propVal === "object" || typeof propVal === "function") && !Object.isFrozen(propVal)) {
-        deepFreeze(propVal);
-      }
-    });
-    return obj;
-  }
-
-  // packages/utils/nextRepaint.js
-  async function nextRepaint() {
-    return new Promise(requestAnimationFrame);
-  }
 
   // packages/utils/errors/index.js
   var node = {
@@ -607,13 +524,13 @@
             }
           };
           let value = null;
-          const { store } = prop;
+          const { store: store2 } = prop;
           if (this.props.proxies && key in this.props.proxies) {
             value = this.props.proxies[key];
-          } else if (store) {
-            const storeModule = await this.context.store?.init(store);
+          } else if (store2) {
+            const storeModule = await this.context.store?.init(store2);
             if (!storeModule)
-              return errorProps(this.container.nodepath, "proxies", key, 307, store);
+              return errorProps(this.container.nodepath, "proxies", key, 307, store2);
             value = storeModule.proxies(key, this.container);
           }
           check = this.validation(proxiesData, prop, key, replicate(value), "proxies");
@@ -625,12 +542,12 @@
       for (const key in params) {
         const prop = params[key];
         const paramValue = async () => {
-          const { store } = prop;
+          const { store: store2 } = prop;
           let data = null;
-          if (store) {
-            const storeModule = await this.context.store?.init(store);
+          if (store2) {
+            const storeModule = await this.context.store?.init(store2);
             if (!storeModule)
-              return errorProps(this.container.nodepath, "params", key, 307, store);
+              return errorProps(this.container.nodepath, "params", key, 307, store2);
             data = storeModule.params(key);
           } else {
             data = this.props?.params[key];
@@ -645,14 +562,14 @@
     async methods(methods) {
       for (const key in methods) {
         const prop = methods[key];
-        const { store } = prop;
-        if (store) {
-          const storeModule = await this.context.store?.init(store);
+        const { store: store2 } = prop;
+        if (store2) {
+          const storeModule = await this.context.store?.init(store2);
           if (!storeModule)
-            return errorProps(this.container.nodepath, "methods", key, 307, store);
+            return errorProps(this.container.nodepath, "methods", key, 307, store2);
           const method = storeModule.methods(key);
           if (!method)
-            return errorProps(this.container.nodepath, "methods", key, 305, store);
+            return errorProps(this.container.nodepath, "methods", key, 305, store2);
           this.context.method[key] = async (...args) => await method(...replicate(args));
         } else {
           const isMethodValid = this.props.methods && key in this.props.methods;
@@ -1280,53 +1197,6 @@
     return await lifecycle(component2, render, aborted);
   }
 
-  // packages/lesta/createApp.js
-  function createApp(app = {}) {
-    app.use = (plugin, options) => plugin.setup(app, options);
-    app.mount = async (component2, container, props2) => await mountComponent(component2, container, props2, app);
-    return app;
-  }
-
-  // packages/lesta/mountWidget.js
-  async function mountWidget(src, root, signal, aborted) {
-    if (!src)
-      return errorComponent("root", 216);
-    if (signal && !(signal instanceof AbortSignal))
-      errorComponent("root", 217);
-    if (aborted && typeof aborted !== "function")
-      errorComponent("root", 218);
-    const component2 = new InitBasic(src, {}, signal, NodesBasic);
-    const render = () => {
-      root.innerHTML = src.template;
-      component2.context.container = root;
-    };
-    await lifecycle(component2, render, aborted);
-    return {
-      destroy() {
-        delete root.reactivity;
-        delete root.method;
-        root.innerHTML = "";
-      }
-    };
-  }
-
-  // scripts/lesta.global.js
-  window.lesta = {
-    createApp,
-    mountComponent,
-    mountWidget,
-    debounce,
-    throttling,
-    delay,
-    replicate,
-    deliver,
-    mapProps,
-    deleteReactive,
-    cleanHTML,
-    loadModule,
-    uid,
-    queue,
-    deepFreeze,
-    nextRepaint
-  };
+  // scripts/lesta.mountComponent.global.js
+  window.lesta = { mountComponent, replicate, deliver, deleteReactive, cleanHTML, loadModule, queue };
 })();

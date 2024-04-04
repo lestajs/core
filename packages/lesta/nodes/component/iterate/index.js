@@ -8,15 +8,18 @@ export default class Iterate extends Components {
         this.queue = queue()
         this.name = null
         this.created = false
-        this.nodeElement.removeChildren = () => this.remove.bind(this)(0)
+        this.nodeElement.toEmpty = () => this.remove.bind(this)(0)
     }
     async init() {
         if (typeof this.node.component.iterate !== 'function') return errorComponent(this.nodeElement.nodepath, 205)
         this.createIterate = async (index) => {
             if (!this.created) this.nodeElement.style.visibility = 'hidden'
-            const proxies = this.proxies(this.node.component.proxies, this.nodeElement.children[index], index)
+            const proxies = () => this.proxies(this.node.component.proxies, this.nodeElement.children[index], index)
             await this.create(this.proxies.bind(this), this.nodeElement, this.node.component, proxies, this.data[index], index)
-            if (!this.created) this.nodeElement.style.removeProperty('visibility')
+            if (!this.created) {
+                if (this.nodeElement.children.length > 1) return errorComponent(this.nodeElement.nodepath, 210)
+                this.nodeElement.style.removeProperty('visibility')
+            }
             this.created = true
         }
         this.impress.collect = true
@@ -56,7 +59,7 @@ export default class Iterate extends Components {
                 this.impress.collect = true
                 const permit = this.node.component.induce()
                 this.reactiveNode(this.impress.define(), async () => {
-                    !this.node.component.induce() ? this.nodeElement.removeChildren() : await mount()
+                    !this.node.component.induce() ? this.nodeElement.toEmpty() : await mount()
                 })
                 if (permit) await mount()
             } else {

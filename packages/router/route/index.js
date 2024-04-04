@@ -21,10 +21,10 @@ export default {
         path: this.result.map.at(0) || '/',
         params,
         fullPath: this.url.href,
-        hash: this.url.hash.slice(1),
+        hash: this.url.hash,
         query: Object.fromEntries(new URLSearchParams(this.url.search)),
         name: target.name,
-        extras: target.extras,
+        extra: target.extra,
         route: {}
       }
       if (target.path.slice(-1) === '*') to.pathMatch = this.result.map.at(-1)
