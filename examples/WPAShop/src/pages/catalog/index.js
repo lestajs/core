@@ -132,18 +132,18 @@ export default {
     this.param.categories = await catalogApi.getAllCategories()
     // await delay(1500);
     this.proxy.hidden = true
-    console.dir(this.router.to.extras.sidebar)
-    const sidebarSections = this.router.to.extras.sidebar.section
+    //console.dir(this.router.to.extras.sidebar)
+    // const sidebarSections = this.router.to.extras.sidebar.section
 
-    await sidebarSections.content.mount({ src: cart })
-    await sidebarSections.bottom.mount({
-      src: button,
-      proxies: {
-        text: 'Go to Cart'
-      },
-      methods: {
-        change: () => this.router.push('/cart')
-      }
-    })
+    // await sidebarSections.content.mount({ src: cart })
+    // await sidebarSections.bottom.mount({
+    //   src: button,
+    //   proxies: {
+    //     text: 'Go to Cart'
+    //   },
+    //   methods: {
+    //     change: () => this.router.push('/cart')
+    //   }
+    // })
   }
 }

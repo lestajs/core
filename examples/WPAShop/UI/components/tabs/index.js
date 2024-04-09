@@ -5,48 +5,46 @@ export default {
   template: `<div class="lstTabs l-fx"></div><div section="content"></div>`,
   props: {
     proxies: {
-      value: {},
-      selectedIndex: {
+      items: {},
+      value: {
         default: 0
+      }
+    },
+    params: {
+      size: {
+        default: 'large',
+        reverse: {}
       }
     },
     methods: {
       action: {}
     }
   },
-  setters: {
-    selectedIndex(v) {
-      this.node.lstTabs.children[this.proxy.selectedIndex].classList.remove('l-active')
-      return v
-    }
-  },
-  handlers: {
-    selectedIndex(index) {
-      this.node.lstTabs.children[index].classList.add('l-active')
-    }
-  },
   nodes() {
     return {
       lstTabs: {
         component: {
-          iterate: () => this.proxy.value,
+          iterate: () => this.proxy.items,
           src: button,
           proxies: {
-            value: (el) => el
+            value: (el) => el.label || el,
+            disabled: (el) => el.disabled,
+            activated: (_, i) => this.proxy.value === i
           },
           params: {
             name: (_, i) => i,
             type: 'text',
-            size: 'large'
+            size: this.param.size,
+            reverse: this.param.reverse,
+            icon: (el) => el.icon
           },
           methods: {
-            action: ({ name }) => this.method.action({ value: this.proxy.value[name], index: name })
+            action: ({ name }) => {
+              this.method.action?.({ item: this.proxy.items[name], index: name })
+            }
           }
         }
       }
     }
-  },
-  mounted() {
-    this.node.lstTabs.children[this.proxy.selectedIndex].classList.add('l-active')
   }
 }
