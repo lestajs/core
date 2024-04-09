@@ -10,9 +10,10 @@ export default async function(pc, specialty, nodeElement, proxies, create) {
         await create(specialty, nodeElement, options, () => proxies(options.proxies, nodeElement.section[section], section))
       }
     }
+    // const check = (options) => Object.keys(options).every(key => ['src', 'proxies', 'params', 'methods'].includes(key))
     nodeElement.section = {}
     for await (const [section, options] of Object.entries(pc.sections)) {
-      if (options.induce || options.iterate) return errorComponent(nodeElement.section[section].nodepath, 215)
+      if (options.induce || options.iterate || options.sections) return errorComponent(nodeElement.section[section].nodepath, 215)
       const sectionNode = nodeElement.querySelector(`[section="${section}"]`)
       if (!sectionNode) return errorComponent(nodeElement.nodepath, 201, section)
       if (!sectionNode.reactivity) sectionNode.reactivity = { component: new Map() }

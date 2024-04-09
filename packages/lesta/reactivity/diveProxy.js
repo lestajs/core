@@ -10,7 +10,7 @@ export default function diveProxy(_value, handler, path = '') {
     },
     get(target, prop, receiver) {
       if (typeof prop === 'symbol') return Reflect.get(target, prop, receiver) // xp
-      handler.get?.(target, `${path}${prop}`)
+      handler.get?.(target, prop, `${path}${prop}`)
       return Reflect.get(target, prop, receiver)
     },
     set(target, prop, value, receiver) {
