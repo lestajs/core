@@ -7,8 +7,7 @@ export default class InitComponent {
     this.app = app
     this.proxiesData = {}
     this.context = {
-      ...app,
-      mount: app.mount,
+      app,
       phase: 0,
       abortSignal: signal,
       options: component,
@@ -31,11 +30,11 @@ export default class InitComponent {
     if (this.component.created) return await this.component.created.bind(this.context)()
   }
   methods() {
-    if (!this.context.container.method) this.context.container.method = {}
+    // if (!this.context.container.method) this.context.container.method = {}
     if (this.component.methods) {
       for (const [key, method] of Object.entries(this.component.methods)) {
         this.context.method[key] = method.bind(this.context)
-        this.context.container.method[key] = (...args) => this.context.method[key](...replicate(args))
+        // this.context.container.method[key] = (...args) => this.context.method[key](...replicate(args))
       }
     }
     Object.preventExtensions(this.context.method)

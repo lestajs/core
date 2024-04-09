@@ -1,11 +1,10 @@
-function deliver(target, path, value) {
+function deliver(target, path = '', value) {
+  const p = path.split('.')
   let i
   try {
-    for (i = 0; i < path.length - 1; i++) target = target[path[i]]
-    if (value !== undefined) {
-      target[path[i]] = value
-    }
-    return target[path[i]]
+    for (i = 0; i < p.length - 1; i++) target = target[p[i]]
+    if (value !== undefined) target[p[i]] = value
+    return target[p[i]]
   } catch (err) {}
 }
 

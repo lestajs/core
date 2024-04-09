@@ -23,7 +23,6 @@ export default {
           if (this.param.url === '/cart' && this.router.to?.name === 'catalog') {
             event.preventDefault()
             event.stopPropagation()
-
             this.router.to.extra.sidebar.method.toggle()
           }
 

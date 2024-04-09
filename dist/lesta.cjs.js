@@ -48,15 +48,14 @@ function replicate(data) {
 }
 
 // packages/utils/deliver.js
-function deliver(target, path, value) {
+function deliver(target, path = "", value) {
+  const p = path.split(".");
   let i;
   try {
-    for (i = 0; i < path.length - 1; i++)
-      target = target[path[i]];
-    if (value !== void 0) {
-      target[path[i]] = value;
-    }
-    return target[path[i]];
+    for (i = 0; i < p.length - 1; i++)
+      target = target[p[i]];
+    target[p[i]] = value !== void 0 ? value : null;
+    return target[p[i]];
   } catch (err) {
   }
 }
@@ -275,7 +274,7 @@ var component = {
   212: '"induce" property expects a function as a value.',
   213: 'param "%s" is already in props.',
   214: 'proxy "%s" is already in props.',
-  215: '"iterate" and "induce" property is not supported for sections.',
+  215: '"iterate", "induce", "sections" property is not supported within sections.',
   216: "component module is undefined.",
   217: '"abortSignal" property must have the class AbortSignal.',
   218: '"aborted" property expects a function as a value.'
@@ -321,8 +320,7 @@ var InitComponent = class {
     this.app = app;
     this.proxiesData = {};
     this.context = {
-      ...app,
-      mount: app.mount,
+      app,
       phase: 0,
       abortSignal: signal,
       options: component2,
@@ -349,12 +347,9 @@ var InitComponent = class {
       return await this.component.created.bind(this.context)();
   }
   methods() {
-    if (!this.context.container.method)
-      this.context.container.method = {};
     if (this.component.methods) {
       for (const [key, method] of Object.entries(this.component.methods)) {
         this.context.method[key] = method.bind(this.context);
-        this.context.container.method[key] = (...args) => this.context.method[key](...replicate(args));
       }
     }
     Object.preventExtensions(this.context.method);
@@ -429,6 +424,8 @@ function diveProxy(_value, handler, path = "") {
 
 // packages/lesta/reactivity/active.js
 function active(reactivity, ref, value) {
+  if (!reactivity)
+    return;
   const match = (str1, str2) => {
     const min = Math.min(str1.length, str2.length);
     return str1.slice(0, min) === str2.slice(0, min);
@@ -438,7 +435,7 @@ function active(reactivity, ref, value) {
       if (refs.includes(ref))
         fn(value);
     } else if (match(ref, refs)) {
-      fn(value, ref.length > refs.length ? ref.replace(refs + ".", "").split(".") : void 0);
+      fn(value, ref.length > refs.length ? ref.replace(refs + ".", "") : void 0);
     }
   }
 }
@@ -554,10 +551,10 @@ var InitBasic = class extends InitComponent {
         var _a, _b, _c;
         for (const keyNode in this.context.node) {
           const nodeElement = this.context.node[keyNode];
-          nodeElement.reactivity.node && active(nodeElement.reactivity.node, ref);
-          nodeElement.reactivity.component && active(nodeElement.reactivity.component, ref, value);
+          active(nodeElement.reactivity.node, ref);
+          active(nodeElement.reactivity.component, ref, value);
           for (const section in nodeElement.section) {
-            ((_a = nodeElement.section[section]) == null ? void 0 : _a.reactivity.component) && active(nodeElement.section[section].reactivity.component, ref, value);
+            active((_a = nodeElement.section[section]) == null ? void 0 : _a.reactivity.component, ref, value);
           }
         }
         (_c = (_b = this.component.handlers) == null ? void 0 : _b[ref]) == null ? void 0 : _c.bind(this.context)(value);
@@ -627,7 +624,10 @@ var Props = class {
     const nodepath = this.container.nodepath;
     const checkType = (v, t) => v && t && !(typeof v === t || t === "array" && Array.isArray(v)) && errorProps(nodepath, name, key, 304, t);
     const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(nodepath, name, key, 302, v));
-    const checkValue = (v, p) => v != null ? v : p.required && errorProps(nodepath, name, key, 303) || p.default;
+    const checkValue = (v, p) => {
+      var _a2;
+      return v != null ? v : (_a2 = p.required && errorProps(nodepath, name, key, 303)) != null ? _a2 : p.default;
+    };
     const check = (v, p) => {
       if (typeof p === "string")
         return checkType(v, p);
@@ -652,17 +652,20 @@ var Props = class {
     var _a;
     if (proxies) {
       const proxiesData = {};
+      const context = this.context;
       for (const key in proxies) {
         const prop = proxies[key];
-        const context = this.context;
         let check = null;
-        this.container.proxy[key] = (value2, path) => {
-          var _a2;
-          if (path == null ? void 0 : path.length) {
-            deliver(context.proxy[key], path, value2);
-            (_a2 = prop.validate) == null ? void 0 : _a2.call(prop, context.proxy[key], check);
-          } else {
-            this.validation(context.proxy, prop, key, value2, "proxies");
+        this.container.proxy[key] = {
+          getValue: () => replicate(context.proxy[key]),
+          setValue: (value2, path) => {
+            var _a2;
+            if (path) {
+              deliver(context.proxy[key], path, replicate(value2));
+              (_a2 = prop.validate) == null ? void 0 : _a2.call(prop, context.proxy[key], check);
+            } else {
+              this.validation(context.proxy, prop, key, replicate(value2), "proxies");
+            }
           }
         };
         let value = null;
@@ -670,7 +673,7 @@ var Props = class {
         if (this.props.proxies && key in this.props.proxies) {
           value = this.props.proxies[key];
         } else if (store2) {
-          const storeModule = await ((_a = this.context.store) == null ? void 0 : _a.init(store2));
+          const storeModule = await ((_a = this.app.store) == null ? void 0 : _a.init(store2));
           if (!storeModule)
             return errorProps(this.container.nodepath, "proxies", key, 307, store2);
           value = storeModule.proxies(key, this.container);
@@ -688,7 +691,7 @@ var Props = class {
         const { store: store2 } = prop;
         let data = null;
         if (store2) {
-          const storeModule = await ((_a = this.context.store) == null ? void 0 : _a.init(store2));
+          const storeModule = await ((_a = this.app.store) == null ? void 0 : _a.init(store2));
           if (!storeModule)
             return errorProps(this.container.nodepath, "params", key, 307, store2);
           data = storeModule.params(key);
@@ -708,19 +711,19 @@ var Props = class {
       const prop = methods[key];
       const { store: store2 } = prop;
       if (store2) {
-        const storeModule = await ((_a = this.context.store) == null ? void 0 : _a.init(store2));
+        const storeModule = await ((_a = this.app.store) == null ? void 0 : _a.init(store2));
         if (!storeModule)
           return errorProps(this.container.nodepath, "methods", key, 307, store2);
         const method = storeModule.methods(key);
         if (!method)
           return errorProps(this.container.nodepath, "methods", key, 305, store2);
-        this.context.method[key] = async (...args) => await method(...replicate(args));
+        this.context.method[key] = async (...args) => replicate(await method(...replicate(args)));
       } else {
         const isMethodValid = this.props.methods && key in this.props.methods;
         if ((prop == null ? void 0 : prop.required) && !isMethodValid)
           return errorProps(this.container.nodepath, "methods", key, 303);
         if (isMethodValid)
-          this.context.method[key] = async (...args) => await this.props.methods[key](...replicate(args));
+          this.context.method[key] = async (...args) => replicate(await this.props.methods[key](...replicate(args)));
       }
     }
   }
@@ -744,7 +747,6 @@ var Init = class extends InitBasic {
     var _a, _b;
     (_b = (_a = container.reactivity) == null ? void 0 : _a.component) == null ? void 0 : _b.clear();
     delete container.proxy;
-    delete container.method;
     for (const key in container.unstore) {
       container.unstore[key]();
     }
@@ -890,7 +892,7 @@ async function sections_default(pc, specialty, nodeElement, proxies, create) {
     };
     nodeElement.section = {};
     for await (const [section, options] of Object.entries(pc.sections)) {
-      if (options.induce || options.iterate)
+      if (options.induce || options.iterate || options.sections)
         return errorComponent(nodeElement.section[section].nodepath, 215);
       const sectionNode = nodeElement.querySelector(`[section="${section}"]`);
       if (!sectionNode)
@@ -938,14 +940,14 @@ var Components = class extends Node {
     let container = null;
     if (!nodeElement.process) {
       nodeElement.process = true;
-      container = await this.app.mount(src, nodeElement, {
+      container = await mountComponent(src, nodeElement, {
         abortSignal,
         aborted,
         sections,
         ssr,
         ...props_default.collect(pc, value, index),
         proxies: proxies() || {}
-      });
+      }, this.app);
       delete nodeElement.process;
     }
     if (!container)
@@ -993,18 +995,18 @@ var Iterate = class extends Components {
       this.impress.clear();
       this.nodeElement.setAttribute("iterate", "");
       if (Object.getPrototypeOf(this.data).instance === "Proxy") {
-        this.reactiveComponent([this.name], async (v) => {
+        this.reactiveComponent([this.name], (v) => {
           this.data = this.node.component.iterate();
           if (v.length)
-            this.queue.add(async () => {
-              var _a, _b;
+            this.queue.add(() => {
+              var _a;
               if (this.node.component.proxies) {
                 for (const [pr, fn] of Object.entries(this.node.component.proxies)) {
                   if (typeof fn === "function" && fn.name) {
                     if (fn.length) {
                       for (let i = 0; i < Math.min(this.nodeElement.children.length, v.length); i++) {
                         const v2 = fn(this.data[i], i);
-                        (_b = (_a = this.nodeElement.children[i].proxy)[pr]) == null ? void 0 : _b.call(_a, v2);
+                        (_a = this.nodeElement.children[i].proxy[pr]) == null ? void 0 : _a.setValue(v2);
                         this.sections(this.node.component.sections, this.nodeElement.children[i], i);
                       }
                     }
@@ -1014,19 +1016,18 @@ var Iterate = class extends Components {
             });
           this.queue.add(async () => await this.length(v.length));
         });
-        this.reactiveComponent([this.name + ".length"], async (v) => {
+        this.reactiveComponent([this.name + ".length"], (v) => {
           this.queue.add(async () => await this.length(v));
         });
       }
       const mount = async () => await this.add(this.data.length);
+      this.nodeElement.induce = async (permit) => !permit ? this.nodeElement.toEmpty() : await mount();
       if (this.node.component.induce) {
         if (typeof this.node.component.induce !== "function")
           return errorComponent(this.nodeElement.nodepath, 212);
         this.impress.collect = true;
         const permit = this.node.component.induce();
-        this.reactiveNode(this.impress.define(), async () => {
-          !this.node.component.induce() ? this.nodeElement.toEmpty() : await mount();
-        });
+        this.reactiveNode(this.impress.define(), async () => await this.nodeElement.induce(this.node.component.induce()));
         if (permit)
           await mount();
       } else {
@@ -1035,13 +1036,13 @@ var Iterate = class extends Components {
     }
   }
   sections(sections, target, index) {
-    var _a, _b, _c;
+    var _a, _b;
     if (sections) {
       for (const [section, options] of Object.entries(sections)) {
         for (const [p, f] of Object.entries(options.proxies)) {
           if (typeof f === "function" && f.name) {
             if (f.length) {
-              (_c = (_a = target.section[section]) == null ? void 0 : (_b = _a.proxy)[p]) == null ? void 0 : _c.call(_b, f(this.data[index], index));
+              (_b = (_a = target.section[section]) == null ? void 0 : _a.proxy[p]) == null ? void 0 : _b.setValue(f(this.data[index], index));
               this.sections(options.sections, target.section[section], index);
             }
           }
@@ -1052,27 +1053,27 @@ var Iterate = class extends Components {
   proxies(proxies, target, index) {
     const reactive = (pr, fn) => {
       if (this.impress.refs.some((ref) => ref.includes(this.name))) {
-        this.reactiveComponent(this.impress.define(pr), async (v, p) => {
+        this.reactiveComponent(this.impress.define(pr), (v, p) => {
           this.queue.add(async () => {
-            var _a, _b, _c, _d, _e, _f;
+            var _a, _b, _c, _d;
             if (p) {
-              (_c = (_a = this.nodeElement.children[index]) == null ? void 0 : (_b = _a.proxy)[pr]) == null ? void 0 : _c.call(_b, v, p);
+              (_b = (_a = this.nodeElement.children[index]) == null ? void 0 : _a.proxy[pr]) == null ? void 0 : _b.setValue(v, p);
             } else {
               this.data = this.node.component.iterate();
               if (index < this.data.length) {
                 const val = fn(this.data[index], index);
-                (_f = (_d = this.nodeElement.children[index]) == null ? void 0 : (_e = _d.proxy)[pr]) == null ? void 0 : _f.call(_e, val);
+                (_d = (_c = this.nodeElement.children[index]) == null ? void 0 : _c.proxy[pr]) == null ? void 0 : _d.setValue(val);
               }
             }
           });
         }, target);
       } else {
         if (!this.created) {
-          this.reactiveComponent(this.impress.define(pr), async (v, p) => {
-            !this.nodeElement.process && this.queue.add(async () => {
-              var _a, _b, _c, _d;
+          this.reactiveComponent(this.impress.define(pr), (v, p) => {
+            !this.nodeElement.process && this.queue.add(() => {
+              var _a, _b;
               for (let i = 0; i < this.nodeElement.children.length; i++) {
-                p ? (_b = (_a = this.nodeElement.children[i].proxy)[pr]) == null ? void 0 : _b.call(_a, v, p) : (_d = (_c = this.nodeElement.children[i].proxy)[pr]) == null ? void 0 : _d.call(_c, fn(this.data[i], i));
+                p ? (_a = this.nodeElement.children[i].proxy[pr]) == null ? void 0 : _a.setValue(v, p) : (_b = this.nodeElement.children[i].proxy[pr]) == null ? void 0 : _b.setValue(fn(this.data[i], i));
               }
             });
           }, target);
@@ -1087,7 +1088,7 @@ var Iterate = class extends Components {
     if (this.data.length === length) {
       const qty = this.nodeElement.children.length;
       length > qty && await this.add(length);
-      length < qty && this.remove(length);
+      length < qty && await this.remove(length);
     }
   }
   async add(length) {
@@ -1114,19 +1115,19 @@ var Basic = class extends Components {
   }
   async init() {
     const mount = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, () => this.proxies(pc.proxies, this.nodeElement));
-    this.nodeElement.mount = mount;
+    this.nodeElement.induce = async (permit) => {
+      var _a, _b;
+      if (!permit) {
+        (_b = (_a = this.nodeElement).unmount) == null ? void 0 : _b.call(_a);
+      } else if (!this.nodeElement.unmount)
+        await mount(this.node.component);
+    };
     if (this.node.component.induce) {
       if (typeof this.node.component.induce !== "function")
         return errorComponent(this.nodeElement.nodepath, 212);
       this.impress.collect = true;
       const permit = this.node.component.induce();
-      this.reactiveNode(this.impress.define(), async () => {
-        var _a, _b;
-        if (!this.node.component.induce()) {
-          (_b = (_a = this.nodeElement).unmount) == null ? void 0 : _b.call(_a);
-        } else if (!this.nodeElement.unmount)
-          await mount(this.node.component);
-      });
+      this.reactiveNode(this.impress.define(), async () => await this.nodeElement.induce(this.node.component.induce()));
       if (permit)
         await mount(this.node.component);
     } else {
@@ -1135,8 +1136,8 @@ var Basic = class extends Components {
   }
   proxies(proxies, target) {
     const reactive = (pr, fn) => this.reactiveComponent(this.impress.define(pr), (v, p) => {
-      var _a, _b, _c, _d;
-      return p ? (_b = (_a = target.proxy)[pr]) == null ? void 0 : _b.call(_a, v, p) : (_d = (_c = target.proxy)[pr]) == null ? void 0 : _d.call(_c, fn());
+      var _a, _b;
+      return p ? (_a = target.proxy[pr]) == null ? void 0 : _a.setValue(v, p) : (_b = target.proxy[pr]) == null ? void 0 : _b.setValue(fn());
     }, target);
     return this.reactivate(proxies, reactive, null, null, target);
   }
@@ -1161,18 +1162,21 @@ var Directives = class extends Node {
       destroy: () => destroy ? destroy.bind(directive)(node2, options) : {}
     } });
     create && node2.directives[key].create();
-    const active2 = (v, k, o) => {
-      const upd = () => update.bind(directive)(node2, typeof v === "function" ? v(node2) : v, k, o);
-      this.impress.collect = true;
-      upd();
-      this.reactiveNode(this.impress.define(), upd);
+    const handle = (v, k, o) => {
+      const active2 = (value) => update.bind(directive)(node2, value, k, o);
+      if (typeof v === "function") {
+        this.impress.collect = true;
+        active2(v(node2));
+        this.reactiveNode(this.impress.define(), () => active2(v(node2)));
+      } else
+        active2(v);
     };
     if (update) {
       if (typeof options === "object") {
         for (const k in options)
-          active2(options[k], k, options);
+          handle(options[k], k, options);
       } else
-        active2(options);
+        handle(options);
     }
   }
 };
@@ -1218,8 +1222,8 @@ var NodesBasic = class {
     this.impress = impress;
     this.nodeElement = nodeElement;
     this.keyNode = keyNode;
-    this.directive = new Directives(node2, context, nodeElement, impress, app, keyNode);
     this.native = new Native(node2, context, nodeElement, impress, app, keyNode);
+    this.directive = new Directives(node2, context, nodeElement, impress, app, keyNode);
   }
   async controller(key) {
     if (key in this.nodeElement) {
@@ -1246,11 +1250,11 @@ var Nodes = class extends NodesBasic {
       return errorComponent(this.nodeElement.nodepath, 208);
     const { node: node2, context, nodeElement, impress, app, keyNode } = this;
     if (this.node.component.iterate) {
-      this.iterate = new Iterate(node2, context, nodeElement, impress, app, keyNode);
-      await this.iterate.init();
+      const iterate = new Iterate(node2, context, nodeElement, impress, app, keyNode);
+      await iterate.init();
     } else {
-      this.basic = new Basic(node2, context, nodeElement, impress, app, keyNode);
-      await this.basic.init();
+      const basic = new Basic(node2, context, nodeElement, impress, app, keyNode);
+      await basic.init();
     }
   }
 };
@@ -1752,10 +1756,10 @@ var BasicRouter = class {
     if (await this.beforeHooks(this.beforeEach))
       return;
     const to = route_default.init(this.app.router.collection, url);
-    to.pushed = pushed;
-    to.replace = replace;
     const target = to == null ? void 0 : to.route;
     if (target) {
+      to.pushed = pushed;
+      to.replace = replace;
       this.app.router.from = this.form;
       this.app.router.to = to;
       this.app.router.to.route.ssr = this.app.router.type === "ssr" && document.querySelector("html").getAttribute("ssr");

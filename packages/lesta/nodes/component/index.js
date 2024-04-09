@@ -2,6 +2,7 @@ import Node from '../node.js'
 import props from '../../nodes/component/props'
 import sectionComponent from './sections/index.js'
 import { errorComponent } from '../../../utils/errors/component'
+import { mountComponent } from '../../mountComponent'
 
 export default class Components extends Node {
   constructor(...args) {
@@ -21,7 +22,7 @@ export default class Components extends Node {
           const value = arr && fn.length ? fn(arr[index], index) : fn(target)
           Object.assign(result, {[pr]: value})
           reactive(pr, fn)
-          this.impress.clear()
+          // this.impress.clear()
         } else Object.assign(result, {[pr]: fn})
       }
     }
@@ -33,14 +34,14 @@ export default class Components extends Node {
     let container = null
     if (!nodeElement.process) {
       nodeElement.process = true
-      container = await this.app.mount(src, nodeElement, {
+      container = await mountComponent(src, nodeElement, {
         abortSignal,
         aborted,
         sections,
         ssr,
         ...props.collect(pc, value, index),
         proxies: proxies() || {}
-      })
+      }, this.app)
       delete nodeElement.process
     }
     if (!container) return

@@ -11,6 +11,7 @@ export default class Node {
     reactive(refs, active, reactivity) {
         if (refs?.length) reactivity.set(active, refs)
         this.impress.clear()
+        return refs
     }
     reactiveNode(refs, active) {
         this.reactive(refs, active, this.nodeElement.reactivity.node)
