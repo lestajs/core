@@ -14,7 +14,9 @@
 .lstBtn:has(.lstBtnText:empty) {
   gap: 0;
 }
-
+.lstBtn.l-active {
+  background-color: var(--gray300);
+}
 .lstBtnText {
   min-height: 1em;
   padding: 0 .2em;

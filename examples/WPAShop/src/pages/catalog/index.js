@@ -135,15 +135,15 @@ export default {
     console.dir(this.router.to.extra.sidebar)
     const sidebarSections = this.router.to.extra.sidebar.section
 
-    await sidebarSections.content.mount({ src: cart })
-    await sidebarSections.bottom.mount({
-      src: button,
-      proxies: {
-        text: 'Go to Cart'
-      },
-      methods: {
-        change: () => this.router.push('/cart')
-      }
-    })
+    // await sidebarSections.content.mount({ src: cart })
+    // await sidebarSections.bottom.mount({
+    //   src: button,
+    //   proxies: {
+    //     text: 'Go to Cart'
+    //   },
+    //   methods: {
+    //     change: () => this.router.push('/cart')
+    //   }
+    // })
   }
 }
