@@ -32,7 +32,6 @@ export default {
         }
     },
     async created() {
-        await this.router.to.extras.sidebar.section.content.mount({ src: summary })
-        // debugger
+        await this.router.to.extra.sidebar.section.content.mount({ src: summary })
     }
 }

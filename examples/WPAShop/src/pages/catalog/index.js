@@ -132,8 +132,8 @@ export default {
     this.param.categories = await catalogApi.getAllCategories()
     // await delay(1500);
     this.proxy.hidden = true
-    //console.dir(this.router.to.extras.sidebar)
-    // const sidebarSections = this.router.to.extras.sidebar.section
+    console.dir(this.router.to.extra.sidebar)
+    const sidebarSections = this.router.to.extra.sidebar.section
 
     // await sidebarSections.content.mount({ src: cart })
     // await sidebarSections.bottom.mount({

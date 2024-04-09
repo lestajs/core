@@ -55,10 +55,10 @@ export default class BasicRouter {
     let res = null
     if (await this.beforeHooks(this.beforeEach)) return
     const to = route.init(this.app.router.collection, url)
-    to.pushed = pushed
-    to.replace = replace
     const target = to?.route
     if (target) {
+      to.pushed = pushed
+      to.replace = replace
       this.app.router.from = this.form
       this.app.router.to = to
       this.app.router.to.route.ssr = this.app.router.type === 'ssr' && document.querySelector('html').getAttribute('ssr')
