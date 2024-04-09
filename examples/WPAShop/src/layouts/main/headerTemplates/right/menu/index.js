@@ -24,7 +24,9 @@ export default {
             event.preventDefault()
             event.stopPropagation()
 
-            this.router.to.extra.sidebar.method.toggle()
+            console.dir(this.router.to.extra.sidebar)
+            opened = this.router.to.extra.sidebar.proxy.opened.getValue()
+            this.router.to.extra.sidebar.proxy.opened.setValue(!opened)
           }
 
           // console.log(this.param.text)
