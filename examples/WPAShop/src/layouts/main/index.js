@@ -60,6 +60,7 @@ export default {
     }
   },
   mounted() {
-    this.router.to.extra.sidebar = this.node.sidebar
+    console.log(this.router)
+    //this.router.to.extra.sidebar = this.node.sidebar
   }
 }
