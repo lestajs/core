@@ -167,7 +167,7 @@
       get(target, prop, receiver) {
         if (typeof prop === "symbol")
           return Reflect.get(target, prop, receiver);
-        handler.get?.(target, `${path}${prop}`);
+        handler.get?.(target, prop, `${path}${prop}`);
         return Reflect.get(target, prop, receiver);
       },
       set(target, prop, value, receiver) {
@@ -248,7 +248,10 @@
 
   // packages/lesta/init/directives/_text.js
   var _text = {
-    update: (node2, value) => node2.textContent = value !== Object(value) ? value : JSON.stringify(value)
+    update: (node2, value) => {
+      if (value !== void 0)
+        node2.textContent = value !== Object(value) ? value : JSON.stringify(value);
+    }
   };
 
   // packages/lesta/init/directives/_attr.js
@@ -334,8 +337,8 @@
           }
           this.component.handlers?.[ref]?.bind(this.context)(value);
         },
-        get: (target, ref) => {
-          if (this.impress.collect && !this.impress.refs.includes(ref)) {
+        get: (target, prop, ref) => {
+          if (this.impress.collect && !this.impress.refs.includes(ref) && typeof target[prop] !== "function") {
             this.impress.refs.push(ref);
           }
         }
@@ -383,6 +386,7 @@
       if (refs?.length)
         reactivity.set(active2, refs);
       this.impress.clear();
+      return refs;
     }
     reactiveNode(refs, active2) {
       this.reactive(refs, active2, this.nodeElement.reactivity.node);

@@ -49,7 +49,7 @@ export default {
             text: '🗑'
           },
           methods: {
-            change: (_, i) => this.method.deleteFromCart(this.proxy._product)
+            change: (_, i) => this.method.deleteFromCart({ product: this.proxy._product })
           }
         }
       }

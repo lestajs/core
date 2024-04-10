@@ -11,7 +11,7 @@ export default {
           src: card,
           proxies: {
             header: () => this.proxy._product.title,
-            content: () => this.filters.currencyUSD(this.proxy._product.price)
+            content: () => this.app.filters.currencyUSD(this.proxy._product.price)
           }
         }
       },
@@ -27,7 +27,7 @@ export default {
         }
       },
       price: {
-        textContent: () => this.filters.currencyUSD(this.proxy._product.price * this.proxy._product.quantity)
+        textContent: () => this.app.filters.currencyUSD(this.proxy._product.price * this.proxy._product.quantity)
       }
     }
   }

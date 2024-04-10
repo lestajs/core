@@ -50,7 +50,7 @@ export default {
                         text: '-'
                     },
                     methods: {
-                        change: () => this.proxy.quantity > 1 ? this.proxy.quantity-- : this.proxy.quantity 
+                        change: () => this.proxy.quantity > 1 ? this.proxy.quantity-- : ''
                     }
                 }
             }

@@ -1,4 +1,4 @@
-import btn from '../../buttonOld'
+import button from '../../button'
 import miniava from '../../miniava'
 
 export default {
@@ -35,21 +35,20 @@ export default {
           event.stopPropagation()
         },
         component: {
-          src: btn,
+          src: button,
           induce: () => this.proxy.buttons,
           iterate: () => this.proxy.buttons,
-          params: {
-            name: (btn) => btn.name,
-            text: (btn) => btn.text,
-            icon: (btn) => btn.icon,
-            size: 'mini',
-            type: 'text'
-          },
           proxies: {
+            value: (btn) => btn.text,
             active: () => this.proxy.active
           },
+          params: {
+            name: (btn) => btn.name,
+            icon: (btn) => btn.icon,
+            type: 'text'
+          },
           methods: {
-            change: this.method.change
+            action: this.method.change
           }
         }
       },

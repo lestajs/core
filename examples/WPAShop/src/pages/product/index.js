@@ -57,15 +57,15 @@ export default {
             },
             addToCartBtn: {
                 onclick: () => {
-                    this.router.push('/cart')
-                    this.method.addToCart(this.param.product)
+                    this.app.router.push('/cart')
+                    this.method.addToCart({ product: this.param.product })
                 }
             }
         }
     },
     async created(){
-        console.log(this.router.to.params.id)
+        console.log(this.app.router.to.params.id)
 
-        this.param.product = await this.method.getProduct({id: this.router.to.params.id})
+        this.param.product = await this.method.getProduct({ id: this.app.router.to.params.id })
     }
 }

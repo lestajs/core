@@ -16,12 +16,9 @@ export default {
   nodes() {
     return {
       cart: {
-        textContent: () => {
+        _text: () => {
           if(!this.proxy.cartProducts.length) {return 'There is nothing in your cart yet...'}
           //else { return 'Hello' }
-        },
-        onclick: () => {
-          this.node.cart.textContent = 'Hello'
         },
         component: {
           src: cartCard,

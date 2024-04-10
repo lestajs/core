@@ -54,7 +54,8 @@ function deliver(target, path = "", value) {
   try {
     for (i = 0; i < p.length - 1; i++)
       target = target[p[i]];
-    target[p[i]] = value !== void 0 ? value : null;
+    if (value !== void 0)
+      target[p[i]] = value;
     return target[p[i]];
   } catch (err) {
   }
@@ -291,7 +292,7 @@ var props = {
 var store = {
   401: "object with stores in not define.",
   402: 'store module "%s" in not define.',
-  403: 'method "%s" can take only one argument of type object.',
+  // 403: 'method "%s" can take only one argument of type object.',
   404: 'middleware "%s" returns a value not of the object type'
 };
 var router = {
@@ -390,7 +391,7 @@ function diveProxy(_value, handler, path = "") {
       var _a;
       if (typeof prop === "symbol")
         return Reflect.get(target, prop, receiver);
-      (_a = handler.get) == null ? void 0 : _a.call(handler, target, `${path}${prop}`);
+      (_a = handler.get) == null ? void 0 : _a.call(handler, target, prop, `${path}${prop}`);
       return Reflect.get(target, prop, receiver);
     },
     set(target, prop, value, receiver) {
@@ -471,7 +472,10 @@ var _class = {
 
 // packages/lesta/init/directives/_text.js
 var _text = {
-  update: (node2, value) => node2.textContent = value !== Object(value) ? value : JSON.stringify(value)
+  update: (node2, value) => {
+    if (value !== void 0)
+      node2.textContent = value !== Object(value) ? value : JSON.stringify(value);
+  }
 };
 
 // packages/lesta/init/directives/_attr.js
@@ -559,8 +563,8 @@ var InitBasic = class extends InitComponent {
         }
         (_c = (_b = this.component.handlers) == null ? void 0 : _b[ref]) == null ? void 0 : _c.bind(this.context)(value);
       },
-      get: (target, ref) => {
-        if (this.impress.collect && !this.impress.refs.includes(ref)) {
+      get: (target, prop, ref) => {
+        if (this.impress.collect && !this.impress.refs.includes(ref) && typeof target[prop] !== "function") {
           this.impress.refs.push(ref);
         }
       }
@@ -613,6 +617,7 @@ var Props = class {
       return errorProps(this.container.nodepath, 306);
     if (!this.container.proxy)
       this.container.proxy = {};
+    this.context.update = {};
     if (cp) {
       await this.params(cp.params);
       await this.methods(cp.methods);
@@ -649,7 +654,7 @@ var Props = class {
     return check;
   }
   async proxies(proxies) {
-    var _a;
+    var _a, _b, _c;
     if (proxies) {
       const proxiesData = {};
       const context = this.context;
@@ -666,14 +671,18 @@ var Props = class {
             } else {
               this.validation(context.proxy, prop, key, replicate(value2), "proxies");
             }
+          },
+          isIndependent: () => {
+            var _a2;
+            return ((_a2 = this.props.proxies[key]) == null ? void 0 : _a2._independent) || false;
           }
         };
         let value = null;
         const { store: store2 } = prop;
-        if (this.props.proxies && key in this.props.proxies) {
-          value = this.props.proxies[key];
+        if ((_a = this.props.proxies) == null ? void 0 : _a.hasOwnProperty(key)) {
+          value = (_b = this.props.proxies[key]) == null ? void 0 : _b._value;
         } else if (store2) {
-          const storeModule = await ((_a = this.app.store) == null ? void 0 : _a.init(store2));
+          const storeModule = await ((_c = this.app.store) == null ? void 0 : _c.init(store2));
           if (!storeModule)
             return errorProps(this.container.nodepath, "proxies", key, 307, store2);
           value = storeModule.proxies(key, this.container);
@@ -706,9 +715,17 @@ var Props = class {
     }
   }
   async methods(methods) {
-    var _a;
+    var _a, _b;
+    const setMethod = (method, key) => {
+      this.context.method[key] = (obj) => {
+        const result = method({ ...replicate(obj), _update: methods[key].update });
+        return result instanceof Promise ? result.then((data) => replicate(data)) : replicate(result);
+      };
+    };
     for (const key in methods) {
       const prop = methods[key];
+      if (prop.update)
+        this.context.update[key] = prop.update;
       const { store: store2 } = prop;
       if (store2) {
         const storeModule = await ((_a = this.app.store) == null ? void 0 : _a.init(store2));
@@ -717,13 +734,13 @@ var Props = class {
         const method = storeModule.methods(key);
         if (!method)
           return errorProps(this.container.nodepath, "methods", key, 305, store2);
-        this.context.method[key] = async (...args) => replicate(await method(...replicate(args)));
+        setMethod(method, key);
       } else {
-        const isMethodValid = this.props.methods && key in this.props.methods;
+        const isMethodValid = (_b = this.props.methods) == null ? void 0 : _b.hasOwnProperty(key);
         if ((prop == null ? void 0 : prop.required) && !isMethodValid)
           return errorProps(this.container.nodepath, "methods", key, 303);
         if (isMethodValid)
-          this.context.method[key] = async (...args) => replicate(await this.props.methods[key](...replicate(args)));
+          setMethod(this.props.methods[key], key);
       }
     }
   }
@@ -835,6 +852,7 @@ var Node = class {
     if (refs == null ? void 0 : refs.length)
       reactivity.set(active2, refs);
     this.impress.clear();
+    return refs;
   }
   reactiveNode(refs, active2) {
     this.reactive(refs, active2, this.nodeElement.reactivity.node);
@@ -915,20 +933,19 @@ var Components = class extends Node {
   }
   reactiveComponent(refs, active2, target) {
     const nodeElement = target || this.nodeElement;
-    this.reactive(refs, active2, nodeElement.reactivity.component);
+    return this.reactive(refs, active2, nodeElement.reactivity.component);
   }
   reactivate(proxies, reactive, arr, index, target) {
     const result = {};
     if (proxies) {
-      for (const [pr, fn] of Object.entries(proxies)) {
-        if (typeof fn === "function" && fn.name) {
+      for (const [pr, v] of Object.entries(proxies)) {
+        if (typeof v === "function" && v.name) {
           this.impress.collect = true;
-          const value = arr && fn.length ? fn(arr[index], index) : fn(target);
-          Object.assign(result, { [pr]: value });
-          reactive(pr, fn);
-          this.impress.clear();
+          const value = arr && v.length ? v(arr[index], index) : v(target);
+          const ref = reactive(pr, v);
+          Object.assign(result, { [pr]: { _value: value, _independent: !ref } });
         } else
-          Object.assign(result, { [pr]: fn });
+          Object.assign(result, { [pr]: { _value: v, _independent: true } });
       }
     }
     return result;
@@ -1380,7 +1397,7 @@ var Store = class {
     this.store = module2;
     this.context = {
       name,
-      ...app,
+      app,
       options: module2,
       reactivity: /* @__PURE__ */ new Map(),
       param: {},
@@ -1395,21 +1412,18 @@ var Store = class {
     this.context.param = this.store.params;
     Object.preventExtensions(this.context.param);
     for (const key in this.store.methods) {
-      this.context.method[key] = (...args) => {
-        if (args.length && (args.length > 1 || typeof args[0] !== "object"))
-          return errorStore(this.context.name, 403, key);
-        const arg = { ...replicate(args[0]) };
+      this.context.method[key] = (obj) => {
         if (this.store.middlewares && key in this.store.middlewares) {
           return (async () => {
-            const res = await this.store.middlewares[key].bind(this.context)(arg);
+            const res = await this.store.middlewares[key].bind(this.context)(obj);
             if (res && typeof res !== "object")
               return errorStore(this.context.name, 404, key);
-            if (arg && res)
-              Object.assign(arg, res);
-            return this.store.methods[key].bind(this.context)(arg);
+            if (obj && res)
+              Object.assign(obj, res);
+            return this.store.methods[key].bind(this.context)(obj);
           })();
         } else {
-          return this.store.methods[key].bind(this.context)(arg);
+          return this.store.methods[key].bind(this.context)(obj);
         }
       };
     }
@@ -1436,7 +1450,7 @@ var Store = class {
     return this.context.param[key];
   }
   proxies(key, container) {
-    const active2 = (v, p) => container.proxy[key](v, p);
+    const active2 = (v, p) => container.proxy[key].setValue(v, p);
     this.context.reactivity.set(active2, key);
     if (!container.unstore)
       container.unstore = {};

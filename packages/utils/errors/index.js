@@ -37,7 +37,7 @@ const props = {
 const store = {
   401: 'object with stores in not define.',
   402: 'store module "%s" in not define.',
-  403: 'method "%s" can take only one argument of type object.',
+  // 403: 'method "%s" can take only one argument of type object.',
   404: 'middleware "%s" returns a value not of the object type'
 }
 const router = {

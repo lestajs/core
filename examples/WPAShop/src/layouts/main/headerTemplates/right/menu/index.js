@@ -16,14 +16,13 @@ export default {
         _html: this.param.text,
         onclick: (event) => {
           // console.log(this.router)
-          console.log(this.router.to)
-          console.log(this.router.from)
-          console.log(this.param.url)
+          console.log(this.app.router.to)
+          console.log(this.app.router.from)
 
-          if (this.param.url === '/cart' && this.router.to?.name === 'catalog') {
+          if (this.param.url === '/cart' && this.app.router.to?.name === 'catalog') {
             event.preventDefault()
             event.stopPropagation()
-            this.router.to.extra.sidebar.method.toggle()
+            this.app.router.to.extra.sidebar.method.toggle()
           }
 
           // console.log(this.param.text)

@@ -3,42 +3,54 @@ import '../spinner/index.css'
 
 export default {
   template: `
-  <button class="lstBtn l-fx-b l-br">
+  <button class="lstBtn l-fx-b l-br l-jc-c">
     <span class="lstBtnIcon l-fx l-jc-center"></span>
     <span class="lstBtnText"></span>
   </button>`,
   props: {
     proxies: {
-      value: {},
+      value: {
+        default: ''
+      },
       disabled: {},
       error: {},
       activated: {}
     },
     params: {
       name: { default: '' },
-      type: { default: 'button' },
-      size: { default: 'medium' },
+      type: { default: 'secondary' },
+      size: {
+        enum: ['small', 'medium', 'large'],
+        default: 'medium'
+      },
       reverse: {},
       icon: {}
     },
     methods: {
-      action: {}
+      action: {
+        update(target, prop) {
+          target[prop] = !target[prop]
+        }
+      }
     }
   },
   nodes() {
     return {
       lstBtn: {
-        _class: {
-          'l-fx-rev': this.param.reverse === 'end',
-          'l-active': () => this.proxy.activated
-        },
         _attr: {
           size: this.param.size
+        },
+        _class: {
+          'l-fx-rev': this.param.reverse,
+          'l-active': () => this.proxy.activated
         },
         name: this.param.name,
         type: this.param.type,
         disabled: () => this.proxy.disabled,
-        onclick: (event) => this.method.action?.({ name: this.param.name, value: this.proxy.value, activated: this.proxy.activated, icon: event.target.closest('.lstBtnIcon') })
+        onclick: (event) => {
+          if (this.container.proxy.activated.isIndependent()) this.update.action(this.proxy, 'activated')
+          this.method.action?.({ name: this.param.name, value: this.proxy.value, icon: event.target.closest('.lstBtnIcon'), activated: this.proxy.activated })
+        }
       },
       lstBtnIcon: {
         _class: {
@@ -49,14 +61,6 @@ export default {
       lstBtnText: {
         _text: () => this.proxy.value
       }
-    }
-  },
-  methods: {
-    set(v) {
-      this.proxy.value = v
-    },
-    spinner(v) {
-      this.proxy.error = v
     }
   }
 }

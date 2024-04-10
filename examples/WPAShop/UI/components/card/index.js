@@ -1,4 +1,4 @@
-import btn from '../buttonOld'
+import button from '../button'
 import image from '../image'
 import './index.css'
 
@@ -59,7 +59,7 @@ export default {
             buttons: () => this.proxy.buttons
           },
           methods: {
-            change: (btn) => this.method.change && this.method.change(btn.name, this.param.index)
+            change: ({ name }) => this.method.change?.({ name, index: this.param.index })
           }
         }
       },
@@ -72,17 +72,19 @@ export default {
           event.stopPropagation()
         },
         component: {
-          src: btn,
+          src: button,
           iterate: () => this.proxy.actions,
+          proxies: {
+            value: (btn) => btn.text
+          },
           params: {
             name: (btn) => btn.name,
-            text: (btn) => btn.text,
             icon: (btn) => btn.icon,
             size: 'small',
             type: 'text'
           },
           methods: {
-            change: (btn) => this.method.action && this.method.action(btn.name, this.param.index)
+            action: ({ name }) => this.method.action?.({ name, index: this.param.index })
           }
         }
       },
