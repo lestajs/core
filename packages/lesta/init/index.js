@@ -11,7 +11,7 @@ class Init extends InitBasic {
   destroy(container) {
     container.reactivity?.component?.clear()
     delete container.proxy
-    delete container.method
+    // delete container.method
     for (const key in container.unstore) {
       container.unstore[key]()
     }

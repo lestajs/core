@@ -31,16 +31,16 @@ class InitBasic extends InitComponent {
       set: (target, value, ref) => {
         for (const keyNode in this.context.node) {
           const nodeElement = this.context.node[keyNode]
-          nodeElement.reactivity.node && active(nodeElement.reactivity.node, ref)
-          nodeElement.reactivity.component && active(nodeElement.reactivity.component, ref, value)
+          active(nodeElement.reactivity.node, ref)
+          active(nodeElement.reactivity.component, ref, value)
           for (const section in nodeElement.section) {
-            nodeElement.section[section]?.reactivity.component && active(nodeElement.section[section].reactivity.component, ref, value)
+            active(nodeElement.section[section]?.reactivity.component, ref, value)
           }
         }
         this.component.handlers?.[ref]?.bind(this.context)(value)
       },
-      get: (target, ref) => {
-        if (this.impress.collect && !this.impress.refs.includes(ref)) {
+      get: (target, prop, ref) => {
+        if (this.impress.collect && !this.impress.refs.includes(ref) && typeof target[prop] !== 'function') {
           this.impress.refs.push(ref)
         }
       }

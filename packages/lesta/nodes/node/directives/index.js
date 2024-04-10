@@ -18,16 +18,18 @@ export default class Directives extends Node {
         }})
         create && node.directives[key].create()
         
-        const active = (v, k, o) => {
-            const upd = () =>  update.bind(directive)(node, typeof v === 'function' ? v(node) : v, k, o)
-            this.impress.collect = true
-            upd()
-            this.reactiveNode(this.impress.define(), upd)
+        const handle = (v, k, o) => {
+            const active = (value) =>  update.bind(directive)(node, value, k, o)
+            if (typeof v === 'function') {
+                this.impress.collect = true
+                active(v(node))
+                this.reactiveNode(this.impress.define(), () => active(v(node)))
+            } else active(v)
         }
         if (update) {
             if (typeof options === 'object') {
-                for (const k in options) active(options[k], k, options)
-            } else active(options)
+                for (const k in options) handle(options[k], k, options)
+            } else handle(options)
         }
     }
 }

@@ -117,8 +117,8 @@ export default {
             url: (product) => '/product/' + product.id
           },
           methods: {
-            change: (btnName, i) => {
-              this.method.addToCart(this.proxy.products[i])
+            change: ({ index }) => {
+              this.method.addToCart({ product: this.proxy.products[index] })
             }
           }
         }
@@ -132,8 +132,8 @@ export default {
     this.param.categories = await catalogApi.getAllCategories()
     // await delay(1500);
     this.proxy.hidden = true
-    console.dir(this.router.to.extra.sidebar)
-    const sidebarSections = this.router.to.extra.sidebar.section
+    console.dir(this.app.router.to.extra.sidebar)
+    const sidebarSections = this.app.router.to.extra.sidebar.section
 
     await sidebarSections.content.mount({ src: cart })
     await sidebarSections.bottom.mount({
@@ -142,7 +142,7 @@ export default {
         text: 'Go to Cart'
       },
       methods: {
-        change: () => this.router.push('/cart')
+        change: () => this.app.router.push('/cart')
       }
     })
   }

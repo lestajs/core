@@ -1,55 +1,36 @@
-.LstInputWr {
+.lstInputWr {
   position: relative;
-}
-.LstInput {
-  min-height: 1em;
-  min-width: 10ch;
-  width: 100%;
-  background-color: #ffffff10;
-  border: 1px solid #00000020;
-  color: inherit;
-}
-.LstInput[type="search"] {
-  padding-right: 2.2em;
-}
-.LstInputWr:has(input[type="search"]):before {
-  display: block;
-  position: absolute;
-  content: '';
-  top: .6em;
-  right: .9em;
-  width: .9em;
-  height: .9em;
-  border: 2px solid;
-  border-radius: 1em;
-  z-index: 2;
-}
-.LstInputWr:has(input[type="search"]):after {
-  display: block;
-  position: absolute;
-  content: '';
-  right: .8em;
-  top: 1.6em;
-  width: .4em;
-  border: 1px solid;
-  z-index: 2;
-  transform-origin: right;
-  transform: rotate(45deg);
+  display: flex;
+  align-items: center;
 }
 
-.LstInput[type="search"]::-webkit-search-cancel-button{
+.lstInput.lstError, .lstInput:invalid  {
+  border-color: var(--red);
+}
+.lstInputAfter {
+  padding: 0 .3em;
+  font-size: var(--fs-xxs);
+}
+.lstInput.lstError + .lstInputAfter {
+  color: var(--red);
+}
+
+.lstInput::-webkit-datetime-edit-fields-wrapper {
+  line-height: 1.2;
+}
+.lstInput::placeholder {
+  color: var(--gray400);
+}
+
+.lstInput.lstError {
+  border-color: var(--red);
+}
+.lstInputAfter {
+  padding: 0 .3em;
+}
+.lstInputAfter:empty {
   display: none;
 }
-.LstInput:focus {
-  outline: 1px solid #00000022;
-}
-.LstLabel {
-  font-weight: 600;
-  margin: var(--xs) 0 var(--xxs) 0;
-}
-.LstLabel:empty {
-  display: none;
-}
-.LstMessage:empty {
-  display: none;
+.lstUI input[disabled] {
+  background-color: var(--gray);
 }

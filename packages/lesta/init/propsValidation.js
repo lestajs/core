@@ -12,6 +12,7 @@ class Props {
   async setup(cp) {
     if (this.props.proxies && Object.keys(this.props.proxies).length && !cp?.proxies) return errorProps(this.container.nodepath, 306)
     if (!this.container.proxy) this.container.proxy = {}
+    this.context.update = {}
     if (cp) {
       await this.params(cp.params)
       await this.methods(cp.methods)
@@ -22,7 +23,7 @@ class Props {
     const nodepath = this.container.nodepath
     const checkType = (v, t) => v && t && !(typeof v === t || (t === 'array' && Array.isArray(v))) && errorProps(nodepath, name, key, 304, t)
     const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(nodepath, name, key, 302, v))
-    const checkValue = (v, p) => v ?? (p.required && errorProps(nodepath, name, key, 303) || p.default)
+    const checkValue = (v, p) => v ?? ((p.required && errorProps(nodepath, name, key, 303)) ?? p.default)
     const check = (v, p) => {
       if (typeof p === 'string') return checkType(v, p)
       checkType(v, p.type)
@@ -44,24 +45,28 @@ class Props {
   async proxies(proxies) {
     if (proxies) {
       const proxiesData = {}
+      const context = this.context
       for (const key in proxies) {
         const prop = proxies[key]
-        const context = this.context
         let check = null
-        this.container.proxy[key] = (value, path) => {
-          if (path?.length) {
-            deliver(context.proxy[key], path, value)
-            prop.validate?.(context.proxy[key], check)
-          } else {
-            this.validation(context.proxy, prop, key, value, 'proxies')
-          }
+        this.container.proxy[key] = {
+          getValue: () => replicate(context.proxy[key]),
+          setValue: (value, path) => {
+            if (path) {
+              deliver(context.proxy[key], path, replicate(value))
+              prop.validate?.(context.proxy[key], check)
+            } else {
+              this.validation(context.proxy, prop, key, replicate(value), 'proxies')
+            }
+          },
+          isIndependent: () => this.props.proxies[key]?._independent || false
         }
         let value = null
         const { store } = prop
-        if (this.props.proxies && key in this.props.proxies) {
-          value = this.props.proxies[key]
+        if (this.props.proxies?.hasOwnProperty(key)) {
+          value = this.props.proxies[key]?._value
         } else if (store) {
-          const storeModule = await this.context.store?.init(store)
+          const storeModule = await this.app.store?.init(store)
           if (!storeModule) return errorProps(this.container.nodepath, 'proxies', key, 307, store)
           value = storeModule.proxies(key, this.container)
         }
@@ -77,7 +82,7 @@ class Props {
         const { store } = prop
         let data = null
         if (store) {
-          const storeModule = await this.context.store?.init(store)
+          const storeModule = await this.app.store?.init(store)
           if (!storeModule) return errorProps(this.container.nodepath, 'params', key, 307, store)
           data = storeModule.params(key)
         } else {
@@ -90,19 +95,26 @@ class Props {
     }
   }
   async methods(methods) {
+    const setMethod = (method, key) => {
+      this.context.method[key] = (obj) => {
+        const result = method({ ...replicate(obj), _update: methods[key].update })
+        return result instanceof Promise ? result.then(data => replicate(data)) : replicate(result)
+      }
+    }
     for (const key in methods) {
       const prop = methods[key]
+      if (prop.update) this.context.update[key] = prop.update
       const { store } = prop
       if (store) {
-        const storeModule = await this.context.store?.init(store)
+        const storeModule = await this.app.store?.init(store)
         if (!storeModule) return errorProps(this.container.nodepath, 'methods', key, 307, store)
         const method = storeModule.methods(key)
         if (!method) return errorProps(this.container.nodepath, 'methods', key, 305, store)
-        this.context.method[key] = async (...args) => await method(...replicate(args))
+        setMethod(method, key)
       } else {
-        const isMethodValid = this.props.methods && (key in this.props.methods)
+        const isMethodValid = this.props.methods?.hasOwnProperty(key)
         if (prop?.required && !(isMethodValid)) return errorProps(this.container.nodepath, 'methods', key, 303)
-        if (isMethodValid) this.context.method[key] = async (...args) => await this.props.methods[key](...replicate(args))
+        if (isMethodValid) setMethod(this.props.methods[key], key)
       }
     }
   }

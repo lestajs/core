@@ -13,15 +13,15 @@
   }
 
   // packages/utils/deliver.js
-  function deliver(target, path, value) {
+  function deliver(target, path = "", value) {
+    const p = path.split(".");
     let i;
     try {
-      for (i = 0; i < path.length - 1; i++)
-        target = target[path[i]];
-      if (value !== void 0) {
-        target[path[i]] = value;
-      }
-      return target[path[i]];
+      for (i = 0; i < p.length - 1; i++)
+        target = target[p[i]];
+      if (value !== void 0)
+        target[p[i]] = value;
+      return target[p[i]];
     } catch (err) {
     }
   }
@@ -157,7 +157,7 @@
     212: '"induce" property expects a function as a value.',
     213: 'param "%s" is already in props.',
     214: 'proxy "%s" is already in props.',
-    215: '"iterate" and "induce" property is not supported for sections.',
+    215: '"iterate", "induce", "sections" property is not supported within sections.',
     216: "component module is undefined.",
     217: '"abortSignal" property must have the class AbortSignal.',
     218: '"aborted" property expects a function as a value.'
@@ -186,8 +186,7 @@
       this.app = app;
       this.proxiesData = {};
       this.context = {
-        ...app,
-        mount: app.mount,
+        app,
         phase: 0,
         abortSignal: signal,
         options: component2,
@@ -214,12 +213,9 @@
         return await this.component.created.bind(this.context)();
     }
     methods() {
-      if (!this.context.container.method)
-        this.context.container.method = {};
       if (this.component.methods) {
         for (const [key, method] of Object.entries(this.component.methods)) {
           this.context.method[key] = method.bind(this.context);
-          this.context.container.method[key] = (...args) => this.context.method[key](...replicate(args));
         }
       }
       Object.preventExtensions(this.context.method);
@@ -259,7 +255,7 @@
       get(target, prop, receiver) {
         if (typeof prop === "symbol")
           return Reflect.get(target, prop, receiver);
-        handler.get?.(target, `${path}${prop}`);
+        handler.get?.(target, prop, `${path}${prop}`);
         return Reflect.get(target, prop, receiver);
       },
       set(target, prop, value, receiver) {
@@ -293,6 +289,8 @@
 
   // packages/lesta/reactivity/active.js
   function active(reactivity, ref, value) {
+    if (!reactivity)
+      return;
     const match = (str1, str2) => {
       const min = Math.min(str1.length, str2.length);
       return str1.slice(0, min) === str2.slice(0, min);
@@ -302,7 +300,7 @@
         if (refs.includes(ref))
           fn(value);
       } else if (match(ref, refs)) {
-        fn(value, ref.length > refs.length ? ref.replace(refs + ".", "").split(".") : void 0);
+        fn(value, ref.length > refs.length ? ref.replace(refs + ".", "") : void 0);
       }
     }
   }
@@ -338,7 +336,10 @@
 
   // packages/lesta/init/directives/_text.js
   var _text = {
-    update: (node2, value) => node2.textContent = value !== Object(value) ? value : JSON.stringify(value)
+    update: (node2, value) => {
+      if (value !== void 0)
+        node2.textContent = value !== Object(value) ? value : JSON.stringify(value);
+    }
   };
 
   // packages/lesta/init/directives/_attr.js
@@ -416,16 +417,16 @@
         set: (target, value, ref) => {
           for (const keyNode in this.context.node) {
             const nodeElement = this.context.node[keyNode];
-            nodeElement.reactivity.node && active(nodeElement.reactivity.node, ref);
-            nodeElement.reactivity.component && active(nodeElement.reactivity.component, ref, value);
+            active(nodeElement.reactivity.node, ref);
+            active(nodeElement.reactivity.component, ref, value);
             for (const section in nodeElement.section) {
-              nodeElement.section[section]?.reactivity.component && active(nodeElement.section[section].reactivity.component, ref, value);
+              active(nodeElement.section[section]?.reactivity.component, ref, value);
             }
           }
           this.component.handlers?.[ref]?.bind(this.context)(value);
         },
-        get: (target, ref) => {
-          if (this.impress.collect && !this.impress.refs.includes(ref)) {
+        get: (target, prop, ref) => {
+          if (this.impress.collect && !this.impress.refs.includes(ref) && typeof target[prop] !== "function") {
             this.impress.refs.push(ref);
           }
         }
@@ -478,6 +479,7 @@
         return errorProps(this.container.nodepath, 306);
       if (!this.container.proxy)
         this.container.proxy = {};
+      this.context.update = {};
       if (cp) {
         await this.params(cp.params);
         await this.methods(cp.methods);
@@ -488,7 +490,7 @@
       const nodepath = this.container.nodepath;
       const checkType = (v, t) => v && t && !(typeof v === t || t === "array" && Array.isArray(v)) && errorProps(nodepath, name, key, 304, t);
       const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(nodepath, name, key, 302, v));
-      const checkValue = (v, p) => v ?? (p.required && errorProps(nodepath, name, key, 303) || p.default);
+      const checkValue = (v, p) => v ?? ((p.required && errorProps(nodepath, name, key, 303)) ?? p.default);
       const check = (v, p) => {
         if (typeof p === "string")
           return checkType(v, p);
@@ -511,24 +513,28 @@
     async proxies(proxies) {
       if (proxies) {
         const proxiesData = {};
+        const context = this.context;
         for (const key in proxies) {
           const prop = proxies[key];
-          const context = this.context;
           let check = null;
-          this.container.proxy[key] = (value2, path) => {
-            if (path?.length) {
-              deliver(context.proxy[key], path, value2);
-              prop.validate?.(context.proxy[key], check);
-            } else {
-              this.validation(context.proxy, prop, key, value2, "proxies");
-            }
+          this.container.proxy[key] = {
+            getValue: () => replicate(context.proxy[key]),
+            setValue: (value2, path) => {
+              if (path) {
+                deliver(context.proxy[key], path, replicate(value2));
+                prop.validate?.(context.proxy[key], check);
+              } else {
+                this.validation(context.proxy, prop, key, replicate(value2), "proxies");
+              }
+            },
+            isIndependent: () => this.props.proxies[key]?._independent || false
           };
           let value = null;
           const { store: store2 } = prop;
-          if (this.props.proxies && key in this.props.proxies) {
-            value = this.props.proxies[key];
+          if (this.props.proxies?.hasOwnProperty(key)) {
+            value = this.props.proxies[key]?._value;
           } else if (store2) {
-            const storeModule = await this.context.store?.init(store2);
+            const storeModule = await this.app.store?.init(store2);
             if (!storeModule)
               return errorProps(this.container.nodepath, "proxies", key, 307, store2);
             value = storeModule.proxies(key, this.container);
@@ -545,7 +551,7 @@
           const { store: store2 } = prop;
           let data = null;
           if (store2) {
-            const storeModule = await this.context.store?.init(store2);
+            const storeModule = await this.app.store?.init(store2);
             if (!storeModule)
               return errorProps(this.container.nodepath, "params", key, 307, store2);
             data = storeModule.params(key);
@@ -560,23 +566,31 @@
       }
     }
     async methods(methods) {
+      const setMethod = (method, key) => {
+        this.context.method[key] = (obj) => {
+          const result = method({ ...replicate(obj), _update: methods[key].update });
+          return result instanceof Promise ? result.then((data) => replicate(data)) : replicate(result);
+        };
+      };
       for (const key in methods) {
         const prop = methods[key];
+        if (prop.update)
+          this.context.update[key] = prop.update;
         const { store: store2 } = prop;
         if (store2) {
-          const storeModule = await this.context.store?.init(store2);
+          const storeModule = await this.app.store?.init(store2);
           if (!storeModule)
             return errorProps(this.container.nodepath, "methods", key, 307, store2);
           const method = storeModule.methods(key);
           if (!method)
             return errorProps(this.container.nodepath, "methods", key, 305, store2);
-          this.context.method[key] = async (...args) => await method(...replicate(args));
+          setMethod(method, key);
         } else {
-          const isMethodValid = this.props.methods && key in this.props.methods;
+          const isMethodValid = this.props.methods?.hasOwnProperty(key);
           if (prop?.required && !isMethodValid)
             return errorProps(this.container.nodepath, "methods", key, 303);
           if (isMethodValid)
-            this.context.method[key] = async (...args) => await this.props.methods[key](...replicate(args));
+            setMethod(this.props.methods[key], key);
         }
       }
     }
@@ -599,7 +613,6 @@
     destroy(container) {
       container.reactivity?.component?.clear();
       delete container.proxy;
-      delete container.method;
       for (const key in container.unstore) {
         container.unstore[key]();
       }
@@ -684,6 +697,7 @@
       if (refs?.length)
         reactivity.set(active2, refs);
       this.impress.clear();
+      return refs;
     }
     reactiveNode(refs, active2) {
       this.reactive(refs, active2, this.nodeElement.reactivity.node);
@@ -740,7 +754,7 @@
       };
       nodeElement.section = {};
       for await (const [section, options] of Object.entries(pc.sections)) {
-        if (options.induce || options.iterate)
+        if (options.induce || options.iterate || options.sections)
           return errorComponent(nodeElement.section[section].nodepath, 215);
         const sectionNode = nodeElement.querySelector(`[section="${section}"]`);
         if (!sectionNode)
@@ -763,20 +777,19 @@
     }
     reactiveComponent(refs, active2, target) {
       const nodeElement = target || this.nodeElement;
-      this.reactive(refs, active2, nodeElement.reactivity.component);
+      return this.reactive(refs, active2, nodeElement.reactivity.component);
     }
     reactivate(proxies, reactive, arr, index, target) {
       const result = {};
       if (proxies) {
-        for (const [pr, fn] of Object.entries(proxies)) {
-          if (typeof fn === "function" && fn.name) {
+        for (const [pr, v] of Object.entries(proxies)) {
+          if (typeof v === "function" && v.name) {
             this.impress.collect = true;
-            const value = arr && fn.length ? fn(arr[index], index) : fn(target);
-            Object.assign(result, { [pr]: value });
-            reactive(pr, fn);
-            this.impress.clear();
+            const value = arr && v.length ? v(arr[index], index) : v(target);
+            const ref = reactive(pr, v);
+            Object.assign(result, { [pr]: { _value: value, _independent: !ref } });
           } else
-            Object.assign(result, { [pr]: fn });
+            Object.assign(result, { [pr]: { _value: v, _independent: true } });
         }
       }
       return result;
@@ -788,14 +801,14 @@
       let container = null;
       if (!nodeElement.process) {
         nodeElement.process = true;
-        container = await this.app.mount(src, nodeElement, {
+        container = await mountComponent(src, nodeElement, {
           abortSignal,
           aborted,
           sections,
           ssr,
           ...props_default.collect(pc, value, index),
           proxies: proxies() || {}
-        });
+        }, this.app);
         delete nodeElement.process;
       }
       if (!container)
@@ -843,17 +856,17 @@
         this.impress.clear();
         this.nodeElement.setAttribute("iterate", "");
         if (Object.getPrototypeOf(this.data).instance === "Proxy") {
-          this.reactiveComponent([this.name], async (v) => {
+          this.reactiveComponent([this.name], (v) => {
             this.data = this.node.component.iterate();
             if (v.length)
-              this.queue.add(async () => {
+              this.queue.add(() => {
                 if (this.node.component.proxies) {
                   for (const [pr, fn] of Object.entries(this.node.component.proxies)) {
                     if (typeof fn === "function" && fn.name) {
                       if (fn.length) {
                         for (let i = 0; i < Math.min(this.nodeElement.children.length, v.length); i++) {
                           const v2 = fn(this.data[i], i);
-                          this.nodeElement.children[i].proxy[pr]?.(v2);
+                          this.nodeElement.children[i].proxy[pr]?.setValue(v2);
                           this.sections(this.node.component.sections, this.nodeElement.children[i], i);
                         }
                       }
@@ -863,19 +876,18 @@
               });
             this.queue.add(async () => await this.length(v.length));
           });
-          this.reactiveComponent([this.name + ".length"], async (v) => {
+          this.reactiveComponent([this.name + ".length"], (v) => {
             this.queue.add(async () => await this.length(v));
           });
         }
         const mount = async () => await this.add(this.data.length);
+        this.nodeElement.induce = async (permit) => !permit ? this.nodeElement.toEmpty() : await mount();
         if (this.node.component.induce) {
           if (typeof this.node.component.induce !== "function")
             return errorComponent(this.nodeElement.nodepath, 212);
           this.impress.collect = true;
           const permit = this.node.component.induce();
-          this.reactiveNode(this.impress.define(), async () => {
-            !this.node.component.induce() ? this.nodeElement.toEmpty() : await mount();
-          });
+          this.reactiveNode(this.impress.define(), async () => await this.nodeElement.induce(this.node.component.induce()));
           if (permit)
             await mount();
         } else {
@@ -889,7 +901,7 @@
           for (const [p, f] of Object.entries(options.proxies)) {
             if (typeof f === "function" && f.name) {
               if (f.length) {
-                target.section[section]?.proxy[p]?.(f(this.data[index], index));
+                target.section[section]?.proxy[p]?.setValue(f(this.data[index], index));
                 this.sections(options.sections, target.section[section], index);
               }
             }
@@ -900,25 +912,25 @@
     proxies(proxies, target, index) {
       const reactive = (pr, fn) => {
         if (this.impress.refs.some((ref) => ref.includes(this.name))) {
-          this.reactiveComponent(this.impress.define(pr), async (v, p) => {
+          this.reactiveComponent(this.impress.define(pr), (v, p) => {
             this.queue.add(async () => {
               if (p) {
-                this.nodeElement.children[index]?.proxy[pr]?.(v, p);
+                this.nodeElement.children[index]?.proxy[pr]?.setValue(v, p);
               } else {
                 this.data = this.node.component.iterate();
                 if (index < this.data.length) {
                   const val = fn(this.data[index], index);
-                  this.nodeElement.children[index]?.proxy[pr]?.(val);
+                  this.nodeElement.children[index]?.proxy[pr]?.setValue(val);
                 }
               }
             });
           }, target);
         } else {
           if (!this.created) {
-            this.reactiveComponent(this.impress.define(pr), async (v, p) => {
-              !this.nodeElement.process && this.queue.add(async () => {
+            this.reactiveComponent(this.impress.define(pr), (v, p) => {
+              !this.nodeElement.process && this.queue.add(() => {
                 for (let i = 0; i < this.nodeElement.children.length; i++) {
-                  p ? this.nodeElement.children[i].proxy[pr]?.(v, p) : this.nodeElement.children[i].proxy[pr]?.(fn(this.data[i], i));
+                  p ? this.nodeElement.children[i].proxy[pr]?.setValue(v, p) : this.nodeElement.children[i].proxy[pr]?.setValue(fn(this.data[i], i));
                 }
               });
             }, target);
@@ -933,7 +945,7 @@
       if (this.data.length === length) {
         const qty = this.nodeElement.children.length;
         length > qty && await this.add(length);
-        length < qty && this.remove(length);
+        length < qty && await this.remove(length);
       }
     }
     async add(length) {
@@ -960,18 +972,18 @@
     }
     async init() {
       const mount = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, () => this.proxies(pc.proxies, this.nodeElement));
-      this.nodeElement.mount = mount;
+      this.nodeElement.induce = async (permit) => {
+        if (!permit) {
+          this.nodeElement.unmount?.();
+        } else if (!this.nodeElement.unmount)
+          await mount(this.node.component);
+      };
       if (this.node.component.induce) {
         if (typeof this.node.component.induce !== "function")
           return errorComponent(this.nodeElement.nodepath, 212);
         this.impress.collect = true;
         const permit = this.node.component.induce();
-        this.reactiveNode(this.impress.define(), async () => {
-          if (!this.node.component.induce()) {
-            this.nodeElement.unmount?.();
-          } else if (!this.nodeElement.unmount)
-            await mount(this.node.component);
-        });
+        this.reactiveNode(this.impress.define(), async () => await this.nodeElement.induce(this.node.component.induce()));
         if (permit)
           await mount(this.node.component);
       } else {
@@ -979,7 +991,7 @@
       }
     }
     proxies(proxies, target) {
-      const reactive = (pr, fn) => this.reactiveComponent(this.impress.define(pr), (v, p) => p ? target.proxy[pr]?.(v, p) : target.proxy[pr]?.(fn()), target);
+      const reactive = (pr, fn) => this.reactiveComponent(this.impress.define(pr), (v, p) => p ? target.proxy[pr]?.setValue(v, p) : target.proxy[pr]?.setValue(fn()), target);
       return this.reactivate(proxies, reactive, null, null, target);
     }
   };
@@ -1003,18 +1015,21 @@
         destroy: () => destroy ? destroy.bind(directive)(node2, options) : {}
       } });
       create && node2.directives[key].create();
-      const active2 = (v, k, o) => {
-        const upd = () => update.bind(directive)(node2, typeof v === "function" ? v(node2) : v, k, o);
-        this.impress.collect = true;
-        upd();
-        this.reactiveNode(this.impress.define(), upd);
+      const handle = (v, k, o) => {
+        const active2 = (value) => update.bind(directive)(node2, value, k, o);
+        if (typeof v === "function") {
+          this.impress.collect = true;
+          active2(v(node2));
+          this.reactiveNode(this.impress.define(), () => active2(v(node2)));
+        } else
+          active2(v);
       };
       if (update) {
         if (typeof options === "object") {
           for (const k in options)
-            active2(options[k], k, options);
+            handle(options[k], k, options);
         } else
-          active2(options);
+          handle(options);
       }
     }
   };
@@ -1060,8 +1075,8 @@
       this.impress = impress;
       this.nodeElement = nodeElement;
       this.keyNode = keyNode;
-      this.directive = new Directives(node2, context, nodeElement, impress, app, keyNode);
       this.native = new Native(node2, context, nodeElement, impress, app, keyNode);
+      this.directive = new Directives(node2, context, nodeElement, impress, app, keyNode);
     }
     async controller(key) {
       if (key in this.nodeElement) {
@@ -1088,11 +1103,11 @@
         return errorComponent(this.nodeElement.nodepath, 208);
       const { node: node2, context, nodeElement, impress, app, keyNode } = this;
       if (this.node.component.iterate) {
-        this.iterate = new Iterate(node2, context, nodeElement, impress, app, keyNode);
-        await this.iterate.init();
+        const iterate = new Iterate(node2, context, nodeElement, impress, app, keyNode);
+        await iterate.init();
       } else {
-        this.basic = new Basic(node2, context, nodeElement, impress, app, keyNode);
-        await this.basic.init();
+        const basic = new Basic(node2, context, nodeElement, impress, app, keyNode);
+        await basic.init();
       }
     }
   };
@@ -1197,6 +1212,29 @@
     return await lifecycle(component2, render, aborted);
   }
 
+  // packages/lesta/mountWidget.js
+  async function mountWidget(src, root, signal, aborted) {
+    if (!src)
+      return errorComponent("root", 216);
+    if (signal && !(signal instanceof AbortSignal))
+      errorComponent("root", 217);
+    if (aborted && typeof aborted !== "function")
+      errorComponent("root", 218);
+    const component2 = new InitBasic(src, {}, signal, NodesBasic);
+    const render = () => {
+      root.innerHTML = src.template;
+      component2.context.container = root;
+    };
+    await lifecycle(component2, render, aborted);
+    return {
+      destroy() {
+        delete root.reactivity;
+        delete root.method;
+        root.innerHTML = "";
+      }
+    };
+  }
+
   // scripts/lesta.mountComponent.global.js
-  window.lesta = { mountComponent, replicate, deliver, deleteReactive, cleanHTML, loadModule, queue };
+  window.lesta = { mountComponent, mountWidget, replicate, deliver, deleteReactive, cleanHTML, loadModule, queue };
 })();

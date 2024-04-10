@@ -32,6 +32,6 @@ export default {
         }
     },
     async created() {
-        await this.router.to.extra.sidebar.section.content.mount({ src: summary })
+        await this.app.router.to.extra.sidebar.section.content.mount({ src: summary })
     }
 }

@@ -14,7 +14,9 @@
 .lstBtn:has(.lstBtnText:empty) {
   gap: 0;
 }
-
+.lstBtn.l-active {
+  background-color: var(--gray300);
+}
 .lstBtnText {
   min-height: 1em;
   padding: 0 .2em;
@@ -62,18 +64,22 @@
   background-color: var(--gray700);
   color: white;
 }
-.lstBtn[type="accent"] {
-  background-color: var(--green);
+
+.lstBtn[type="secondary"] {
+  background-color: var(--gray100);
 }
-.lstBtn[type="warn"] {
-  background-color: var(--red);
-}
+
 .lstBtn[type="text"] {
   background-color: transparent;
 }
-.lstBtn[type="text"]:active {
-
-}
 .lstBtn[type="primary"] .lstSpinner:before {
   background-color: white;
+}
+
+.lstBtn[type="primary"]:disabled {
+  background-color: var(--gray400);
+}
+
+.lstBtn:disabled > * {
+  opacity: .5;
 }

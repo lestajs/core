@@ -1,100 +1,59 @@
 import './index.css'
-import { debounce } from 'lesta'
-import { _attr } from '../directives'
 
 export default {
   template: `
-    <div class="LstLabel"></div>
-    <div class="LstInputWr">
-      <input type="text" class="LstInput b0 br pn">
-      <div class="LstMessage"></div>
+    <div class="l-fx l-ai-c"><label class="lstLbl l-label"></label><div class="lstInputInfo"></div></div>
+    <slot name="username"></slot>
+    <div class="lstInputWr">
+      <input type="text" class="lstInput l-field l-br">
     </div>`,
-  directives: { _attr },
   props: {
     proxies: {
-      value: {
-        default: ''
-      },
-      message: {}
+      value: { default: '' },
+      disabled: {},
+      error: {}
     },
     params: {
-      value: {},
+      type: { default: 'text' },
+      name: { default: '' },
+      size: { default: 'medium' },
       label: {},
-      type: {
-        default: 'text'
-      },
-      size: { default: 'small' },
-      validate: {},
-      placeholder: {
-        default: ''
-      },
-      readonly: {},
-      autocomplete: {},
-      autofocus: {},
-      maxlength: {},
-      minlength: {},
-      max: {},
-      min: {},
-      step: {}
+      tooltip: {},
+      attributes: {},
+      validKeys: {}
     },
     methods: {
-      change: {},
-      onfocus: {},
-      onblur: {}
+      action: {}
     }
   },
   nodes() {
     return {
-      LstLabel: {
-        textContent: () => this.param.label
+      lstLbl: {
+        _text: () => this.param.label
       },
-      LstMessage: {
-        textContent: () => this.proxy.message
-      },
-      LstInput: {
+      lstInput: {
+        _class: {
+          lstError: () => this.proxy.error
+        },
         _attr: {
           size: this.param.size,
-          readonly: this.param.readonly,
-          required: this.param.validate?.required,
-          minlength: this.param.minlength,
-          maxlength: this.param.maxlength,
-          min: this.param.min,
-          max: this.param.max
+          ...this.param.attributes
         },
-        value: () => this.proxy.value ?? this.param.value ?? '',
         type: this.param.type,
-        placeholder: this.param.placeholder,
-        oninput: debounce((event) => {
-          this.param.value = event.target.value
-          this.proxy.value = event.target.value
-          this.method.change && this.method.change(event.target.value)
-        }),
-        onfocus: () => this.method.onfocus && this.method.onfocus(this.proxy.value),
-        onblur: () => this.method.onblur && this.method.onblur(this.proxy.value)
+        name: this.param.name,
+        value: () => this.proxy.value,
+        disabled: () => this.proxy.disabled,
+        onfocus: (event) => this.method.update('onfocus', event.target.value),
+        onblur: (event) => this.method.update('onblur', event.target.value),
+        oninput: (event) => this.method.update('oninput', event.target.value),
+        onkeypress: (event) => this.param.validKeys && !(new RegExp(this.param.validKeys).test(event.key)) && event.preventDefault()
       }
     }
   },
   methods: {
-    set(v) {
-      this.proxy.value = v
-    },
-    validate() {
-      if (!this.node.LstInput.checkValidity()) {
-        this.proxy.message = this.node.LstInput.validationMessage
-      } else return true
-
-    },
-    blur() {
-      this.node.LstInput.blur()
-    },
-    focus() {
-      this.node.LstInput.focus()
-    },
-    select() {
-      this.node.LstInput.select()
-    },
-    disabled(v) {
-      this.node.LstInput.disabled = v
+    update(eventType, value) {
+      const validationMessage = this.node.lstInput.validationMessage
+      this.method.action?.({ name: this.param.name, value, validationMessage, eventType })
     }
   }
 }

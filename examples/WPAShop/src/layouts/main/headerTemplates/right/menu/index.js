@@ -20,11 +20,13 @@ export default {
           console.log(this.router.from)
           console.log(this.param.url)
 
-          if (this.param.url === '/cart' && this.router.to?.name === 'catalog') {
+          if (this.param.url === '/cart' && this.app.router.to?.name === 'catalog') {
             event.preventDefault()
             event.stopPropagation()
 
-            this.router.to.extra.sidebar.method.toggle()
+            console.dir(this.router.to.extra.sidebar)
+            const opened = this.router.to.extra.sidebar.proxy.opened.getValue()
+            this.router.to.extra.sidebar.proxy.opened.setValue(!opened)
           }
 
           // console.log(this.param.text)

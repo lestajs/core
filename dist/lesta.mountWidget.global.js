@@ -78,7 +78,7 @@
     212: '"induce" property expects a function as a value.',
     213: 'param "%s" is already in props.',
     214: 'proxy "%s" is already in props.',
-    215: '"iterate" and "induce" property is not supported for sections.',
+    215: '"iterate", "induce", "sections" property is not supported within sections.',
     216: "component module is undefined.",
     217: '"abortSignal" property must have the class AbortSignal.',
     218: '"aborted" property expects a function as a value.'
@@ -98,8 +98,7 @@
       this.app = app;
       this.proxiesData = {};
       this.context = {
-        ...app,
-        mount: app.mount,
+        app,
         phase: 0,
         abortSignal: signal,
         options: component2,
@@ -126,12 +125,9 @@
         return await this.component.created.bind(this.context)();
     }
     methods() {
-      if (!this.context.container.method)
-        this.context.container.method = {};
       if (this.component.methods) {
         for (const [key, method] of Object.entries(this.component.methods)) {
           this.context.method[key] = method.bind(this.context);
-          this.context.container.method[key] = (...args) => this.context.method[key](...replicate(args));
         }
       }
       Object.preventExtensions(this.context.method);
@@ -171,7 +167,7 @@
       get(target, prop, receiver) {
         if (typeof prop === "symbol")
           return Reflect.get(target, prop, receiver);
-        handler.get?.(target, `${path}${prop}`);
+        handler.get?.(target, prop, `${path}${prop}`);
         return Reflect.get(target, prop, receiver);
       },
       set(target, prop, value, receiver) {
@@ -205,6 +201,8 @@
 
   // packages/lesta/reactivity/active.js
   function active(reactivity, ref, value) {
+    if (!reactivity)
+      return;
     const match = (str1, str2) => {
       const min = Math.min(str1.length, str2.length);
       return str1.slice(0, min) === str2.slice(0, min);
@@ -214,7 +212,7 @@
         if (refs.includes(ref))
           fn(value);
       } else if (match(ref, refs)) {
-        fn(value, ref.length > refs.length ? ref.replace(refs + ".", "").split(".") : void 0);
+        fn(value, ref.length > refs.length ? ref.replace(refs + ".", "") : void 0);
       }
     }
   }
@@ -250,7 +248,10 @@
 
   // packages/lesta/init/directives/_text.js
   var _text = {
-    update: (node2, value) => node2.textContent = value !== Object(value) ? value : JSON.stringify(value)
+    update: (node2, value) => {
+      if (value !== void 0)
+        node2.textContent = value !== Object(value) ? value : JSON.stringify(value);
+    }
   };
 
   // packages/lesta/init/directives/_attr.js
@@ -328,16 +329,16 @@
         set: (target, value, ref) => {
           for (const keyNode in this.context.node) {
             const nodeElement = this.context.node[keyNode];
-            nodeElement.reactivity.node && active(nodeElement.reactivity.node, ref);
-            nodeElement.reactivity.component && active(nodeElement.reactivity.component, ref, value);
+            active(nodeElement.reactivity.node, ref);
+            active(nodeElement.reactivity.component, ref, value);
             for (const section in nodeElement.section) {
-              nodeElement.section[section]?.reactivity.component && active(nodeElement.section[section].reactivity.component, ref, value);
+              active(nodeElement.section[section]?.reactivity.component, ref, value);
             }
           }
           this.component.handlers?.[ref]?.bind(this.context)(value);
         },
-        get: (target, ref) => {
-          if (this.impress.collect && !this.impress.refs.includes(ref)) {
+        get: (target, prop, ref) => {
+          if (this.impress.collect && !this.impress.refs.includes(ref) && typeof target[prop] !== "function") {
             this.impress.refs.push(ref);
           }
         }
@@ -385,6 +386,7 @@
       if (refs?.length)
         reactivity.set(active2, refs);
       this.impress.clear();
+      return refs;
     }
     reactiveNode(refs, active2) {
       this.reactive(refs, active2, this.nodeElement.reactivity.node);
@@ -410,18 +412,21 @@
         destroy: () => destroy ? destroy.bind(directive)(node2, options) : {}
       } });
       create && node2.directives[key].create();
-      const active2 = (v, k, o) => {
-        const upd = () => update.bind(directive)(node2, typeof v === "function" ? v(node2) : v, k, o);
-        this.impress.collect = true;
-        upd();
-        this.reactiveNode(this.impress.define(), upd);
+      const handle = (v, k, o) => {
+        const active2 = (value) => update.bind(directive)(node2, value, k, o);
+        if (typeof v === "function") {
+          this.impress.collect = true;
+          active2(v(node2));
+          this.reactiveNode(this.impress.define(), () => active2(v(node2)));
+        } else
+          active2(v);
       };
       if (update) {
         if (typeof options === "object") {
           for (const k in options)
-            active2(options[k], k, options);
+            handle(options[k], k, options);
         } else
-          active2(options);
+          handle(options);
       }
     }
   };
@@ -467,8 +472,8 @@
       this.impress = impress;
       this.nodeElement = nodeElement;
       this.keyNode = keyNode;
-      this.directive = new Directives(node2, context, nodeElement, impress, app, keyNode);
       this.native = new Native(node2, context, nodeElement, impress, app, keyNode);
+      this.directive = new Directives(node2, context, nodeElement, impress, app, keyNode);
     }
     async controller(key) {
       if (key in this.nodeElement) {

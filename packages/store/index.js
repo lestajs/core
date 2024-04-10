@@ -8,7 +8,7 @@ class Store {
     this.store = module
     this.context = {
       name,
-      ...app,
+      app,
       options: module,
       reactivity: new Map(),
       param: {},
@@ -23,18 +23,19 @@ class Store {
     this.context.param = this.store.params
     Object.preventExtensions(this.context.param)
     for (const key in this.store.methods) {
-      this.context.method[key] = (...args) => {
-        if (args.length && (args.length > 1 || typeof args[0] !== 'object')) return errorStore(this.context.name, 403, key)
-        const arg = {...replicate(args[0])}
+      // this.context.method[key] = (...args) => {
+      this.context.method[key] = (obj) => {
+        // if (args.length && (args.length > 1 || typeof args[0] !== 'object')) return errorStore(this.context.name, 403, key)
+        // const obj = {...replicate(arg)}
         if (this.store.middlewares && key in this.store.middlewares) {
           return (async () => {
-            const res = await this.store.middlewares[key].bind(this.context)(arg)
+            const res = await this.store.middlewares[key].bind(this.context)(obj)
             if (res && typeof res !== 'object') return errorStore(this.context.name, 404, key)
-            if (arg && res) Object.assign(arg, res)
-            return this.store.methods[key].bind(this.context)(arg)
+            if (obj && res) Object.assign(obj, res)
+            return this.store.methods[key].bind(this.context)(obj)
           })()
         } else {
-          return this.store.methods[key].bind(this.context)(arg)
+          return this.store.methods[key].bind(this.context)(obj)
         }
       }
     }
@@ -59,7 +60,7 @@ class Store {
     return this.context.param[key]
   }
   proxies(key, container) {
-    const active = (v, p) => container.proxy[key](v, p)
+    const active = (v, p) => container.proxy[key].setValue(v, p)
     this.context.reactivity.set(active, key)
     if (!container.unstore) container.unstore = {}
     container.unstore[key] = () => {

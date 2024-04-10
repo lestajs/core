@@ -28,10 +28,10 @@ const products = {
         return response
       }
     },
-    async addToCart(product) {
+    async addToCart({ product }) {
+      debugger
       const response = await cartApi.addToCart(product)
-      console.log(product, response)
-
+      
       if (response) {
         const p = this.proxy.cartProducts.find((el) => el.id === product.id)
         console.log(p)
@@ -43,7 +43,7 @@ const products = {
         }
       }
     },
-    async deleteFromCart(product) {
+    async deleteFromCart({ product }) {
       const response = await cartApi.deleteFromCart(product)
 
       if (response) {

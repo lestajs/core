@@ -10,8 +10,8 @@ export default class NodesBasic {
     this.impress = impress
     this.nodeElement = nodeElement
     this.keyNode = keyNode
-    this.directive = new Directives(node, context, nodeElement, impress, app, keyNode)
     this.native = new Native(node, context, nodeElement, impress, app, keyNode)
+    this.directive = new Directives(node, context, nodeElement, impress, app, keyNode)
   }
   async controller(key) {
     if (key in this.nodeElement) {
