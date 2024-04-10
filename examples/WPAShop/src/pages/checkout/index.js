@@ -11,6 +11,10 @@ export default {
   proxies: {
     currentTab: 0,
   },
+  sources: {
+    ship: () => import('./tabs/ship'),
+    pickUp: () => import('./tabs/pickUp')
+  },
   nodes() {
     return {
       tabs: {
@@ -21,10 +25,18 @@ export default {
             value: () => this.proxy.currentTab,
           },
           methods: {
-            action({ index }) {
+            action: ({ index }) => {
               console.log(this, index)
               this.proxy.currentTab = index
+              if (index === 0) {
+                this.node.tabs.section.content.mount({ src: this.source.ship })
+              } else {
+                this.node.tabs.section.content.mount({ src: this.source.pickUp })
+              }
             }
+          },
+          sections: {
+            content: {}
           }
         }
       }
