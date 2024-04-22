@@ -41,6 +41,7 @@ export default {
       LstCardStandard: {
         component: {
           induce: () => this.proxy.header || this.proxy.content,
+          async: true,
           src: this.source.standard,
           proxies: {
             header: () => this.proxy.header,
@@ -51,6 +52,7 @@ export default {
       LstCardClassic: {
         component: {
           induce: () => this.proxy.title || this.proxy.buttons,
+          async: true,
           src: this.source.classic,
           proxies: {
             title: () => this.proxy.title,

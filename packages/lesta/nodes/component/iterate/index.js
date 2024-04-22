@@ -5,20 +5,21 @@ import { errorComponent } from '../../../../utils/errors/component'
 export default class Iterate extends Components {
     constructor(...args) {
         super(...args)
-        this.queue = queue()
         this.name = null
         this.created = false
         this.nodeElement.toEmpty = () => this.remove.bind(this)(0)
     }
     async init() {
         if (typeof this.node.component.iterate !== 'function') return errorComponent(this.nodeElement.nodepath, 205)
+        this.queue = queue()
+        this.nodeElement.innerHTML = ''
         this.createIterate = async (index) => {
-            if (!this.created) this.nodeElement.style.visibility = 'hidden'
+            // if (!this.created) this.nodeElement.style.visibility = 'hidden'
             const proxies = () => this.proxies(this.node.component.proxies, this.nodeElement.children[index], index)
             await this.create(this.proxies.bind(this), this.nodeElement, this.node.component, proxies, this.data[index], index)
             if (!this.created) {
                 if (this.nodeElement.children.length > 1) return errorComponent(this.nodeElement.nodepath, 210)
-                this.nodeElement.style.removeProperty('visibility')
+                // this.nodeElement.style.removeProperty('visibility')
             }
             this.created = true
         }
@@ -54,16 +55,8 @@ export default class Iterate extends Components {
                 })
             }
             const mount = async () => await this.add(this.data.length)
-            this.nodeElement.induce = async (permit) => !permit ? this.nodeElement.toEmpty() : await mount()
-            if (this.node.component.induce) {
-                if (typeof this.node.component.induce !== 'function') return errorComponent(this.nodeElement.nodepath, 212)
-                this.impress.collect = true
-                const permit = this.node.component.induce()
-                this.reactiveNode(this.impress.define(), async () => await this.nodeElement.induce(this.node.component.induce()))
-                if (permit) await mount()
-            } else {
-                await mount()
-            }
+            const induced = this.induced(async (permit) => !permit ? this.nodeElement.toEmpty() : await mount())
+            if (induced) await mount()
         }
     }
     sections(sections, target, index) {

@@ -25,7 +25,7 @@ export default {
                     methods: {
                         change: () => {},
                     },
-                    sections: {
+                    spots: {
                         content: {
                             src: groupcheckbox,
                             param: {

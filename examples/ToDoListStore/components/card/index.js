@@ -1,66 +1,57 @@
 import './index.css'
+import { delay } from 'lesta'
 
 export default {
   template: `
-  <div class="card">
-    <div class="line">
-      <div class="date"></div>
-      <h3 class="name"></h3>
-    </div>
-    <div class="description"></div>
-    <div class="buttons">
-      <button class="completed">completed</button>
-      <button class="edit">edit</button>
-      <button class="remove">remove</button>
+  <div class="grid-card">
+    <div class="card">
+      <div class="line">
+        <div class="name"></div>
+        <div class="date"></div>
+      </div>
+      <div class="description"></div>
+      <div class="bottom"></div>
     </div>
   </div>`,
   props: {
-    proxies: {
-      _card: {
-        changed: true
+    params: {
+      bottomComponent: {
+        ignore: true
       }
     },
-    methods: {
-      complete: {},
-      remove: {},
-      edit: {},
-    }
-  },
-  setters: {
-    '_card.completed'(v) {
-      console.log(v)
-      return v
+    proxies: {
+      card: {}
     }
   },
   nodes() {
     return {
       line: {
         _class: {
-          yellow: () => this.proxy._card.completed
+          yellow: () => this.proxy.card.completed
         }
       },
       name: {
-        textContent: () => this.proxy._card.name
+        _text: () => this.proxy.card.name
       },
       description: {
-        textContent: () => this.proxy._card.description
+        _text: () => this.proxy.card.description
       },
       date: {
-        textContent: () => new Date(this.proxy._card.date).toLocaleString().slice(0,-10),
+        _text: () => new Date(this.proxy.card.date).toLocaleString().slice(0,-10),
       },
-      completed: {
-        _class: {
-          yellow: () => this.proxy._card.completed
-        },
-        textContent: () => this.proxy._card.completed ? 'completed' : 'uncompleted',
-        onclick: () => this.method.complete(this.proxy._card)
-      },
-      remove: {
-        onclick: () => this.method.remove(this.proxy._card)
-      },
-      edit: {
-        onclick: () => this.method.edit(this.proxy._card)
+      bottom: {
+        component: {
+          src: this.param.bottomComponent.module,
+          proxies: {
+            card: () => this.proxy.card
+          }
+        }
       }
     }
+  },
+  async created() {
+    await delay(1000)
+    console.dir(this.container)
+    return this.proxy.card
   }
 }

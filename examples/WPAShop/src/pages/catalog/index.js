@@ -132,11 +132,8 @@ export default {
     this.param.categories = await catalogApi.getAllCategories()
     // await delay(1500);
     this.proxy.hidden = true
-    console.dir(this.app.router.to.extra.sidebar)
-    const sidebarSections = this.app.router.to.extra.sidebar.section
-
-    await sidebarSections.content.mount({ src: cart })
-    await sidebarSections.bottom.mount({
+    await this.app.sidebar.spot.content.mount({ src: cart })
+    await this.app.sidebar.spot.bottom.mount({
       src: button,
       proxies: {
         text: 'Go to Cart'

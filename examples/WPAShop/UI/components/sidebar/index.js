@@ -6,10 +6,10 @@ export default {
       <div class="lstBackdrop"></div>
       <div class="lstSidebarWr">
         <div>
-          <div section="top"></div>
-          <div section="content"></div>
+          <div spot="top"></div>
+          <div spot="content"></div>
         </div>
-        <div section="bottom"></div>
+        <div spot="bottom"></div>
       </div>
     </div>`,
   props: {
@@ -28,6 +28,10 @@ export default {
       onclose: {}
     }
   },
+  spots: ['top', 'content', 'bottom'],
+  outwards: {
+    methods: ['open', 'close', 'toggle']
+  },
   nodes() {
     return {
       lstBackdrop: {
@@ -39,6 +43,15 @@ export default {
           'l-opened': () => this.proxy.opened,
           'l-mobile': () => this.proxy.mobile
         },
+      },
+      top: {
+        component: {}
+      },
+      content: {
+        component: {}
+      },
+      bottom: {
+        component: {}
       }
     }
   },
@@ -49,6 +62,9 @@ export default {
     close() {
       this.proxy.opened = false
       this.method.onclose && this.method.onclose()
+    },
+    toggle() {
+      this.proxy.opened = !this.proxy.opened
     }
   }
 }

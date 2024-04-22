@@ -9,6 +9,20 @@ export default class Components extends Node {
     super(...args)
     this.nodeElement.reactivity.component = new Map()
   }
+  induced(fn) {
+    if (this.node.component.hasOwnProperty('induce')) {
+      this.nodeElement.induce = fn
+      const induce = this.node.component.induce
+      if (!induce) return
+      if (typeof induce === 'function') {
+        this.impress.collect = true
+        const permit = induce()
+        this.reactiveNode(this.impress.define(), async () => await this.nodeElement.induce(induce()))
+        if (!permit) return
+      }
+    }
+    return true
+  }
   reactiveComponent(refs, active, target) {
     const nodeElement = target || this.nodeElement
     return this.reactive(refs, active, nodeElement.reactivity.component)

@@ -29,14 +29,11 @@ export default {
               console.log(this, index)
               this.proxy.currentTab = index
               if (index === 0) {
-                this.node.tabs.section.content.mount({ src: this.source.ship })
+                this.node.tabs.spot.content.mount({ src: this.source.ship })
               } else {
-                this.node.tabs.section.content.mount({ src: this.source.pickUp })
+                this.node.tabs.spot.content.mount({ src: this.source.pickUp })
               }
             }
-          },
-          sections: {
-            content: {}
           }
         }
       }

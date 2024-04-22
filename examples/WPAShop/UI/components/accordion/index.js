@@ -8,7 +8,7 @@ export default {
         <div class="LstTriggerIcon LstArrow"></div>
     </div>
     <div class="LstPanel">
-        <p class="LstContent" section="content"></p>
+        <p class="LstContent" spot="content"></p>
     </div>`,
   proxies: {
     hide: false
@@ -26,6 +26,7 @@ export default {
       change : {}
     }
   },
+  spots: ['content'],
   nodes() {
     return {
       LstTrigger: {
@@ -45,6 +46,9 @@ export default {
         _class: {
           hide: () => this.proxy.hide
         }
+      },
+      content: {
+        component: {}
       }
     }
   },

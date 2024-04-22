@@ -1,17 +1,14 @@
-.LstHeader {
-  background-color: #ffffff10;
-  border-bottom: 1px solid #00000020;
+.lstHdr {
+  border-bottom: 1px solid var(--gray200);
   width: 100%;
-}
-.LstHeaderContent {
   justify-content: space-between;
   align-items: center;
-  margin: 0 auto;
   padding: var(--xxs);
 }
-[section="center"] {
+
+.lstHdr [section="center"] {
   flex: 1;
 }
-[section]:empty {
+.lstHdr [section]:empty {
   display: none;
 }

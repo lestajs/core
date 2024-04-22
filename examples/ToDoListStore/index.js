@@ -1,13 +1,18 @@
 import component from './app'
 import tasks from './stores/tasks'
+import notices from './stores/notices'
 import { createApp, createStores } from 'lesta'
 
 const root = document.querySelector('#root')
-const app = createApp()
+const app = createApp({
+  store: {},
+  popup: {},
+  selector: (name) => '.' + name.replace('_', '-')
+})
 
-const stores = createStores(app, { tasks })
+const stores = createStores(app, { tasks, notices })
 
-// stores.init('products').then(() => {
+// stores.init('tasks').then(() => {
 // app.mount(component, root)
 // })
 
