@@ -1,50 +1,57 @@
 import './index.css'
+import header from '../header'
 import card from '../card'
 import form from '../form'
 import search from '../search'
-import notifications from '../notifications'
+import notification from '../notification'
+import bottomPanel from '../bottomPanel'
 import { mapProps } from 'lesta'
 
 export default {
   template: `
-        <header>
-            <div class="search"></div>
-            <div class="btnGroup">
-              <div class="count"></div>
-              <button class="filter blue"></button>
-              <button class="add green">Add Task</button>
-            </div>
-        </header>
-        <div class="notifications"></div>
-        <div class="cards"></div>`,
+    <template>
+      <div class="search"></div>
+    </template>
+    <template>
+      <div class="controls">
+        <div class="count"></div>
+        <button class="filter blue"></button>
+        <button class="add green">Add Task</button>
+      </div>
+    </template>
+    <div class="header"></div>
+    <div class="notifications"></div>
+    <div class="cards"></div>
+    <div class="bottom-panel"></div>`,
   props: {
-    params: {
-      popup: {
-        ignore: true
-      }
-    },
     proxies: {
       // tasks: { store: 'tasks' },
-      // test: { store: 'tasks' }
-      ...mapProps(['tasks', 'test'], { store: 'tasks' })
+      // loading: { store: 'tasks' }
+      ...mapProps(['tasks', 'loading'], { store: 'tasks' })
     },
     methods: {
-      ...mapProps(['add', 'edit', 'remove', 'complete', 'search', 'filter', 'delayFilterStop'], { store: 'tasks' })
+      ...mapProps(['addTask', 'searchTasks', 'filterTasks', 'filterStop'], { store: 'tasks' })
     }
   },
   handlers: {
     showIncomplete(v) {
-      this.method.delayFilterStop()
+      this.method.filterStop()
     }
   },
   proxies: {
     showIncomplete: false
   },
   sources: {
-    count: () => import('../count')
+    count: () => import('../count'),
+    cardButtons: () => import('../cardButtons'),
   },
   nodes() {
     return {
+      header: {
+        component: {
+          src: header
+        }
+      },
       count: {
         component: {
           src: this.source.count,
@@ -55,84 +62,77 @@ export default {
         textContent: () => this.proxy.showIncomplete ? 'Hide incomplete' : 'Show incomplete',
         onclick: () => {
           this.proxy.showIncomplete = !this.proxy.showIncomplete
-          this.method.filter({ incomplete: this.proxy.showIncomplete })
+          this.method.filterTasks({ incomplete: this.proxy.showIncomplete })
         }
       },
       add: {
         onclick: () => {
           this.proxy.showIncomplete = false
-          this.method.popupAdd()
+          this.method.addPopup()
         }
       },
       search: {
+        _replace: () => this.node.header.spot.start, // this.node.header.spot.start
         component: {
           src: search,
           methods: {
-            search: (value) => {
+            search: ({ value }) => {
               this.proxy.showIncomplete = false
-              this.method.search({ value })
+              this.method.searchTasks({ value })
             }
           }
         }
       },
+      controls: {
+        _replace: () => this.node.header.spot.end,
+      },
       notifications: {
         component: {
-          src: notifications
+          src: notification
         }
       },
       cards: {
-        textContent: () => !this.proxy.tasks.length ? 'empty...' : '',
+        _class: {
+          loading: () => this.proxy.loading
+        },
         component: {
           src: card,
+          async: true,
           iterate: () => this.proxy.tasks,
           params: {
             index: (task, index) => index,
+            bottomComponent: {
+              module: this.source.cardButtons
+            }
           },
           proxies: {
-            _card: (task) => task
+            card: (task) => task
           },
-          methods: {
-            complete: (task) => this.method.complete({ id: task.id }),
-            remove: (task) => {
-              this.method.remove({ id: task.id })
-              this.node.notifications.method.add({ text: task.name })
-            },
-            edit: this.method.popupEdit
-          }
+          aborted: (v) => console.log(v, this)
+        }
+      },
+      bottom_panel: { // app selector
+        component: {
+          src: bottomPanel
         }
       }
     }
   },
   methods: {
-    popupAdd() {
-      this.param.popup.section.content.mount({
+    addPopup() {
+      this.app.popup.spot.content.mount({
         src: form,
         methods: {
           save: (task) => {
-            this.method.add({ task })
-            this.param.popup.method.close()
+            this.method.addTask({ task })
+            this.app.popup.method.close()
           }
         }
       })
-      this.param.popup.method.open()
-    },
-    popupEdit(task) {
-      this.param.popup.section.content.mount({
-        src: form,
-        params: {
-          card: task,
-        },
-        methods: {
-          save: ({ date, name, description }) => {
-            task.date = date
-            task.description = description
-            task.name = name
-            this.method.edit({ task })
-            this.param.popup.method.close()
-          }
-        }
-      })
-      this.param.popup.method.open()
+      this.app.popup.method.show()
     }
+  },
+  mounted() {
+    console.dir(this.container)
   }
 }

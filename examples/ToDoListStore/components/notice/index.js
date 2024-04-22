@@ -14,14 +14,12 @@ export default {
       }
     },
     proxies: {
-      notify: {
+      notice: {
         validation: (v) => {
           return v.text || 'removed'
         },
         type: 'object',
         required: true,
-        // default: ...
-        // store: ''
       }
     },
     methods: {
@@ -33,10 +31,10 @@ export default {
   nodes() {
     return {
       text: {
-        _text: () => this.proxy.notify.text
+        _text: () => this.proxy.notice.text
       },
       close: {
-        onclick: () => this.method.close(this.param.index)
+        onclick: () => this.method.close({ index: this.param.index })
       }
     }
   }

@@ -12,7 +12,6 @@ class Props {
   async setup(cp) {
     if (this.props.proxies && Object.keys(this.props.proxies).length && !cp?.proxies) return errorProps(this.container.nodepath, 306)
     if (!this.container.proxy) this.container.proxy = {}
-    this.context.update = {}
     if (cp) {
       await this.params(cp.params)
       await this.methods(cp.methods)
@@ -97,13 +96,12 @@ class Props {
   async methods(methods) {
     const setMethod = (method, key) => {
       this.context.method[key] = (obj) => {
-        const result = method({ ...replicate(obj), _update: methods[key].update })
+        const result = method({ ...replicate(obj), _params: this.context.container.param, _methods: this.context.container.method })
         return result instanceof Promise ? result.then(data => replicate(data)) : replicate(result)
       }
     }
     for (const key in methods) {
       const prop = methods[key]
-      if (prop.update) this.context.update[key] = prop.update
       const { store } = prop
       if (store) {
         const storeModule = await this.app.store?.init(store)

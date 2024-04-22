@@ -48,7 +48,7 @@ export default {
                     proxies: {
                         header: 'Do you have a promo code?'
                     },
-                    sections: {
+                    spots: {
                         content: {
                             src: input,
                             methods: {

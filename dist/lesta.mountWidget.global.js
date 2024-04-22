@@ -75,7 +75,7 @@
     209: "iterable component must have a template.",
     210: "iterable component must have only one root tag in the template.",
     211: "component should have object as the object type.",
-    212: '"induce" property expects a function as a value.',
+    212: 'method "%s" is already in props.',
     213: 'param "%s" is already in props.',
     214: 'proxy "%s" is already in props.',
     215: '"iterate", "induce", "sections" property is not supported within sections.',
@@ -126,19 +126,34 @@
     }
     methods() {
       if (this.component.methods) {
+        if (this.component.outwards?.methods?.length)
+          this.context.container.method = {};
         for (const [key, method] of Object.entries(this.component.methods)) {
+          if (this.context.method.hasOwnProperty(key))
+            return errorComponent(this.context.container.nodepath, 212, key);
           this.context.method[key] = method.bind(this.context);
+          if (this.component.outwards?.methods?.includes(key)) {
+            this.context.container.method[key] = (obj) => {
+              const result = method(replicate(obj));
+              return result instanceof Promise ? result.then((data) => replicate(data)) : replicate(result);
+            };
+          }
         }
       }
       Object.preventExtensions(this.context.method);
     }
     params() {
       if (this.component.params) {
+        if (this.component.outwards?.params?.length)
+          this.context.container.param = {};
         for (const key in this.component.params) {
-          if (key in this.context.param)
+          if (this.context.param.hasOwnProperty(key))
             return errorComponent(this.context.container.nodepath, 213, key);
+          if (this.component.outwards?.params?.includes(key)) {
+            this.context.container.param[key] = this.component.params[key];
+          }
         }
-        Object.assign(this.context.param, replicate(this.component.params));
+        Object.assign(this.context.param, this.component.params);
       }
       Object.preventExtensions(this.context.param);
     }
@@ -248,10 +263,7 @@
 
   // packages/lesta/init/directives/_text.js
   var _text = {
-    update: (node2, value) => {
-      if (value !== void 0)
-        node2.textContent = value !== Object(value) ? value : JSON.stringify(value);
-    }
+    update: (node2, value) => node2.textContent = value !== Object(value) ? value : JSON.stringify(value)
   };
 
   // packages/lesta/init/directives/_attr.js

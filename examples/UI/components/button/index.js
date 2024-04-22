@@ -1,48 +1,69 @@
-import { _attr } from '../directives'
 import './index.css'
+import '../spinner/index.css'
 
 export default {
   template: `
-  <button class="lstBtn fx-b br pn">
-    <span class="lstBtnIcon"></span>
+  <button class="lstBtn l-fx-b l-br l-jc-c">
+    <span class="lstBtnIcon l-fx l-jc-center"></span>
     <span class="lstBtnText"></span>
   </button>`,
-  directives: { _attr },
   props: {
     proxies: {
-      value: {},
-      disabled: {}
+      value: {
+        default: ''
+      },
+      disabled: {},
+      error: {},
+      activated: {}
     },
     params: {
       name: { default: '' },
-      type: { default: 'button' },
-      size: { default: 'small' },
-      text: {},
-      options: { default: {} }
+      type: { default: 'secondary' },
+      size: {
+        enum: ['small', 'medium', 'large'],
+        default: 'medium'
+      },
+      reverse: {},
+      icon: {}
     },
     methods: {
-      change: {}
+      action: {}
     }
+  },
+  params: {
+    update(target, prop) {
+      target[prop] = !target[prop]
+    }
+  },
+  outwards: {
+    params: ['update']
   },
   nodes() {
     return {
       lstBtn: {
-        _class: {
-          'fx-rev': this.param.options.reverse
-        },
         _attr: {
-          size: this.param.size,
+          size: this.param.size
+        },
+        _class: {
+          'l-fx-rev': this.param.reverse,
+          'l-active': () => this.proxy.activated
         },
         name: this.param.name,
         type: this.param.type,
         disabled: () => this.proxy.disabled,
-        onclick: () => this.method.change && this.method.change(this.param.name)
+        onclick: (event) => {
+          if (this.container.proxy.activated.isIndependent()) this.param.update(this.proxy, 'activated')
+          this.method.action?.({ name: this.param.name, value: this.proxy.value, icon: event.target.closest('.lstBtnIcon'), activated: this.proxy.activated })
+        }
       },
       lstBtnIcon: {
-        _html: () => this.param.options.icon
+        _class: {
+          lstSpinner: () => this.proxy.error
+        },
+        _html: () => this.param.icon
       },
       lstBtnText: {
-        textContent: () => this.param.text ?? this.proxy.value
+        _text: () => this.proxy.value
       }
     }
   }

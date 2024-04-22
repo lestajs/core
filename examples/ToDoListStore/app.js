@@ -8,27 +8,22 @@ export default {
       <div class="popup"></div>
       <main></main>
     </div>`,
-  selectors: {
-    main: 'main'
-  },
   nodes() {
     return {
       popup: {
         component: {
           src: dialog,
-          sections: {
-            content: {}
-          }
         }
       },
       main: {
+        selector:  'main',
         component: {
-          src: main,
-          params: {
-            popup: () => this.node.popup
-          }
+          src: main
         }
       }
     }
+  },
+  mounted() {
+    this.app.popup = this.node.popup
   }
 }

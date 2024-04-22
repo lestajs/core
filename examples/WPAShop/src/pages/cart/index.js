@@ -25,13 +25,13 @@ export default {
                     src: cartExtend,
                     iterate: () => this.proxy.cartProducts,
                     proxies: {
-                        _product: (product) => product,
+                        product: (product) => product,
                     }
                 }
             }
         }
     },
     async created() {
-        await this.app.router.to.extra.sidebar.section.content.mount({ src: summary })
+        await this.app.sidebar.spot.content.mount({ src: summary })
     }
 }

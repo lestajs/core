@@ -272,7 +272,7 @@ var component = {
   209: "iterable component must have a template.",
   210: "iterable component must have only one root tag in the template.",
   211: "component should have object as the object type.",
-  212: '"induce" property expects a function as a value.',
+  212: 'method "%s" is already in props.',
   213: 'param "%s" is already in props.',
   214: 'proxy "%s" is already in props.',
   215: '"iterate", "induce", "sections" property is not supported within sections.',
@@ -348,20 +348,37 @@ var InitComponent = class {
       return await this.component.created.bind(this.context)();
   }
   methods() {
+    var _a, _b, _c, _d;
     if (this.component.methods) {
+      if ((_b = (_a = this.component.outwards) == null ? void 0 : _a.methods) == null ? void 0 : _b.length)
+        this.context.container.method = {};
       for (const [key, method] of Object.entries(this.component.methods)) {
+        if (this.context.method.hasOwnProperty(key))
+          return errorComponent(this.context.container.nodepath, 212, key);
         this.context.method[key] = method.bind(this.context);
+        if ((_d = (_c = this.component.outwards) == null ? void 0 : _c.methods) == null ? void 0 : _d.includes(key)) {
+          this.context.container.method[key] = (obj) => {
+            const result = method(replicate(obj));
+            return result instanceof Promise ? result.then((data) => replicate(data)) : replicate(result);
+          };
+        }
       }
     }
     Object.preventExtensions(this.context.method);
   }
   params() {
+    var _a, _b, _c, _d;
     if (this.component.params) {
+      if ((_b = (_a = this.component.outwards) == null ? void 0 : _a.params) == null ? void 0 : _b.length)
+        this.context.container.param = {};
       for (const key in this.component.params) {
-        if (key in this.context.param)
+        if (this.context.param.hasOwnProperty(key))
           return errorComponent(this.context.container.nodepath, 213, key);
+        if ((_d = (_c = this.component.outwards) == null ? void 0 : _c.params) == null ? void 0 : _d.includes(key)) {
+          this.context.container.param[key] = this.component.params[key];
+        }
       }
-      Object.assign(this.context.param, replicate(this.component.params));
+      Object.assign(this.context.param, this.component.params);
     }
     Object.preventExtensions(this.context.param);
   }
@@ -472,10 +489,7 @@ var _class = {
 
 // packages/lesta/init/directives/_text.js
 var _text = {
-  update: (node2, value) => {
-    if (value !== void 0)
-      node2.textContent = value !== Object(value) ? value : JSON.stringify(value);
-  }
+  update: (node2, value) => node2.textContent = value !== Object(value) ? value : JSON.stringify(value)
 };
 
 // packages/lesta/init/directives/_attr.js
@@ -617,7 +631,6 @@ var Props = class {
       return errorProps(this.container.nodepath, 306);
     if (!this.container.proxy)
       this.container.proxy = {};
-    this.context.update = {};
     if (cp) {
       await this.params(cp.params);
       await this.methods(cp.methods);
@@ -718,14 +731,12 @@ var Props = class {
     var _a, _b;
     const setMethod = (method, key) => {
       this.context.method[key] = (obj) => {
-        const result = method({ ...replicate(obj), _update: methods[key].update });
+        const result = method({ ...replicate(obj), _params: this.context.container.param, _methods: this.context.container.method });
         return result instanceof Promise ? result.then((data) => replicate(data)) : replicate(result);
       };
     };
     for (const key in methods) {
       const prop = methods[key];
-      if (prop.update)
-        this.context.update[key] = prop.update;
       const { store: store2 } = prop;
       if (store2) {
         const storeModule = await ((_a = this.app.store) == null ? void 0 : _a.init(store2));
@@ -931,6 +942,22 @@ var Components = class extends Node {
     super(...args);
     this.nodeElement.reactivity.component = /* @__PURE__ */ new Map();
   }
+  induced(fn) {
+    if (this.node.component.hasOwnProperty("induce")) {
+      this.nodeElement.induce = fn;
+      const induce = this.node.component.induce;
+      if (!induce)
+        return;
+      if (typeof induce === "function") {
+        this.impress.collect = true;
+        const permit = induce();
+        this.reactiveNode(this.impress.define(), async () => await this.nodeElement.induce(induce()));
+        if (!permit)
+          return;
+      }
+    }
+    return true;
+  }
   reactiveComponent(refs, active2, target) {
     const nodeElement = target || this.nodeElement;
     return this.reactive(refs, active2, nodeElement.reactivity.component);
@@ -983,7 +1010,6 @@ var Components = class extends Node {
 var Iterate = class extends Components {
   constructor(...args) {
     super(...args);
-    this.queue = queue();
     this.name = null;
     this.created = false;
     this.nodeElement.toEmpty = () => this.remove.bind(this)(0);
@@ -991,15 +1017,14 @@ var Iterate = class extends Components {
   async init() {
     if (typeof this.node.component.iterate !== "function")
       return errorComponent(this.nodeElement.nodepath, 205);
+    this.queue = queue();
+    this.nodeElement.innerHTML = "";
     this.createIterate = async (index) => {
-      if (!this.created)
-        this.nodeElement.style.visibility = "hidden";
       const proxies = () => this.proxies(this.node.component.proxies, this.nodeElement.children[index], index);
       await this.create(this.proxies.bind(this), this.nodeElement, this.node.component, proxies, this.data[index], index);
       if (!this.created) {
         if (this.nodeElement.children.length > 1)
           return errorComponent(this.nodeElement.nodepath, 210);
-        this.nodeElement.style.removeProperty("visibility");
       }
       this.created = true;
     };
@@ -1038,18 +1063,9 @@ var Iterate = class extends Components {
         });
       }
       const mount = async () => await this.add(this.data.length);
-      this.nodeElement.induce = async (permit) => !permit ? this.nodeElement.toEmpty() : await mount();
-      if (this.node.component.induce) {
-        if (typeof this.node.component.induce !== "function")
-          return errorComponent(this.nodeElement.nodepath, 212);
-        this.impress.collect = true;
-        const permit = this.node.component.induce();
-        this.reactiveNode(this.impress.define(), async () => await this.nodeElement.induce(this.node.component.induce()));
-        if (permit)
-          await mount();
-      } else {
+      const induced = this.induced(async (permit) => !permit ? this.nodeElement.toEmpty() : await mount());
+      if (induced)
         await mount();
-      }
     }
   }
   sections(sections, target, index) {
@@ -1132,24 +1148,15 @@ var Basic = class extends Components {
   }
   async init() {
     const mount = async (pc) => await this.create(this.proxies.bind(this), this.nodeElement, pc, () => this.proxies(pc.proxies, this.nodeElement));
-    this.nodeElement.induce = async (permit) => {
+    const induced = this.induced(async (permit) => {
       var _a, _b;
       if (!permit) {
         (_b = (_a = this.nodeElement).unmount) == null ? void 0 : _b.call(_a);
       } else if (!this.nodeElement.unmount)
         await mount(this.node.component);
-    };
-    if (this.node.component.induce) {
-      if (typeof this.node.component.induce !== "function")
-        return errorComponent(this.nodeElement.nodepath, 212);
-      this.impress.collect = true;
-      const permit = this.node.component.induce();
-      this.reactiveNode(this.impress.define(), async () => await this.nodeElement.induce(this.node.component.induce()));
-      if (permit)
-        await mount(this.node.component);
-    } else {
-      this.node.component.src && await mount(this.node.component);
-    }
+    });
+    if (induced)
+      await mount(this.node.component);
   }
   proxies(proxies, target) {
     const reactive = (pr, fn) => this.reactiveComponent(this.impress.define(pr), (v, p) => {
@@ -1259,20 +1266,15 @@ var NodesBasic = class {
 var Nodes = class extends NodesBasic {
   constructor(...args) {
     super(...args);
+    this.iterate = new Iterate(...args);
+    this.basic = new Basic(...args);
   }
   async component() {
     if (this.nodeElement.hasAttribute("section"))
       return errorComponent(this.nodeElement.nodepath, 207);
     if (this.nodeElement.hasAttribute("iterable"))
       return errorComponent(this.nodeElement.nodepath, 208);
-    const { node: node2, context, nodeElement, impress, app, keyNode } = this;
-    if (this.node.component.iterate) {
-      const iterate = new Iterate(node2, context, nodeElement, impress, app, keyNode);
-      await iterate.init();
-    } else {
-      const basic = new Basic(node2, context, nodeElement, impress, app, keyNode);
-      await basic.init();
-    }
+    this.node.component.iterate ? await this.iterate.init() : await this.basic.init();
   }
 };
 

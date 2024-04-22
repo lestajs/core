@@ -17,7 +17,7 @@ const component = {
   209: 'iterable component must have a template.',
   210: 'iterable component must have only one root tag in the template.',
   211: 'component should have object as the object type.',
-  212: '"induce" property expects a function as a value.',
+  212: 'method "%s" is already in props.',
   213: 'param "%s" is already in props.',
   214: 'proxy "%s" is already in props.',
   215: '"iterate", "induce", "sections" property is not supported within sections.',
