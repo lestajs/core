@@ -1,14 +1,20 @@
 function mixins(target) {
   if (target.mixins?.length) {
-    const properties = ['selectors', 'directives', 'params', 'proxies', 'methods', 'handlers', 'setters', 'sources']
+    const properties = ['directives', 'params', 'proxies', 'methods', 'handlers', 'setters', 'sources']
     const props = ['params', 'proxies', 'methods']
     const hooks = ['loaded', 'rendered', 'created', 'mounted', 'unmounted']
-    const result = { props: {} }
+    const result = { props: {}, outwards: { params: [], methods: [] }, spots: [] }
     const mergeProperties = (a, b, key) => {
       return { ...a[key], ...b[key] }
     }
+    const mergeArrays = (a, b) => {
+      return [ ...a, ...b || [] ]
+    }
     const mergeOptions = (options) => {
       result.template = options.template || result.template
+      result.outwards.params = mergeArrays(result.outwards.params, options.outwards?.params)
+      result.outwards.methods = mergeArrays(result.outwards.methods, options.outwards?.methods)
+      result.spots = mergeArrays(result.spots, options.spots)
       properties.forEach((key) => {
         result[key] = mergeProperties(result, options, key)
       })

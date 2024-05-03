@@ -5,5 +5,5 @@ export default {
     <div class="header-wrapper">
         <div spot="start"></div><div spot="end"></div>
     </div>`,
-  spots: ['start', 'end']
+  spots: ['start', 'end'],
 }

@@ -1,9 +1,9 @@
 import { replicate } from '../../utils/index.js'
-import InitComponent from '../../lesta/init/initComponent.js'
+import InitBasic from '../../lesta/initBasic.js'
 import nodeHandler from '../nodes/index.js'
-import propsValidation from '../../lesta/init/propsValidation.js'
+import propsValidation from '../../lesta/propsValidation.js'
 
-class Init extends InitComponent {
+class Init extends InitBasic {
   constructor(...args) {
     super(...args)
   }

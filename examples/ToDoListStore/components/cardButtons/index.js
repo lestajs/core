@@ -1,6 +1,5 @@
 import './index.css'
-import form from '../form'
-import { mapProps, delay } from 'lesta'
+import { mapProps } from 'lesta'
 
 export default {
   template: `
@@ -34,30 +33,30 @@ export default {
         }
       },
       edit: {
-        onclick: () => this.method.editPopup(this.proxy.card)
+        onclick: () => this.app.rootContainer.method.createForm({ mode: 'edit', data: this.proxy.card })
       }
     }
   },
-  methods: {
-    editPopup(task) {
-      this.app.popup.spot.content.mount({
-        src: form,
-        params: {
-          card: task,
-        },
-        methods: {
-          save: ({ date, name, description }) => {
-            task.date = date
-            task.description = description
-            task.name = name
-            this.method.editTask({ task })
-            this.app.popup.method.close()
-          }
-        }
-      })
-      this.app.popup.method.show()
-    }
-  },
+  // methods: {
+  //   editPopup(task) {
+  //     this.app.popup.spot.content.mount({
+  //       src: form,
+  //       params: {
+  //         card: task,
+  //       },
+  //       methods: {
+  //         save: ({ date, name, description }) => {
+  //           task.date = date
+  //           task.description = description
+  //           task.name = name
+  //           this.method.editTask({ task })
+  //           this.app.popup.method.close()
+  //         }
+  //       }
+  //     })
+  //     this.app.popup.method.show()
+  //   }
+  // },
   async loaded() {
     // await delay(3000)
   }

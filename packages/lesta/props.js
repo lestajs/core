@@ -2,8 +2,7 @@ export default {
   collect(propertyComponent, val, index) {
     return {
       params: this.params(propertyComponent.params, val, index),
-      methods: this.methods(propertyComponent.methods),
-      section: propertyComponent.section
+      methods: this.methods(propertyComponent.methods)
     }
   },
   methods(methods) {

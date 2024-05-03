@@ -1,6 +1,6 @@
-import { deliver } from '../../utils/deliver.js'
-import { replicate } from '../../utils/index.js'
-import { errorProps } from '../../utils/errors/props.js'
+import { deliver } from '../utils/deliver.js'
+import { replicate } from '../utils'
+import { errorProps } from '../utils/errors/props.js'
 
 class Props {
   constructor(props, context, app) {
@@ -22,7 +22,7 @@ class Props {
     const nodepath = this.container.nodepath
     const checkType = (v, t) => v && t && !(typeof v === t || (t === 'array' && Array.isArray(v))) && errorProps(nodepath, name, key, 304, t)
     const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(nodepath, name, key, 302, v))
-    const checkValue = (v, p) => v ?? ((p.required && errorProps(nodepath, name, key, 303)) ?? p.default)
+    const checkValue = (v, p) => v ?? ((p.required && errorProps(nodepath, name, key, 303)) ?? p.default ?? v)
     const check = (v, p) => {
       if (typeof p === 'string') return checkType(v, p)
       checkType(v, p.type)
@@ -87,7 +87,7 @@ class Props {
         } else {
           data = this.props?.params[key]
         }
-        return prop?.ignore ? data : replicate(data)
+        return prop?.hole ? data : replicate(data)
       }
       this.validation(this.context.param, prop, key, await paramValue(), 'params')
       if (prop.readonly) Object.defineProperty(this.context.param, key, { writable: false })
@@ -95,8 +95,9 @@ class Props {
   }
   async methods(methods) {
     const setMethod = (method, key) => {
-      this.context.method[key] = (obj) => {
-        const result = method({ ...replicate(obj), _params: this.context.container.param, _methods: this.context.container.method })
+      this.context.method[key] = (...args) => {
+        if (args.length && (args.length > 1 || typeof args.at(0) !== 'object')) return errorProps(this.container.nodepath, 'methods', key, 301)
+        const result = method({ ...replicate(args.at(0)), _params: this.context.container.param, _methods: this.context.container.method })
         return result instanceof Promise ? result.then(data => replicate(data)) : replicate(result)
       }
     }

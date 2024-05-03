@@ -1,4 +1,4 @@
-import { replicate } from '../../utils/index.js'
+import { replicate } from '../utils'
 
 export default function diveProxy(_value, handler, path = '') {
   if (!(_value && (_value.constructor.name === 'Object' || _value.constructor.name === 'Array'))) {
@@ -9,12 +9,12 @@ export default function diveProxy(_value, handler, path = '') {
       return {target, instance: 'Proxy'}
     },
     get(target, prop, receiver) {
-      if (typeof prop === 'symbol') return Reflect.get(target, prop, receiver)
+      // if (typeof prop === 'symbol') return Reflect.get(target, prop, receiver)  // !
       handler.get?.(target, prop, `${path}${prop}`)
       return Reflect.get(target, prop, receiver)
     },
     set(target, prop, value, receiver) {
-      if (typeof prop === 'symbol') return Reflect.set(target, prop, value, receiver)
+      // if (typeof prop === 'symbol') return Reflect.set(target, prop, value, receiver) // !
       let upd = false
       const reject = handler.beforeSet(value, `${path}${prop}`, (v) => {
         value = v
@@ -35,7 +35,9 @@ export default function diveProxy(_value, handler, path = '') {
   }
   _value = replicate(_value)
   for (let key in _value) {
-    _value[key] = diveProxy(_value[key], handler, `${path}${key}.`)
+    if (_value.hasOwnProperty(key)) { // !!!
+      _value[key] = diveProxy(_value[key], handler, `${path}${key}.`)
+    }
   }
   return new Proxy(_value, proxyHandler)
 }

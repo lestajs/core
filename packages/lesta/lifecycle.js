@@ -1,12 +1,14 @@
-async function lifecycle(component, render, aborted) {
+import { replicate } from '../utils/index'
+
+async function lifecycle(component, render, props) {
   const hooks = [
     async () => await component.loaded(),
     async () => {
-      component.context.container = render()
+      render() // component.context.container =
       if (typeof document !== 'undefined') return await component.rendered()
     },
     async () => {
-      await component.props()
+      await component.props(props)
       component.params()
       component.methods()
       component.proxies()
@@ -17,14 +19,22 @@ async function lifecycle(component, render, aborted) {
       if (typeof document !== 'undefined') return await component.mounted()
     }
   ]
+  const result = (data) => {
+    return {
+      container: component.context.container,
+      phase: component.context.phase,
+      data
+    }
+  }
   for await (const hook of hooks) {
     const data = await hook()
     component.context.phase++
     if (component.context.abortSignal?.aborted || data) {
-      aborted && aborted({ phase: component.context.phase, data, abortSignal: component.context.abortSignal })
+      props.aborted?.(result(replicate(data)))
       return
     }
   }
+  props.completed?.(result(null))
   return component.context.container
 }
 

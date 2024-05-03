@@ -1,5 +1,5 @@
-import active from '../lesta/reactivity/active.js'
-import diveProxy from '../lesta/reactivity/diveProxy.js'
+import active from '../lesta/active.js'
+import diveProxy from '../lesta/diveProxy.js'
 import { replicate, loadModule } from '../utils'
 import { errorStore } from '../utils/errors/store.js'
 
@@ -23,10 +23,7 @@ class Store {
     this.context.param = this.store.params
     Object.preventExtensions(this.context.param)
     for (const key in this.store.methods) {
-      // this.context.method[key] = (...args) => {
       this.context.method[key] = (obj) => {
-        // if (args.length && (args.length > 1 || typeof args[0] !== 'object')) return errorStore(this.context.name, 403, key)
-        // const obj = {...replicate(arg)}
         if (this.store.middlewares && key in this.store.middlewares) {
           return (async () => {
             const res = await this.store.middlewares[key].bind(this.context)(obj)

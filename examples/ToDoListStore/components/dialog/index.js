@@ -4,13 +4,16 @@ export default {
   template: `
   <dialog class="dialog">
     <div class="close"></div>
-    <div spot="content" class="content"></slot>
+    <div spot="content"></slot>
   </dialog>`,
   props: {
     proxies: {
       opened: {
         default: false
       }
+    },
+    methods: {
+      onclose: {}
     }
   },
   spots: ['content'],
@@ -27,19 +30,17 @@ export default {
     return {
       dialog: {},
       close: {
-        onclick: () => this.node.dialog.close()
-      },
-      content: {
-        component: {}
+        onclick: () => this.proxy.opened = false
       }
     }
   },
   methods: {
     show() {
-      this.node.dialog.showModal()
+      this.node.dialog.target.showModal()
     },
     close() {
-      this.node.dialog.close()
+      this.node.dialog.target.close()
+      this.method.onclose()
     }
   }
 }

@@ -14,19 +14,19 @@ export default {
   nodes() {
     return {
       notices: {
-        component: {
-          src: notice,
-          iterate: () => this.proxy.notices,
-          params: {
-            index: (_, index) => index
-          },
-          proxies: {
-            notice: (notice) => notice
-          },
-          methods: {
-            close: ({ index }) => this.method.removeNotice({ index })
-          }
-        }
+        // component: {
+        //   src: notice,
+        //   iterate: () => this.proxy.notices,
+        //   params: {
+        //     index: (_, index) => index
+        //   },
+        //   proxies: {
+        //     notice: (notice) => notice
+        //   },
+        //   methods: {
+        //     close: ({ index }) => this.method.removeNotice({ index })
+        //   }
+        // }
       }
     }
   }

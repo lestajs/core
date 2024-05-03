@@ -1,22 +1,8 @@
-import { errorComponent } from '../utils/errors/component'
-import { loadModule } from '../utils'
-import { Init } from './init'
-import { mixins } from './mixins'
-import Nodes from './nodes'
-import renderComponent from './renderComponent'
-import { lifecycle } from './lifecycle'
+import { mount } from './mount'
 
-async function mountComponent(src, container, props = {}, app = {}) {
-  const { signal, aborted, params, methods, proxies, sections, section, ssr } = props
-  const nodepath = container.nodepath || 'root'
-  if (signal && !(signal instanceof AbortSignal)) errorComponent(nodepath, 217)
-  if (aborted && typeof aborted !== 'function') errorComponent(nodepath, 218)
-  const options = await loadModule(src, signal)
-  if (!options) return errorComponent(nodepath, 216)
-  const component = new Init(mixins(options), app, signal, Nodes)
-  component.context.options.inputs = { params, methods, proxies, sections }
-  const render = () => renderComponent(container, component, section, ssr)
-  return await lifecycle(component, render, aborted)
+async function mountComponent({ options, target, name = 'root', aborted, completed }) {
+  const container = { target, nodepath: name }
+  await mount(options, container, { aborted, completed })
+  return container
 }
-
 export { mountComponent }

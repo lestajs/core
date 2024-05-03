@@ -1,49 +1,13 @@
 var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
 };
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// scripts/lesta.js
-var lesta_exports = {};
-__export(lesta_exports, {
-  cleanHTML: () => cleanHTML,
-  createApp: () => createApp,
-  createRouter: () => createRouter,
-  createStores: () => createStores,
-  debounce: () => debounce,
-  deepFreeze: () => deepFreeze,
-  delay: () => delay,
-  deleteReactive: () => deleteReactive,
-  deliver: () => deliver,
-  loadModule: () => loadModule,
-  mapProps: () => mapProps,
-  mount: () => mount,
-  mountWidget: () => mountWidget,
-  nextRepaint: () => nextRepaint,
-  queue: () => queue,
-  replicate: () => replicate,
-  throttling: () => throttling,
-  uid: () => uid
-});
-module.exports = __toCommonJS(lesta_exports);
 
 // packages/utils/replicate.js
 function replicate(data) {
   if (!data)
-    return data != null ? data : null;
+    return data ?? null;
   return typeof data === "object" ? JSON.parse(JSON.stringify(data)) : data;
 }
 
@@ -95,46 +59,50 @@ function throttling(fn, timeout = 50) {
 }
 
 // packages/utils/delay.js
-function delay(ms = 0) {
+function delay(delay2) {
   let timer, _reject;
   const promise = new Promise((resolve, reject) => {
     _reject = () => {
       clearTimeout(timer);
       reject();
-      promise._pending = false;
-      promise.rejected = true;
+      promise._pending = false
+      promise.rejected = true
     };
     timer = setTimeout(() => {
       clearTimeout(timer);
       resolve();
-      promise._pending = false;
-      promise._fulfilled = true;
-    }, ms);
+      promise._pending = false
+      promise._fulfilled = true
+    }, delay2 || 0);
   });
-  promise._reject = _reject;
-  promise._pending = true;
-  promise._rejected = false;
-  promise._fulfilled = false;
+  promise._reject = _reject
+  promise._pending = true
+  promise._rejected = false
+  promise._fulfilled = false
   return promise;
 }
+
+// async function delay(milliseconds = 0, returnValue) {
+//   return new Promise(done => setTimeout((() => done(returnValue)), milliseconds));
+// }
 
 // packages/utils/loadModule.js
 async function loadModule(src, signal) {
   if (typeof src === "function") {
-    const module2 = src();
-    if (!(module2 instanceof Promise) || (signal == null ? void 0 : signal.aborted))
+    const module = src();
+    if (!(module instanceof Promise) || signal?.aborted)
       return;
     const load = async () => {
       if (signal) {
         if (signal.aborted)
           return;
-        return await Promise.race([module2, new Promise((resolve) => signal.addEventListener("abort", () => resolve()))]);
+        return await Promise.race([module, new Promise((resolve) => signal.addEventListener("abort", () => resolve()))]);
       } else {
-        return await module2;
+        return await module;
       }
     };
     const res = await load();
-    return res == null ? void 0 : res.default;
+    return res?.default;
   }
   return src;
 }
@@ -213,31 +181,62 @@ function uid() {
   });
 }
 
-// packages/utils/queue.js
-var queue = () => {
-  const funcQueue = [];
-  let processing = false;
-  const size = () => funcQueue.length;
-  const isEmpty = () => funcQueue.length === 0;
-  const add = (fn) => {
-    funcQueue.push(fn);
-    if (!processing) {
-      processing = true;
-      next();
-    }
-  };
-  const next = async () => {
-    const action = funcQueue.at(0);
-    if (action) {
-      await action();
-      funcQueue.shift();
-      next();
-    } else {
-      processing = false;
-    }
-  };
-  return { add, isEmpty, size };
-};
+// packages/utils/queue.js // ! ??
+// class Queue {
+//   _queue = Promise.resolve();
+//
+//   enqueue(fn) {
+//     const result = this._queue.then(fn);
+//     this._queue = result.then(() => {}, () => {});
+//
+//     // we changed return result to return result.then()
+//     // to re-arm the promise
+//     return result.then();
+//   }
+//
+//   wait() {
+//     return this._queue;
+//   }
+// }
+
+
+class Queue {
+  constructor() {
+    this.queue = [];
+    this.running = false;
+  }
+  size() {
+    return this.queue.length
+  }
+  isEmpty() {
+    return this.queue.length === 0
+  }
+  add(fn) {
+    return new Promise((resolve, reject) => {
+      const action = async () => {
+        try {
+          const result = await fn();
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      this.queue.push(action);
+      
+      if (!this.running) {
+        this.running = true;
+        this.next();
+      }
+    });
+  }
+  async next() {
+    if (this.isEmpty()) return this.running = false
+    const action = this.queue.shift()
+    await action()
+    this.next()
+  }
+}
 
 // packages/utils/deepFreeze.js
 function deepFreeze(obj) {
@@ -262,18 +261,16 @@ var node = {
   103: 'node property "%s" expects an object as its value.',
   104: 'unknown node property: "%s".',
   105: "node with this name was not found in the template.",
-  106: "innerHTML method is not secure due to XXS attacks, use _html or _evalHTML directives.",
-  107: 'node "%s" error, spot cannot be a node.',
-  108: '"selector" property is not supported within spots.'
+  106: "innerHTML method is not secure due to XXS attacks, use _html or _evalHTML directives."
 };
 var component = {
-  // 201: 'section "%s" is not found in the template.',
-  202: 'spot "%s" is not defined.',
-  // 203: '"src" property must not be empty.',
-  // 204: 'section mounting is not available for iterable components. You can set the default component in the "sections".',
+  201: 'section "%s" is not found in the template.',
+  202: 'section "%s" is not defined.',
+  203: '"src" property must not be empty.',
+  204: 'section mounting is not available for iterable components. You can set the default component in the "sections".',
   205: '"iterate" property expects a function.',
   206: '"iterate" function must return an array.',
-  // 207: 'node is a section, the "component" property is not supported.',
+  207: 'node is a section, the "component" property is not supported.',
   208: 'node is iterable, the "component" property is not supported.',
   209: "iterable component must have a template.",
   210: "iterable component must have only one root tag in the template.",
@@ -281,13 +278,13 @@ var component = {
   212: 'method "%s" is already in props.',
   213: 'param "%s" is already in props.',
   214: 'proxy "%s" is already in props.',
-  // 215: '"iterate", "induce", "sections" property is not supported within sections.',
-  216: "component options is not defined.",
-  217: "target is not defined."
-  // 218: '"aborted" property expects a function as a value.'
+  215: '"iterate", "induce", "sections" property is not supported within sections.',
+  216: "component module is undefined.",
+  217: '"abortSignal" property must have the class AbortSignal.',
+  218: '"aborted" property expects a function as a value.'
 };
 var props = {
-  301: 'props methods "%s" can take only one argument of type object.',
+  // 301: 'parent component passes proxies, you need to specify them in props.',
   302: "value %s does not match enum",
   303: "props is required.",
   304: 'value does not match type "%s".',
@@ -314,132 +311,56 @@ var router = {
 };
 
 // packages/utils/errors/component.js
-var errorComponent = (name, code, param = "") => {
+var errorComponent = (name = "root", code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
     console.error(`Lesta |${code}| Error creating component "${name}": ${component[code]}`, param);
   }
 };
 
-// packages/lesta/directives/index.js
-var directives_exports = {};
-__export(directives_exports, {
-  _attr: () => _attr,
-  _class: () => _class,
-  _evalHTML: () => _evalHTML,
-  _event: () => _event,
-  _html: () => _html,
-  _text: () => _text
-});
-
-// packages/lesta/directives/_html.js
-var _html = {
-  update: (node2, value) => {
-    node2.innerHTML = "";
-    value && node2.append(...cleanHTML(value));
-  }
-};
-
-// packages/lesta/directives/_evalHTML.js
-var _evalHTML = {
-  update: (node2, value) => value !== void 0 ? node2.innerHTML = value : ""
-};
-
-// packages/lesta/directives/_class.js
-var _class = {
-  update: (node2, value, key) => value ? node2.classList.add(key) : node2.classList.remove(key)
-};
-
-// packages/lesta/directives/_text.js
-var _text = {
-  update: (node2, value) => node2.textContent = value !== Object(value) ? value : JSON.stringify(value)
-};
-
-// packages/lesta/directives/_attr.js
-var _attr = {
-  update: (node2, value, key) => {
-    if (typeof value === "boolean") {
-      value ? node2.setAttribute(key, "") : node2.removeAttribute(key);
-    } else
-      node2.setAttribute(key, value);
-  }
-};
-
-// packages/lesta/directives/_event.js
-var _event = {
-  create: (node2, options) => {
-    for (const key in options) {
-      node2.addEventListener(key, options[key]);
-    }
-  },
-  destroy: (node2, options) => {
-    for (const key in options) {
-      node2.removeEventListener(key, options[key]);
-    }
-  }
-};
-
-// packages/lesta/impress.js
-var impress_default = {
-  refs: [],
-  collect: false,
-  define(pr) {
-    if (pr && this.refs.every((e) => e.startsWith(this.refs.at(0))))
-      return this.refs.at(-1);
-    return [...this.refs];
-  },
-  clear() {
-    this.collect = false;
-    this.refs.length = 0;
-  }
-};
-
-// packages/lesta/initBasic.js
-var InitBasic = class {
-  constructor(component2, container, app = {}, signal) {
+// packages/lesta/init/initComponent.js
+var InitComponent = class {
+  constructor(component2, app, signal) {
     this.component = component2;
     this.app = app;
-    this.impress = impress_default;
     this.proxiesData = {};
     this.context = {
       app,
-      container,
-      options: component2,
       phase: 0,
       abortSignal: signal,
+      options: component2,
+      container: null,
       node: {},
       param: {},
       method: {},
       proxy: {},
-      source: component2.sources || {},
-      directives: { ...directives_exports, ...app.directives, ...component2.directives }
+      source: component2.sources || {}
     };
   }
   async loaded(props2) {
-    var _a;
-    return await ((_a = this.component.loaded) == null ? void 0 : _a.bind(this.context)(props2));
+    if (this.component.loaded)
+      return await this.component.loaded.bind(this.context)(props2);
   }
   async rendered() {
-    var _a;
     if (typeof this.component !== "object")
       return errorComponent(this.context.container.nodepath, 211);
-    return await ((_a = this.component.rendered) == null ? void 0 : _a.bind(this.context)());
+    if (this.component.rendered)
+      return await this.component.rendered.bind(this.context)();
   }
   async created() {
-    var _a;
-    return await ((_a = this.component.created) == null ? void 0 : _a.bind(this.context)());
+    if (this.component.created)
+      return await this.component.created.bind(this.context)();
   }
   methods() {
-    var _a, _b, _c, _d;
     if (this.component.methods) {
-      if ((_b = (_a = this.component.outwards) == null ? void 0 : _a.methods) == null ? void 0 : _b.length)
+      if (this.component.outwards?.methods?.length)
         this.context.container.method = {};
       for (const [key, method] of Object.entries(this.component.methods)) {
         if (this.context.method.hasOwnProperty(key))
           return errorComponent(this.context.container.nodepath, 212, key);
         this.context.method[key] = method.bind(this.context);
-        if ((_d = (_c = this.component.outwards) == null ? void 0 : _c.methods) == null ? void 0 : _d.includes(key)) {
-          this.context.container.method[key] = (...args) => {
-            const result = method.bind(this.context)(replicate(...args));
+        if (this.component.outwards?.methods?.includes(key)) {
+          this.context.container.method[key] = (obj) => {
+            const result = method.bind(this.context)(replicate(obj)); // ! .bind(this.context)
             return result instanceof Promise ? result.then((data) => replicate(data)) : replicate(result);
           };
         }
@@ -448,14 +369,13 @@ var InitBasic = class {
     Object.preventExtensions(this.context.method);
   }
   params() {
-    var _a, _b, _c, _d;
     if (this.component.params) {
-      if ((_b = (_a = this.component.outwards) == null ? void 0 : _a.params) == null ? void 0 : _b.length)
+      if (this.component.outwards?.params?.length)
         this.context.container.param = {};
       for (const key in this.component.params) {
         if (this.context.param.hasOwnProperty(key))
           return errorComponent(this.context.container.nodepath, 213, key);
-        if ((_d = (_c = this.component.outwards) == null ? void 0 : _c.params) == null ? void 0 : _d.includes(key)) {
+        if (this.component.outwards?.params?.includes(key)) {
           this.context.container.param[key] = this.component.params[key];
         }
       }
@@ -476,7 +396,7 @@ var InitBasic = class {
   }
 };
 
-// packages/lesta/diveProxy.js
+// packages/lesta/reactivity/diveProxy.js
 function diveProxy(_value, handler, path = "") {
   if (!(_value && (_value.constructor.name === "Object" || _value.constructor.name === "Array"))) {
     return _value;
@@ -486,11 +406,14 @@ function diveProxy(_value, handler, path = "") {
       return { target, instance: "Proxy" };
     },
     get(target, prop, receiver) {
-      var _a;
-      (_a = handler.get) == null ? void 0 : _a.call(handler, target, prop, `${path}${prop}`);
+      if (typeof prop === "symbol")
+        return Reflect.get(target, prop, receiver);
+      handler.get?.(target, prop, `${path}${prop}`);
       return Reflect.get(target, prop, receiver);
     },
     set(target, prop, value, receiver) {
+      if (typeof prop === "symbol")
+        return Reflect.set(target, prop, value, receiver);
       let upd = false;
       const reject = handler.beforeSet(value, `${path}${prop}`, (v) => {
         value = v;
@@ -512,14 +435,12 @@ function diveProxy(_value, handler, path = "") {
   };
   _value = replicate(_value);
   for (let key in _value) {
-    if (_value.hasOwnProperty(key)) {
-      _value[key] = diveProxy(_value[key], handler, `${path}${key}.`);
-    }
+    _value[key] = diveProxy(_value[key], handler, `${path}${key}.`);
   }
   return new Proxy(_value, proxyHandler);
 }
 
-// packages/lesta/active.js
+// packages/lesta/reactivity/active.js
 function active(reactivity, ref, value) {
   if (!reactivity)
     return;
@@ -537,6 +458,75 @@ function active(reactivity, ref, value) {
   }
 }
 
+// packages/lesta/init/directives/index.js
+var directives_exports = {};
+__export(directives_exports, {
+  _attr: () => _attr,
+  _class: () => _class,
+  _evalHTML: () => _evalHTML,
+  _event: () => _event,
+  _html: () => _html,
+  _text: () => _text,
+  _replace: () => _replace
+});
+
+// packages/lesta/init/directives/_html.js
+var _html = {
+  update: (node2, value) => {
+    node2.innerHTML = "";
+    value && node2.append(...cleanHTML(value));
+  }
+};
+
+// packages/lesta/init/directives/_evalHTML.js
+var _evalHTML = {
+  update: (node2, value) => value !== void 0 ? node2.innerHTML = value : ""
+};
+
+// packages/lesta/init/directives/_class.js
+var _class = {
+  update: (node2, value, key) => value ? node2.classList.add(key) : node2.classList.remove(key)
+};
+
+// packages/lesta/init/directives/_text.js
+var _text = {
+  update: (node2, value) => node2.textContent = value !== Object(value) ? value : JSON.stringify(value)
+};
+
+// packages/lesta/init/directives/_attr.js
+var _attr = {
+  update: (node2, value, key) => {
+    if (typeof value === "boolean") {
+      value ? node2.setAttribute(key, "") : node2.removeAttribute(key);
+    } else
+      node2.setAttribute(key, value);
+  }
+};
+
+// packages/lesta/init/directives/_event.js
+var _event = {
+  create: (node2, options) => {
+    for (const key in options) {
+      node2.addEventListener(key, options[key]);
+    }
+  },
+  destroy: (node2, options) => {
+    for (const key in options) {
+      node2.removeEventListener(key, options[key]);
+    }
+  }
+};
+var _replace = {
+  create: (node2, options) => {
+    options().replaceWith(node2)
+  },
+  // destroy: (node2, options) => {
+  //   for (const key in options) {
+  //     node2.removeEventListener(key, options[key]);
+  //   }
+  // }
+};
+
 // packages/utils/errors/node.js
 var errorNode = (name, code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
@@ -544,27 +534,41 @@ var errorNode = (name, code, param = "") => {
   }
 };
 
-// packages/lesta/initNode.js
-var InitNode = class extends InitBasic {
-  constructor(component2, container, app, signal, factory) {
-    super(component2, container, app, signal);
-    this.factory = factory;
+// packages/lesta/init/impress.js
+var impress_default = {
+  refs: [],
+  collect: false,
+  define(pr) {
+    if (pr && this.refs.every((e) => e.startsWith(this.refs.at(0))))
+      return this.refs.at(-1);
+    return [...this.refs];
+  },
+  clear() {
+    this.collect = false;
+    this.refs.length = 0;
+  }
+};
+
+// packages/lesta/init/basic.js
+var InitBasic = class extends InitComponent {
+  constructor(component2, app, signal, Nodes2) {
+    super(component2, app, signal);
+    this.Nodes = Nodes2;
+    this.impress = impress_default;
+    this.context = {
+      ...this.context,
+      directives: { ...directives_exports, ...app.directives, ...component2.directives }
+    };
   }
   async props() {
   }
   async mounted() {
-    var _a;
-    await ((_a = this.component.mounted) == null ? void 0 : _a.bind(this.context)());
-  }
-  actives(nodeElement, ref) {
-    var _a;
-    active((_a = nodeElement.reactivity) == null ? void 0 : _a.node, ref);
+    this.component.mounted && await this.component.mounted.bind(this.context)();
   }
   getProxy() {
     return diveProxy(this.proxiesData, {
       beforeSet: (value, ref, callback) => {
-        var _a;
-        if ((_a = this.component.setters) == null ? void 0 : _a[ref]) {
+        if (this.component.setters?.[ref]) {
           const v = this.component.setters[ref].bind(this.context)(value);
           if (v === void 0)
             return true;
@@ -572,56 +576,77 @@ var InitNode = class extends InitBasic {
         }
       },
       set: (target, value, ref) => {
-        var _a, _b;
-        for (const name in this.context.node) {
-          this.actives(this.context.node[name], ref, value);
+        for (const keyNode in this.context.node) {
+          const nodeElement = this.context.node[keyNode];
+          active(nodeElement.reactivity?.node, ref); // ! + ?
+          active(nodeElement.reactivity?.component, ref, value); // ! + ?
         }
-        (_b = (_a = this.component.handlers) == null ? void 0 : _a[ref]) == null ? void 0 : _b.bind(this.context)(value);
+        this.component.handlers?.[ref]?.bind(this.context)(value);
       },
       get: (target, prop, ref) => {
-        if (this.impress.collect && !this.impress.refs.includes(ref) && target.hasOwnProperty(prop)) {
+        if (this.impress.collect && !this.impress.refs.includes(ref) && typeof target[prop] !== "function") {
           this.impress.refs.push(ref);
         }
       }
     });
   }
+  // findInTemplates(templates, selector) {
+  //   for (const template of Array.from(templates)) {
+  //     const nodeElement = template.content.querySelector(selector)
+  //     if (nodeElement) return nodeElement
+  //   }
+  // }
   async nodes() {
-    var _a;
     if (this.component.nodes) {
       const nodes = this.component.nodes.bind(this.context)();
       const container = this.context.container;
-      const t = container.target;
-      for (const name in nodes) {
-        const s = ((_a = nodes[name]) == null ? void 0 : _a.selector) || this.context.app.selector || `.${name}`;
-        const selector = typeof s === "function" ? s(name) : s;
-        const target = t.querySelector(selector) || t.classList.contains(name) && t;
-        const nodepath = container.nodepath + "." + name;
+      const t = container.target // !
+      // const templates = t.getElementsByTagName('template') // !
+      for (const keyNode in nodes) {
+        // const templates = t.getElementsByTagName('template')
+        // for (const template of Array.from(templates)) {
+        //   const nodeElement = template.content.querySelector(selector)
+        //   if (nodeElement) return nodeElement
+        // }
+        const s = nodes[keyNode]?.selector || this.context.app.selector || `.${keyNode}`; // ! app
+        const selector = typeof s === "function" ? s(keyNode) : s;
+        const target = t.querySelector(selector) ||
+          // t.spot?.[keyNode] || // !
+          (t.classList.contains(keyNode) && t) // ||
+          // this.findInTemplates(templates, selector) // !
+        const nodepath = container.nodepath ? container.nodepath + "." + keyNode : keyNode;
         if (target) {
-          if (container.spot && Object.values(container.spot).includes(target)) {
-            errorNode(nodepath, 107, name);
-            continue;
-          }
-          Object.assign(this.context.node, { [name]: { target, nodepath, nodename: name, directives: {} } });
+          // nodeElement.nodepath = nodepath;
+          // nodeElement.nodename = keyNode;
+          Object.assign(this.context.node, { [keyNode]: {
+            target,
+            nodepath: nodepath,
+            nodename: keyNode
+          }});
         } else
           errorNode(nodepath, 105);
       }
-      Object.preventExtensions(this.context.node);
-      for await (const [name, nodeElement] of Object.entries(this.context.node)) {
-        const n = this.factory(nodes[name], this.context, nodeElement, this.impress, this.app);
-        await n.controller();
+      Object.preventExtensions(this.context.node); // !
+      for await (const [keyNode, nodeElement] of Object.entries(this.context.node)) { // !
+        const options = nodes[keyNode] || {}
+        // if (!nodeElement.target) nodeElement.target = options.target?.()
+        const node2 = new this.Nodes(options, this.context, nodeElement, this.impress, this.app, keyNode);
+        for (const key in options) { // ! - await
+          await node2.controller(key);
+        }
       }
     }
   }
 };
 
 // packages/utils/errors/props.js
-var errorProps = (name, type, prop, code, param = "") => {
+var errorProps = (name = "root", type, prop, code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
     console.error(`Lesta |${code}| Error in props ${type} "${prop}" in component "${name}": ${props[code]}`, param);
   }
 };
 
-// packages/lesta/propsValidation.js
+// packages/lesta/init/propsValidation.js
 var Props = class {
   constructor(props2, context, app) {
     this.props = props2;
@@ -630,7 +655,7 @@ var Props = class {
     this.app = app;
   }
   async setup(cp) {
-    if (this.props.proxies && Object.keys(this.props.proxies).length && !(cp == null ? void 0 : cp.proxies))
+    if (this.props.proxies && Object.keys(this.props.proxies).length && !cp?.proxies)
       return errorProps(this.container.nodepath, 306);
     if (!this.container.proxy)
       this.container.proxy = {};
@@ -641,14 +666,10 @@ var Props = class {
     }
   }
   validation(target, prop, key, value, name) {
-    var _a;
     const nodepath = this.container.nodepath;
     const checkType = (v, t) => v && t && !(typeof v === t || t === "array" && Array.isArray(v)) && errorProps(nodepath, name, key, 304, t);
     const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(nodepath, name, key, 302, v));
-    const checkValue = (v, p) => {
-      var _a2, _b;
-      return v != null ? v : (_b = (_a2 = p.required && errorProps(nodepath, name, key, 303)) != null ? _a2 : p.default) != null ? _b : v;
-    };
+    const checkValue = (v, p) => v ?? ((p.required && errorProps(nodepath, name, key, 303)) ?? p.default ?? v) // ! v;
     const check = (v, p) => {
       if (typeof p === "string")
         return checkType(v, p);
@@ -659,18 +680,16 @@ var Props = class {
     const variant = {
       string: () => checkType(value, prop),
       object: () => {
-        var _a2;
         value = check(value, prop);
-        (_a2 = prop.validate) == null ? void 0 : _a2.call(prop, value, check);
+        prop.validate?.(value, check);
       },
       function: () => prop(value, check)
     };
-    (_a = variant[typeof prop]) == null ? void 0 : _a.call(variant);
+    variant[typeof prop]?.();
     target[key] = value;
     return check;
   }
   async proxies(proxies) {
-    var _a, _b, _c;
     if (proxies) {
       const proxiesData = {};
       const context = this.context;
@@ -680,25 +699,21 @@ var Props = class {
         this.container.proxy[key] = {
           getValue: () => replicate(context.proxy[key]),
           setValue: (value2, path) => {
-            var _a2;
             if (path) {
               deliver(context.proxy[key], path, replicate(value2));
-              (_a2 = prop.validate) == null ? void 0 : _a2.call(prop, context.proxy[key], check);
+              prop.validate?.(context.proxy[key], check);
             } else {
               this.validation(context.proxy, prop, key, replicate(value2), "proxies");
             }
           },
-          isIndependent: () => {
-            var _a2;
-            return ((_a2 = this.props.proxies[key]) == null ? void 0 : _a2._independent) || false;
-          }
+          isIndependent: () => this.props.proxies[key]?._independent || false
         };
         let value = null;
         const { store: store2 } = prop;
-        if ((_a = this.props.proxies) == null ? void 0 : _a.hasOwnProperty(key)) {
-          value = (_b = this.props.proxies[key]) == null ? void 0 : _b._value;
+        if (this.props.proxies?.hasOwnProperty(key)) {
+          value = this.props.proxies[key]?._value;
         } else if (store2) {
-          const storeModule = await ((_c = this.app.store) == null ? void 0 : _c.init(store2));
+          const storeModule = await this.app.store?.init(store2);
           if (!storeModule)
             return errorProps(this.container.nodepath, "proxies", key, 307, store2);
           value = storeModule.proxies(key, this.container);
@@ -712,18 +727,17 @@ var Props = class {
     for (const key in params) {
       const prop = params[key];
       const paramValue = async () => {
-        var _a, _b;
         const { store: store2 } = prop;
         let data = null;
         if (store2) {
-          const storeModule = await ((_a = this.app.store) == null ? void 0 : _a.init(store2));
+          const storeModule = await this.app.store?.init(store2);
           if (!storeModule)
             return errorProps(this.container.nodepath, "params", key, 307, store2);
           data = storeModule.params(key);
         } else {
-          data = (_b = this.props) == null ? void 0 : _b.params[key];
+          data = this.props?.params[key];
         }
-        return (prop == null ? void 0 : prop.hole) ? data : replicate(data);
+        return prop?.ignore ? data : replicate(data);
       };
       this.validation(this.context.param, prop, key, await paramValue(), "params");
       if (prop.readonly)
@@ -731,12 +745,9 @@ var Props = class {
     }
   }
   async methods(methods) {
-    var _a, _b;
     const setMethod = (method, key) => {
-      this.context.method[key] = (...args) => {
-        if (args.length && (args.length > 1 || typeof args.at(0) !== "object"))
-          return errorProps(this.container.nodepath, "methods", key, 301);
-        const result = method({ ...replicate(args.at(0)), _params: this.context.container.param, _methods: this.context.container.method });
+      this.context.method[key] = (obj) => {
+        const result = method({ ...replicate(obj), _params: this.context.container.param, _methods: this.context.container.method });
         return result instanceof Promise ? result.then((data) => replicate(data)) : replicate(result);
       };
     };
@@ -744,7 +755,7 @@ var Props = class {
       const prop = methods[key];
       const { store: store2 } = prop;
       if (store2) {
-        const storeModule = await ((_a = this.app.store) == null ? void 0 : _a.init(store2));
+        const storeModule = await this.app.store?.init(store2);
         if (!storeModule)
           return errorProps(this.container.nodepath, "methods", key, 307, store2);
         const method = storeModule.methods(key);
@@ -752,8 +763,8 @@ var Props = class {
           return errorProps(this.container.nodepath, "methods", key, 305, store2);
         setMethod(method, key);
       } else {
-        const isMethodValid = (_b = this.props.methods) == null ? void 0 : _b.hasOwnProperty(key);
-        if ((prop == null ? void 0 : prop.required) && !isMethodValid)
+        const isMethodValid = this.props.methods?.hasOwnProperty(key);
+        if (prop?.required && !isMethodValid)
           return errorProps(this.container.nodepath, "methods", key, 303);
         if (isMethodValid)
           setMethod(this.props.methods[key], key);
@@ -768,92 +779,69 @@ var propsValidation_default = {
   }
 };
 
-// packages/lesta/initNodeComponent.js
-var InitNodeComponent = class extends InitNode {
+// packages/lesta/init/index.js
+var Init = class extends InitBasic {
   constructor(...args) {
     super(...args);
   }
-  async props(props2) {
-    this.proxiesData = await propsValidation_default.init(props2, this.component.props, this.context, this.app) || {};
-  }
-  actives(nodeElement, ref, value) {
-    const reactivity = (c) => {
-      var _a, _b;
-      active((_a = c.reactivity) == null ? void 0 : _a.node, ref);
-      active((_b = c.reactivity) == null ? void 0 : _b.component, ref, value);
-    };
-    const spotsReactivity = (c) => {
-      for (const name in c.spot) {
-        reactivity(c.spot[name]);
-        spotsReactivity(c.spot[name]);
-      }
-    };
-    reactivity(nodeElement);
-    if (nodeElement.children) {
-      nodeElement.children.forEach((c) => spotsReactivity(c));
-    } else
-      spotsReactivity(nodeElement);
+  async props(props) { // !
+    this.proxiesData = await propsValidation_default.init(props, this.component.props, this.context, this.app) || {}; // !
   }
   destroy(container) {
-    var _a, _b;
-    (_b = (_a = container.reactivity) == null ? void 0 : _a.component) == null ? void 0 : _b.clear();
+    container.reactivity?.component?.clear();
     delete container.proxy;
-    delete container.method;
     for (const key in container.unstore) {
       container.unstore[key]();
     }
   }
   unmount(container) {
-    var _a, _b, _c, _d, _e, _f;
     if (this.context.node) {
       for (const node2 of Object.values(this.context.node)) {
+        if (node2.unmount && !node2.target.hasAttribute("iterable")) { // ! -  && !node2.hasAttribute("iterable")
+          // if (node2.section) {
+          //   for (const section of Object.values(node2.section)) {
+          //     section.unmount && section.unmount();
+          //   }
+          // }
+          
+          node2.unmount();
+        }
+        node2.reactivity?.node?.clear(); // !
+        for (const key in node2.spot) { // !
+          node2.spot[key].unmount?.();
+        }
         if (node2.directives) {
           for (const directive of Object.values(node2.directives)) {
-            (_a = directive.destroy) == null ? void 0 : _a.call(directive);
+            directive.destroy?.(); // !
           }
         }
-        (_c = (_b = node2.reactivity) == null ? void 0 : _b.node) == null ? void 0 : _c.clear();
-        if (!node2.unmount)
-          return;
-        for (const key in node2.spot) {
-          (_e = (_d = node2.spot[key]).unmount) == null ? void 0 : _e.call(_d);
-        }
-        node2.unmount();
+        // node2.unmount?.()
       }
     }
-    (_f = this.component.unmounted) == null ? void 0 : _f.bind(this.context)();
+    this.component.unmounted?.bind(this.context)(); // !
     delete container.unmount;
   }
 };
 
 // packages/lesta/mixins.js
 function mixins(target) {
-  var _a;
-  if ((_a = target.mixins) == null ? void 0 : _a.length) {
-    const properties = ["directives", "params", "proxies", "methods", "handlers", "setters", "sources"];
+  if (target.mixins?.length) {
+    const properties = ["selectors", "directives", "params", "proxies", "methods", "handlers", "setters", "sources"];
     const props2 = ["params", "proxies", "methods"];
     const hooks = ["loaded", "rendered", "created", "mounted", "unmounted"];
-    const result = { props: {}, outwards: { params: [], methods: [] }, spots: [] };
+    const result = { props: {} };
     const mergeProperties = (a, b, key) => {
       return { ...a[key], ...b[key] };
     };
-    const mergeArrays = (a, b) => {
-      return [...a, ...b || []];
-    };
     const mergeOptions = (options) => {
-      var _a2, _b;
       result.template = options.template || result.template;
-      result.outwards.params = mergeArrays(result.outwards.params, (_a2 = options.outwards) == null ? void 0 : _a2.params);
-      result.outwards.methods = mergeArrays(result.outwards.methods, (_b = options.outwards) == null ? void 0 : _b.methods);
-      result.spots = mergeArrays(result.spots, options.spots);
       properties.forEach((key) => {
         result[key] = mergeProperties(result, options, key);
       });
       hooks.forEach((key) => {
         const resultHook = result[key];
         result[key] = async function() {
-          var _a3;
-          return ((_a3 = options[key]) == null ? void 0 : _a3.bind(this)()) || (resultHook == null ? void 0 : resultHook.bind(this)());
+          return options[key]?.bind(this)() || resultHook?.bind(this)();
         };
       });
       props2.forEach((key) => {
@@ -861,10 +849,9 @@ function mixins(target) {
       });
       const resultNodes = result.nodes;
       result.nodes = function() {
-        var _a3;
         return {
-          ...resultNodes == null ? void 0 : resultNodes.bind(this)(),
-          ...(_a3 = options.nodes) == null ? void 0 : _a3.bind(this)()
+          ...resultNodes?.bind(this)(),
+          ...options.nodes?.bind(this)()
         };
       };
     };
@@ -877,222 +864,35 @@ function mixins(target) {
   return target;
 }
 
-// packages/lesta/directiveProperties.js
-var directiveProperties_default = {
-  directives(key) {
-    const n = this.nodeElement;
-    if (!key.startsWith("_"))
-      return errorNode(n.nodepath, 102, key);
-    const directive = this.context.directives[key];
-    const options = this.nodeOptions[key];
-    const { create, update, destroy } = directive;
-    Object.assign(n.directives, { [key]: {
-      create: () => create ? create.bind(directive)(n.target, options) : {},
-      destroy: () => destroy ? destroy.bind(directive)(n.target, options) : {}
-    } });
-    create && n.directives[key].create();
-    const handle = (v, k, o) => {
-      const active2 = (value) => update.bind(directive)(n.target, value, k, o);
-      if (typeof v === "function") {
-        this.impress.collect = true;
-        active2(v(n.target));
-        this.reactiveNode(this.impress.define(), () => active2(v(n.target)));
-      } else
-        active2(v);
-    };
-    if (update) {
-      if (typeof options === "object") {
-        for (const k in options)
-          handle(options[k], k, options);
-      } else
-        handle(options);
-    }
+// packages/lesta/nodes/node.js
+var Node = class {
+  constructor(node2, context, nodeElement, impress, app, keyNode) {
+    this.app = app;
+    this.node = node2;
+    this.context = context;
+    this.impress = impress;
+    this.nodeElement = nodeElement;
+    this.keyNode = keyNode;
+    this.nodeElement.reactivity = { node: /* @__PURE__ */ new Map() };
+  }
+  reactive(refs, active2, reactivity) {
+    if (refs?.length)
+      reactivity.set(active2, refs);
+    this.impress.clear();
+    return refs;
+  }
+  reactiveNode(refs, active2) {
+    this.reactive(refs, active2, this.nodeElement.reactivity.node);
   }
 };
 
-// packages/lesta/DOMProperties.js
-var DOMProperties_default = {
-  listeners(key) {
-    if (typeof this.nodeOptions[key] === "function") {
-      this.nodeElement.target[key] = (event) => this.nodeOptions[key].bind(this.context)(event);
-    }
-  },
-  general(key) {
-    if (key === "innerHTML")
-      return errorNode(this.nodeElement.nodepath, 106);
-    if (typeof this.nodeOptions[key] === "function") {
-      const active2 = () => {
-        const val = this.nodeOptions[key].bind(this.context)();
-        if (this.nodeElement.target[key] !== null && typeof this.nodeElement.target[key] === "object") {
-          val !== null && typeof val === "object" ? Object.assign(this.nodeElement.target[key], val) : errorNode(this.nodeElement.nodepath, 103, key);
-        } else
-          this.nodeElement.target[key] = val;
-      };
-      this.impress.collect = true;
-      active2();
-      this.reactiveNode(this.impress.define(), active2);
-    } else
-      this.nodeElement.target[key] = this.nodeOptions[key];
-  },
-  native(key) {
-    key.startsWith("on") ? this.listeners(key) : this.general(key);
-  }
-};
-
-// packages/lesta/iterativeComponent.js
-var iterativeComponent_default = {
-  async iterative(options) {
-    if (typeof options.iterate !== "function")
-      return errorComponent(this.nodeElement.nodepath, 205);
-    this.name = null;
-    this.nodeElement.children = [];
-    this.nodeElement.target.innerHTML = "";
-    this.nodeOptions.component = options;
-    this.nodeElement.clear = () => this.remove.bind(this)(0);
-    this.createIterate = async (index) => {
-      this.nodeElement.children[index] = this.nodeElement._current = { parent: this.nodeElement, target: true, nodepath: this.nodeElement.nodepath + "." + index, index, isIterable: true };
-      await this.create(this.proxiesIterate.bind(this), this.nodeElement.children[index], options, this.data[index], index);
-    };
-    this.impress.collect = true;
-    this.data = options.iterate();
-    if (this.data) {
-      if (!Array.isArray(this.data))
-        return errorComponent(this.nodeElement.nodepath, 206);
-      this.name = this.impress.refs.at(-1);
-      this.impress.clear();
-      this.qty = this.data.length;
-      this.nodeElement.isIterative = true;
-      if (Object.getPrototypeOf(this.data).instance === "Proxy") {
-        this.reactiveComponent([this.name], (v) => {
-          var _a, _b, _c;
-          this.data = options.iterate();
-          if (options.proxies) {
-            for (const [pr, fn] of Object.entries(options.proxies)) {
-              if (typeof fn === "function" && fn.name) {
-                if (fn.length) {
-                  for (let i = 0; i < Math.min(this.nodeElement.target.children.length, v.length); i++) {
-                    (_c = (_b = (_a = this.nodeElement.children[i]) == null ? void 0 : _a.proxy) == null ? void 0 : _b[pr]) == null ? void 0 : _c.setValue(fn(this.nodeElement.children[i]));
-                  }
-                }
-              }
-            }
-          }
-          this.length(v.length);
-        });
-        this.reactiveComponent([this.name + ".length"], (v) => this.length(v));
-      }
-      const mount2 = async () => {
-        this.data = options.iterate();
-        return await this.length(this.data.length);
-      };
-      const induced = this.induced(async (permit) => permit ? await mount2() : this.nodeElement._clear());
-      if (induced)
-        await mount2();
-    }
-  },
-  // sections(sections, target, index) {
-  //     if (sections) {
-  //         for (const [section, options] of Object.entries(sections)) {
-  //             for (const [p, f] of Object.entries(options.proxies)) {
-  //                 if (typeof f === 'function' && f.name) {
-  //                     if (f.length) {
-  //                         target.section[section]?.proxy[p]?.setValue(f(this.data[index], index))
-  //                         this.sections(options.sections, target.section[section], index)
-  //                     }
-  //                 }
-  //             }
-  //         }
-  //     }
-  // },
-  proxiesIterate(proxies, index) {
-    const nodeElement = this.nodeElement.children[index];
-    const reactive = (pr, fn) => {
-      if (this.impress.refs.some((ref) => ref.includes(this.name))) {
-        this.reactiveComponent(this.impress.define(pr), (v, p) => {
-          var _a, _b;
-          if (!nodeElement.proxy)
-            return;
-          if (p) {
-            (_a = nodeElement.proxy[pr]) == null ? void 0 : _a.setValue(v, p);
-          } else {
-            this.data = this.nodeOptions.component.iterate();
-            (_b = nodeElement.proxy[pr]) == null ? void 0 : _b.setValue(fn(nodeElement));
-          }
-        });
-      } else {
-        if (!this.nodeElement.created) {
-          this.reactiveComponent(this.impress.define(pr), (v, p) => {
-            var _a, _b, _c, _d;
-            for (let i = 0; i < this.nodeElement.children.length; i++) {
-              const nodeChildren = this.nodeElement.children[i];
-              p ? (_b = (_a = nodeChildren.proxy) == null ? void 0 : _a[pr]) == null ? void 0 : _b.setValue(v, p) : (_d = (_c = nodeChildren.proxy) == null ? void 0 : _c[pr]) == null ? void 0 : _d.setValue(fn(nodeChildren));
-            }
-          });
-        } else
-          this.impress.clear();
-      }
-    };
-    return this.reactivate(proxies, reactive, nodeElement);
-  },
-  async length(length) {
-    this.qty = length;
-    const qty = this.nodeElement.target.children.length;
-    if (length > qty)
-      await this.add();
-    if (length < qty)
-      this.remove(length);
-  },
-  async add() {
-    let qty = this.nodeElement.target.children.length;
-    this.nodeElement._refillNumber = this.qty - qty;
-    while (this.qty > qty) {
-      await this.createIterate(qty);
-      this.nodeElement._refillNumber = 0;
-      qty++;
-    }
-  },
-  remove(length) {
-    var _a, _b;
-    let qty = this.nodeElement.target.children.length;
-    while (length < qty) {
-      qty--;
-      deleteReactive(this.nodeElement.reactivity.component, this.name + "." + qty);
-      (_b = (_a = this.nodeElement.children[qty]).unmount) == null ? void 0 : _b.call(_a);
-      this.nodeElement.children[qty].target.remove();
-      this.nodeElement.children.splice(qty, 1);
-    }
-  }
-};
-
-// packages/lesta/basicComponent.js
-var basicComponent_default = {
-  async basic(options) {
-    this.nodeOptions.component = options;
-    const mount2 = async () => await this.create(this.proxies.bind(this), this.nodeElement, options);
-    const induced = this.induced(async (permit) => {
-      var _a, _b;
-      return permit ? await mount2() : (_b = (_a = this.nodeElement).unmount) == null ? void 0 : _b.call(_a);
-    });
-    if (induced)
-      await mount2();
-  },
-  proxies(proxies) {
-    if (!proxies)
-      return;
-    const reactive = (pr, fn) => this.reactiveComponent(this.impress.define(pr), (v, p) => {
-      var _a, _b, _c, _d;
-      p ? (_b = (_a = this.nodeElement.proxy) == null ? void 0 : _a[pr]) == null ? void 0 : _b.setValue(v, p) : (_d = (_c = this.nodeElement.proxy) == null ? void 0 : _c[pr]) == null ? void 0 : _d.setValue(fn(this.nodeElement));
-    });
-    return this.reactivate(proxies, reactive);
-  }
-};
-
-// packages/lesta/props.js
+// packages/lesta/nodes/component/props.js
 var props_default = {
   collect(propertyComponent, val, index) {
     return {
       params: this.params(propertyComponent.params, val, index),
-      methods: this.methods(propertyComponent.methods)
+      methods: this.methods(propertyComponent.methods),
+      // section: propertyComponent.section // !
     };
   },
   methods(methods) {
@@ -1122,24 +922,16 @@ var props_default = {
   }
 };
 
-// packages/lesta/component.js
-var component_default = {
-  async component() {
+// packages/lesta/nodes/component/index.js
+var Components = class extends Node {
+  constructor(...args) {
+    super(...args);
     this.nodeElement.reactivity.component = /* @__PURE__ */ new Map();
-    if (this.nodeElement.isIterable)
-      return errorComponent(this.nodeElement.nodepath, 208);
-    this.nodeElement.mount = async (options) => {
-      var _a, _b;
-      (_b = (_a = this.nodeElement).unmount) == null ? void 0 : _b.call(_a);
-      this.nodeElement.created = false;
-      options.iterate ? await this.iterative(options) : await this.basic(options);
-    };
-    this.nodeOptions.component.async ? this.nodeElement.mount(this.nodeOptions.component) : await this.nodeElement.mount(this.nodeOptions.component);
-  },
+  }
   induced(fn) {
-    if (this.nodeOptions.component.hasOwnProperty("induce")) {
+    if (this.node.component.hasOwnProperty("induce")) {
       this.nodeElement.induce = fn;
-      const induce = this.nodeOptions.component.induce;
+      const induce = this.node.component.induce;
       if (!induce)
         return;
       if (typeof induce === "function") {
@@ -1151,151 +943,388 @@ var component_default = {
       }
     }
     return true;
-  },
-  reactiveComponent(refs, active2) {
-    return this.reactive(refs, active2, this.nodeElement.reactivity.component);
-  },
-  reactivate(proxies, reactive) {
+  }
+  reactiveComponent(refs, active2) { // ! - target
+    const nodeElement = this.nodeElement;
+    return this.reactive(refs, active2, nodeElement.reactivity.component);
+  }
+  reactivate(proxies, reactive, arr, index) {
     const result = {};
     if (proxies) {
       for (const [pr, v] of Object.entries(proxies)) {
         if (typeof v === "function" && v.name) {
           this.impress.collect = true;
-          const fn = (nodeElement) => v(nodeElement);
-          const value = v(this.nodeElement);
-          const ref = reactive(pr, fn);
+          const value = arr && v.length ? v(arr[index], index) : v();
+          const ref = reactive(pr, v);
           Object.assign(result, { [pr]: { _value: value, _independent: !ref } });
         } else
           Object.assign(result, { [pr]: { _value: v, _independent: true } });
       }
     }
     return result;
-  },
-  async create(proxies, nodeElement, pc, value, index) {
-    const { src, spots, aborted, completed, ssr } = pc;
-    if (!src)
-      return;
-    await mount(src, nodeElement, {
-      // ! - container
-      aborted,
-      completed,
-      ssr,
-      ...props_default.collect(pc, value, index),
-      proxies: proxies(pc.proxies, index) || {}
-    }, this.app);
-    this.nodeElement.created = true;
-    if (!spots)
-      return;
-    for await (const [name, options] of Object.entries(spots)) {
-      if (!nodeElement.spot.hasOwnProperty(name)) {
-        errorComponent(nodeElement.nodepath, 202, name);
-        continue;
+  }
+  async create(proxies, nodeElement, pc, value, index) { // ! -proxies
+    const { src, spots, aborted, ssr } = pc; // ! this.node.component, - abortSignal
+    // if (!src)
+    //   return errorComponent(nodeElement.nodepath, 203); // !
+    console.log(value, index)
+    if (!src) return
+    // let container = null; // !
+    // if (!nodeElement.process) { // !
+      // nodeElement.process = true; // !
+       await mountComponent(src, nodeElement, { // ! - container
+        // abortSignal, // !
+        aborted,
+        // sections, // !
+        ssr,
+        ...props_default.collect(pc, value, index),
+        proxies: proxies(pc.proxies, index) || {}
+      }, this.app);
+      // delete nodeElement.process; // !
+    // }
+    // !
+  }
+};
+
+// packages/lesta/nodes/component/iterate/index.js
+var Iterate = class extends Components {
+  constructor(...args) {
+    super(...args);
+  }
+  async init(options) {
+    if (typeof this.node.component.iterate !== "function")
+      return errorComponent(this.nodeElement.nodepath, 205);
+    this.name = null; // !
+    this.created = false;
+    // this.queue = new Queue(); // !
+    this.nodeElement.target.innerHTML = ""; // !
+    this.node.component = options
+    this.nodeElement._clear = () => this.remove.bind(this)(0); // !
+    this.createIterate = async (index) => {
+      // const proxies = () => this.proxies(this.node.component.proxies, () => this.nodeElement.children[index], index);
+      this.node.component.params = { ...this.node.component.params || {}, _index: index } // !
+      await this.create(this.proxies.bind(this), this.nodeElement, this.node.component, this.data[index], index); // ! - proxies
+      // if (!this.created && this.nodeElement.children.length !== this.data.length) return errorComponent(this.nodeElement.nodepath, 210); // ! - 210
+      this.created = true;
+    };
+    this.impress.collect = true;
+    this.data = this.node.component.iterate();
+    if (this.data) {
+      if (!Array.isArray(this.data))
+        return errorComponent(this.nodeElement.nodepath, 206);
+      this.name = this.impress.refs.at(-1);
+      this.impress.clear();
+      this.qty = this.data.length // !
+      this.nodeElement.target.setAttribute("iterate", ""); // !
+      if (Object.getPrototypeOf(this.data).instance === "Proxy") {
+        this.reactiveComponent([this.name], (v) => {
+          this.data = this.node.component.iterate();
+          if (v.length)
+            // this.queue.add(() => {
+              if (this.node.component.proxies) {
+                for (const [pr, fn] of Object.entries(this.node.component.proxies)) {
+                  if (typeof fn === "function" && fn.name) {
+                    if (fn.length) {
+                      for (let i = 0; i < Math.min(this.nodeElement.children.length, v.length); i++) {
+                        const v2 = fn(this.data[i], i);
+                        this.nodeElement.children[i]?.proxy?.[pr]?.setValue(v2); // ! ?.
+                        // this.sections(this.node.component.sections, this.nodeElement.children[i], i); // !
+                      }
+                    }
+                  }
+                }
+              }
+            // });
+          this.length(v.length) // !
+          // this.queue.add(async () => this.length(v.length));  // ! - await
+        });
+        this.reactiveComponent([this.name + ".length"], (v) => {
+          // this.queue.add(async () => this.length(v)); // ! - await
+          this.length(v) // !
+        });
       }
-      const spotElement = nodeElement.spot[name];
-      Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + "." + name, nodename: name, isSpot: true });
-      const n = factoryNodeComponent_default(options, this.context, spotElement, this.impress, this.app);
-      await n.controller();
+      // const mount = async () => this.queue.add(async () => await this.add(this.data.length)); // ! - await ??
+      const mount = async () => {
+        this.data = this.node.component.iterate();
+        return await this.length(this.data.length);
+      }
+      
+      const induced = this.induced(async (permit) => !permit ? this.nodeElement._clear() : mount()); // ! - await
+      if (induced) {
+        options.async ? mount() : await mount();
+      }
+    }
+  }
+  proxies(proxies, index) {
+    const reactive = (pr, fn) => {
+      if (this.impress.refs.some((ref) => ref.includes(this.name))) {
+        this.reactiveComponent(this.impress.define(pr), (v, p) => {
+          // this.queue.add(() => { // ! - async
+            if (p) {
+              this.nodeElement.children[index]?.proxy[pr]?.setValue(v, p);
+              // this.sections(this.node.component.sections, this.nodeElement.children[index], index) // !
+            } else {
+              this.data = this.node.component.iterate();
+              // if (index < this.data.length) {
+                const val = fn(this.data[index], index);
+                this.nodeElement.children[index]?.proxy[pr]?.setValue(val);
+                // this.sections(this.node.component.sections, this.nodeElement.children[index], index) // !
+              // }
+            }
+         //  });
+        });
+      } else {
+        if (!this.created) {
+          this.reactiveComponent(this.impress.define(pr), (v, p) => {
+           //  this.queue.add(() => { // ! - !this.nodeElement.process
+              for (let i = 0; i < this.nodeElement.children.length; i++) {
+                p ? this.nodeElement.children[i].proxy?.[pr]?.setValue(v, p) : this.nodeElement.children[i].proxy?.[pr]?.setValue(fn(this.data[i], i)); // ! ?.
+                // this.sections(this.node.component.sections, this.nodeElement.children[i], i) // !
+              }
+            });
+         // });
+        } else
+          this.impress.clear();
+      }
+    };
+    return this.reactivate(proxies, reactive, this.data, index);
+  }
+  async length(length) { // ! a-async
+    this.qty = length
+    console.log(this.data.length, length) // ! -
+    const qty = this.nodeElement.children.length;
+    if (length > qty) await this.add(); // ! - await, - length
+    if (length < qty) this.remove(length);
+  }
+  async add() { // ! - length
+    let qty = this.nodeElement.children.length;
+    this.nodeElement._refillNumber = this.qty - qty
+    while (this.qty > qty) {
+      console.log(this.data.length, this.qty)
+      this.nodeElement._currentIndex = qty
+      await this.createIterate(qty);
+      this.nodeElement._refillNumber = 0
+      qty++;
+    }
+  }
+  remove(length) {
+    let qty = this.nodeElement.children.length;
+    console.log(length)
+    while (length < qty) {
+      qty--;
+      deleteReactive(this.nodeElement.reactivity.component, this.name + "." + qty);
+      this.nodeElement.children[qty].unmount?.(); // !
+      this.nodeElement.children[qty].remove(); // !
     }
   }
 };
 
-// packages/lesta/node.js
-var Node = class {
-  constructor(nodeOptions, context, nodeElement, impress, app) {
+// packages/lesta/nodes/component/basic/index.js
+var Basic = class extends Components {
+  constructor(...args) {
+    super(...args);
+  }
+  async init(options) { // !
+    this.node.component = options
+    const mount = async () => await this.create(this.proxies.bind(this), this.nodeElement, options); // ! - () => this.proxies(options.proxies)
+    const induced = this.induced(async (permit) => {
+      if (!permit) {
+        this.nodeElement.unmount?.();
+      } else if (!this.nodeElement.unmount)
+        await mount();
+    });
+    if (induced) {
+      options.async ? mount() : await mount(); // !
+    }
+  }
+  proxies(proxies) { // ! - target
+    if (!proxies) return
+    const reactive = (pr, fn) => this.reactiveComponent(this.impress.define(pr), (v, p) => {
+      console.log(pr)
+      p ? this.nodeElement.proxy?.[pr]?.setValue(v, p) : this.nodeElement.proxy?.[pr]?.setValue(fn()) // ! ?.
+    }); // !- target
+    return this.reactivate(proxies, reactive); // ! - this.nodeElement
+  }
+};
+
+// packages/lesta/nodes/node/directives/index.js
+var Directives = class extends Node {
+  constructor(...args) {
+    super(...args);
+  }
+  init(key) {
+    const node2 = this.nodeElement;
+    if (!key.startsWith("_"))
+      return errorNode(node2.nodepath, 102, key);
+    const directive = this.context.directives[key];
+    const options = this.node[key];
+    const { create, update, destroy } = directive;
+    if (!node2.hasOwnProperty("directives"))
+      Object.assign(node2, { directives: {} });
+    Object.assign(node2.directives, { [key]: {
+        create: () => create ? create.bind(directive)(node2.target, options) : {}, // !
+        destroy: () => destroy ? destroy.bind(directive)(node2.target, options) : {} // !
+      } });
+    create && node2.directives[key].create();
+    const handle = (v, k, o) => {
+      const active2 = (value) => update.bind(directive)(node2.target, value, k, o); // !
+      if (typeof v === "function") {
+        this.impress.collect = true;
+        active2(v(node2.target)); // !
+        this.reactiveNode(this.impress.define(), () => active2(v(node2.target))); // !
+      } else
+        active2(v);
+    };
+    if (update) {
+      if (typeof options === "object") {
+        for (const k in options)
+          handle(options[k], k, options);
+      } else
+        handle(options);
+    }
+  }
+};
+
+// packages/lesta/nodes/node/native/index.js
+var Native = class extends Node {
+  constructor(...args) {
+    super(...args);
+  }
+  listeners(key) {
+    if (typeof this.node[key] === "function") {
+      this.nodeElement.target[key] = (event) => this.node[key].bind(this.context)(event, this.nodeElement); // !
+    }
+  }
+  general(key) {
+    if (key === "innerHTML")
+      return errorNode(this.nodeElement.nodepath, 106);
+    if (typeof this.node[key] === "function") {
+      const active2 = () => {
+        const val = this.node[key].bind(this.context)(this.nodeElement);
+        if (this.nodeElement.target[key] !== null && typeof this.nodeElement.target[key] === "object") { // !
+          val !== null && typeof val === "object" ? Object.assign(this.nodeElement.target[key], val) : errorNode(this.nodeElement.nodepath, 103, key); // !
+        } else
+          this.nodeElement.target[key] = val; // !
+      };
+      this.impress.collect = true;
+      active2();
+      this.reactiveNode(this.impress.define(), active2);
+    } else
+      this.nodeElement.target[key] = this.node[key]; // !
+  }
+  init(key) {
+    key.startsWith("on") ? this.listeners(key) : this.general(key);
+  }
+};
+
+// packages/lesta/nodes/basic.js
+var NodesBasic = class {
+  constructor(node2, context, nodeElement, impress, app, keyNode) {
     this.app = app;
-    this.nodeOptions = nodeOptions;
+    this.node = node2;
     this.context = context;
     this.impress = impress;
     this.nodeElement = nodeElement;
-    this.nodeElement.reactivity = { node: /* @__PURE__ */ new Map() };
+    // this.keyNode = keyNode;
+    this.native = new Native(node2, context, nodeElement, impress, app, keyNode);
+    this.directive = new Directives(node2, context, nodeElement, impress, app, keyNode);
   }
-  reactive(refs, active2, reactivity) {
-    if (refs == null ? void 0 : refs.length)
-      reactivity.set(active2, refs);
-    this.impress.clear();
-    return refs;
-  }
-  reactiveNode(refs, active2) {
-    this.reactive(refs, active2, this.nodeElement.reactivity.node);
-  }
-  async controller() {
-    var _a;
-    for (const key in this.nodeOptions) {
-      if (key in this.nodeElement.target) {
-        this.native(key);
-      } else if (key in this.context.directives) {
-        this.directives(key);
-      } else if (key === "component") {
-        await ((_a = this.component) == null ? void 0 : _a.call(this));
-      } else if (key === "selector") {
-        if (this.nodeElement.isSpot)
-          errorNode(this.nodeElement.nodepath, 108);
-      } else
-        errorNode(this.nodeElement.nodepath, 104, key);
+  async controller(key) {
+    if (key in this.nodeElement.target) { // !
+      this.native.init(key);
+    } else if (key in this.context.directives) {
+      this.directive.init(key);
+    } else if (key === "component") {
+      await this.component?.(); // !
+    } else if (key !== "selector" && key !== "target") { // !
+      errorNode(this.nodeElement.nodepath, 104, key);
     }
   }
 };
 
-// packages/lesta/factoryNodeComponent.js
-function factoryNodeComponent_default(...args) {
-  Object.assign(Node.prototype, DOMProperties_default, directiveProperties_default, iterativeComponent_default, basicComponent_default, component_default);
-  return new Node(...args);
-}
+// packages/lesta/nodes/index.js
+var Nodes = class extends NodesBasic {
+  constructor(...args) {
+    super(...args);
+    this.iterate = new Iterate(...args);
+    this.basic = new Basic(...args);
+  }
+  async component() {
+    // if (this.nodeElement.hasAttribute("section"))
+    //   return errorComponent(this.nodeElement.nodepath, 207); // !
+    if (this.nodeElement.target.hasAttribute("iterable")) // !
+      return errorComponent(this.nodeElement.nodepath, 208);
+    this.nodeElement.mount = async (options) => {
+      this.nodeElement.unmount?.()
+      options.iterate ? await this.iterate.init(options) : await this.basic.init(options);
+    }
+    await this.nodeElement.mount(this.node.component); // !
+    // this.context.mount(options, this.nodeElement)
+    // this.app = app;
+    // this.node = node2;
+    // this.context = context;
+    // this.impress = impress;
+    // this.nodeElement = nodeElement;
+  }
+};
 
 // packages/lesta/renderComponent.js
-function renderComponent(nodeElement, component2, controller) {
+function renderComponent(nodeElement, component2, controller) { // ! - ssr
   const options = { ...component2.context.options };
-  const spots = (node2) => {
-    var _a, _b;
-    if ((_a = options.spots) == null ? void 0 : _a.length)
-      node2.spot = {};
-    (_b = options.spots) == null ? void 0 : _b.forEach((name) => Object.assign(node2.spot, { [name]: { target: node2.target.querySelector(`[spot="${name}"]`) } }));
-  };
-  if (nodeElement.isIterable) {
-    const parent = nodeElement.parent;
+  if (nodeElement.target.hasAttribute("iterate")) { // !
     if (!options.template)
       return errorComponent(nodeElement.nodepath, 209);
-    const { _refillNumber } = parent;
-    parent.target.insertAdjacentHTML("beforeEnd", new Array(_refillNumber).fill(0).reduce((a) => a + options.template, ""));
-    nodeElement.target = parent.target.children[nodeElement.index];
-    spots(nodeElement);
-    if (!parent.unmount)
-      parent.unmount = () => {
-        component2.destroy(parent);
-        parent.clear();
-        delete parent.unmount;
-        controller.abort();
+    // if (!ssr)
+    //   nodeElement.insertAdjacentHTML("beforeEnd", options.template);
+    // const iterableElement = nodeElement.children[nodeElement.children.length - 1];
+    // !
+    const { _refillNumber, _currentIndex } = nodeElement
+    nodeElement.target.insertAdjacentHTML('beforeEnd', new Array(_refillNumber).fill(0).reduce((a) => a + options.template, '')); // !
+    const iterableElement = nodeElement.target.children[_currentIndex]; // !
+
+    // !
+    iterableElement.nodepath = nodeElement.nodepath;
+    if (!nodeElement.unmount)
+      nodeElement.unmount = () => {
+        component2.destroy(nodeElement);
+        nodeElement._clear();
+        delete nodeElement.unmount;
+        controller.abort() // !
       };
-    nodeElement.unmount = () => {
+    iterableElement.target.setAttribute("iterable", ""); // !
+    iterableElement.unmount = () => { // ! - async
+      // component2.destroy(iterableElement); // !
+      component2.unmount(iterableElement);
+      controller.abort() // !
+    };
+    return iterableElement;
+  } else if (options.template) { // ! - ssr
+    nodeElement.target.innerHTML = options.template; // !
+    if (options.spots?.length) nodeElement.spot = {} // !
+    options.spots?.forEach(name => nodeElement.spot[name] = nodeElement.target.querySelector(`[spot="${ name }"]`)) // !
+
+    nodeElement.unmount = () => { // !
       component2.destroy(nodeElement);
       component2.unmount(nodeElement);
-      controller.abort();
+      nodeElement.target.innerHTML = ""; // !
+      controller.abort() // !
     };
-  } else if (options.template) {
-    nodeElement.target.innerHTML = options.template;
-    spots(nodeElement);
-    nodeElement.unmount = () => {
-      component2.destroy(nodeElement);
-      component2.unmount(nodeElement);
-      nodeElement.target.innerHTML = "";
-      controller.abort();
-    };
-    return nodeElement;
+    return nodeElement; // !
   }
+  // }
 }
 
 // packages/lesta/lifecycle.js
-async function lifecycle(component2, render, props2) {
-  var _a, _b, _c;
+async function lifecycle(component2, render, props) { // !
   const hooks = [
     async () => await component2.loaded(),
     async () => {
-      render();
+      component2.context.container = render();
       if (typeof document !== "undefined")
         return await component2.rendered();
     },
     async () => {
-      await component2.props(props2);
+      await component2.props(props);
       component2.params();
       component2.methods();
       component2.proxies();
@@ -1307,45 +1336,48 @@ async function lifecycle(component2, render, props2) {
         return await component2.mounted();
     }
   ];
-  const result = (data) => {
-    return {
-      container: component2.context.container,
-      phase: component2.context.phase,
-      data
-    };
-  };
   for await (const hook of hooks) {
     const data = await hook();
     component2.context.phase++;
-    if (((_a = component2.context.abortSignal) == null ? void 0 : _a.aborted) || data) {
-      (_b = props2.aborted) == null ? void 0 : _b.call(props2, result(replicate(data)));
+    if (component2.context.abortSignal?.aborted || data) {
+      props.aborted && props.aborted({
+        phase: component2.context.phase,
+        data: replicate(data),
+        abortSignal: component2.context.abortSignal,
+        index: props.params?._index, // !
+      });
       return;
     }
   }
-  (_c = props2.completed) == null ? void 0 : _c.call(props2, result(null));
   return component2.context.container;
 }
 
-// packages/lesta/mount.js
-async function mount(module2, container, props2, app = {}) {
-  const controller = new AbortController();
-  const signal = controller.signal;
-  const options = await loadModule(module2, signal);
+// packages/lesta/mountComponent.js
+async function mountComponent(src, container, props2 = {}, app = {}) {
+  // const { aborted, params, methods, proxies, ssr } = props2; // !
+  const nodepath = container.nodepath; // !
+  // if (signal && !(signal instanceof AbortSignal)) // !
+  //   errorComponent(nodepath, 217);
+  
+  const controller = new AbortController() // !
+  const signal = controller.signal // !
+  
+  // if (aborted && typeof aborted !== "function") // !
+  //   errorComponent(nodepath, 218);
+  const options = await loadModule(src, signal);
   if (!options)
-    return errorComponent(container.nodepath, 216);
-  const component2 = new InitNodeComponent(mixins(options), container, app, signal, factoryNodeComponent_default);
-  const render = () => !props2.ssr && renderComponent(container, component2, controller);
+    return errorComponent(nodepath, 216);
+  const component2 = new Init(mixins(options), app, signal, Nodes); // !
+  // component2.context.options.inputs = { params, methods, proxies}; // !
+  const render = () => !props2.ssr && renderComponent(container, component2, controller); // ! + ssr, - ssr
   return await lifecycle(component2, render, props2);
 }
 
 // packages/lesta/createApp.js
 function createApp(app = {}) {
-  app.mount = async ({ options, target, name = "root", aborted, completed }) => {
-    const container = { target, nodepath: name };
-    await mount(options, container, { aborted, completed }, app);
-    return container;
-  };
-  Object.preventExtensions(app);
+  // app.use = (plugin, options) => plugin.setup(app, options);// !
+  app.mount = async (component2, container, props2) => await mountComponent(component2, { target: container, nodepath: "root" }, props2, app); // !
+  Object.preventExtensions(app) // !
   return app;
 }
 
@@ -1358,12 +1390,12 @@ var errorStore = (name, code, param = "") => {
 
 // packages/store/index.js
 var Store = class {
-  constructor(module2, app, name) {
-    this.store = module2;
+  constructor(module, app, name) {
+    this.store = module;
     this.context = {
       name,
       app,
-      options: module2,
+      options: module,
       reactivity: /* @__PURE__ */ new Map(),
       param: {},
       method: {},
@@ -1394,8 +1426,7 @@ var Store = class {
     }
     this.context.proxy = diveProxy(this.store.proxies, {
       beforeSet: (value, ref, callback) => {
-        var _a;
-        if ((_a = this.store.setters) == null ? void 0 : _a[ref]) {
+        if (this.store.setters?.[ref]) {
           const v = this.store.setters[ref].bind(this.context)(value);
           if (v === void 0)
             return true;
@@ -1735,7 +1766,7 @@ var BasicRouter = class {
     if (await this.beforeHooks(this.beforeEach))
       return;
     const to = route_default.init(this.app.router.collection, url);
-    const target = to == null ? void 0 : to.route;
+    const target = to?.route;
     if (target) {
       to.pushed = pushed;
       to.replace = replace;
@@ -1800,23 +1831,29 @@ var Router = class extends BasicRouter {
     return () => callbacks.delete(callback);
   }
   async render(to) {
-    var _a, _b;
     if (to.pushed)
       history[to.replace ? "replaceState" : "pushState"](null, null, to.fullPath);
     const target = to.route;
     const from = this.app.router.from;
     const ssr = target.ssr;
-    if (this.current && (from == null ? void 0 : from.route.component) !== target.component) {
-      (_b = (_a = this.current) == null ? void 0 : _a.unmount) == null ? void 0 : _b.call(_a);
+    if (this.current && from?.route.component !== target.component) {
+      this.current?.unmount?.();
       this.current = null;
     }
-    if (this.currentLayout && (from == null ? void 0 : from.route.layout) !== target.layout) {
+    if (this.currentLayout && from?.route.layout !== target.layout) {
       this.currentLayout.unmount();
       this.currentLayout = null;
     }
     if (target.layout) {
-      if ((from == null ? void 0 : from.route.layout) !== target.layout) {
-        this.currentLayout = await this.app.mount(this.app.router.layouts[target.layout], this.rootContainer, { ssr });
+      if (from?.route.layout !== target.layout) {
+        // if (this.abortControllerLayout) // !
+        //   this.abortControllerLayout.abort();
+        // this.abortControllerLayout = new AbortController();
+        this.currentLayout = await this.app.mount(this.app.router.layouts[target.layout], this.rootContainer, {
+          // signal: this.abortControllerLayout.signal, // !
+          ssr
+        });
+        // this.abortControllerLayout = null; // !
         if (!this.currentLayout)
           return;
         this.contaner = this.rootContainer.querySelector("[router]");
@@ -1830,9 +1867,15 @@ var Router = class extends BasicRouter {
     this.rootContainer.setAttribute("layout", target.layout || "");
     document.title = target.title || "Lesta";
     this.rootContainer.setAttribute("page", target.name || "");
-    if ((from == null ? void 0 : from.route.component) !== target.component) {
+    if (from?.route.component !== target.component) {
+      // if (this.abortController)
+      //   this.abortController.abort();
+      // this.abortController = new AbortController();
       window.scrollTo(0, 0);
-      this.current = await this.app.mount(target.component, this.contaner, { ssr });
+      this.current = await this.app.mount(target.component, this.contaner, {
+        // signal: this.abortController.signal, // !
+        ssr });
+      // this.abortController = null; // !
       if (!this.current)
         return;
     } else
@@ -1846,40 +1889,31 @@ function createRouter(app, options) {
   return new Router(app, options);
 }
 
-// packages/lesta/factoryNode.js
-function factoryNode_default(...args) {
-  Object.assign(Node.prototype, DOMProperties_default, directiveProperties_default);
-  return new Node(...args);
-}
-
 // packages/lesta/mountWidget.js
-async function mountWidget({ options, target, name = "root", aborted, completed }) {
-  if (!options)
-    return errorComponent(name, 216);
-  if (!target)
-    return errorComponent(name, 217);
-  const controller = new AbortController();
-  const signal = controller.signal;
-  const container = {
-    // ???
-    target,
-    nodepath: name,
-    unmount() {
-      delete component2.context.container;
-      target.innerHTML = "";
-      controller.abort();
+async function mountWidget(src, root, aborted) { // !
+  if (!src)
+    return errorComponent("root", 216);
+  // if (signal && !(signal instanceof AbortSignal))
+  //   errorComponent("root", 217);
+  const controller = new AbortController()
+  // if (aborted && typeof aborted !== "function") // !
+  //   errorComponent("root", 218);
+  const component2 = new InitBasic(src, {}, controller.signal, NodesBasic);
+  const render = () => {
+    root.innerHTML = src.template;
+    component2.context.container = root;
+  };
+  await lifecycle(component2, render, { aborted });
+  return {
+    destroy() {
+      delete root.reactivity;
+      delete root.method;
+      root.innerHTML = "";
+      controller.abort() // !
     }
   };
-  const component2 = new InitNode(options, container, {}, signal, factoryNode_default);
-  const render = () => {
-    target.innerHTML = options.template;
-    component2.context.container = container;
-  };
-  await lifecycle(component2, render, { aborted, completed });
-  return container;
 }
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
+export {
   cleanHTML,
   createApp,
   createRouter,
@@ -1891,11 +1925,11 @@ async function mountWidget({ options, target, name = "root", aborted, completed 
   deliver,
   loadModule,
   mapProps,
-  mount,
+  mountComponent,
   mountWidget,
   nextRepaint,
-  queue,
+  // queue, // !
   replicate,
   throttling,
-  uid
-});
+  uid,
+};

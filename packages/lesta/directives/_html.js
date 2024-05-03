@@ -1,4 +1,4 @@
-import { cleanHTML } from '../../../utils'
+import { cleanHTML } from '../../utils'
 
 const _html = {
   update: (node, value) => {

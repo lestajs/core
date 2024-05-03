@@ -1,33 +1,37 @@
-import { replicate } from '../../utils/index.js'
-import { errorComponent } from '../../utils/errors/component.js'
+import * as directives from './directives'
+import impress from './impress'
+import { replicate } from '../utils'
+import { errorComponent } from '../utils/errors/component.js'
 
-export default class InitComponent {
-  constructor(component, app, signal) {
+export default class InitBasic {
+  constructor(component, container, app = {}, signal) {
     this.component = component
     this.app = app
+    this.impress = impress
     this.proxiesData = {}
     this.context = {
       app,
+      container,
+      options: component,
       phase: 0,
       abortSignal: signal,
-      options: component,
-      container: null,
       node: {},
       param: {},
       method: {},
       proxy: {},
-      source: component.sources || {}
+      source: component.sources || {},
+      directives: { ...directives, ...app.directives, ...component.directives }
     }
   }
   async loaded(props) {
-    if (this.component.loaded) return await this.component.loaded.bind(this.context)(props)
+    return await this.component.loaded?.bind(this.context)(props)
   }
   async rendered() {
     if (typeof this.component !== 'object') return errorComponent(this.context.container.nodepath,211)
-    if (this.component.rendered) return await this.component.rendered.bind(this.context)()
+    return await this.component.rendered?.bind(this.context)()
   }
   async created() {
-    if (this.component.created) return await this.component.created.bind(this.context)()
+    return await this.component.created?.bind(this.context)()
   }
   methods() {
     if (this.component.methods) {
@@ -36,8 +40,8 @@ export default class InitComponent {
         if (this.context.method.hasOwnProperty(key)) return errorComponent(this.context.container.nodepath, 212, key)
         this.context.method[key] = method.bind(this.context)
         if (this.component.outwards?.methods?.includes(key)) {
-          this.context.container.method[key] = (obj) => {
-            const result = method(replicate(obj))
+          this.context.container.method[key] = (...args) => {
+            const result = method.bind(this.context)(replicate(...args))
             return result instanceof Promise ? result.then(data => replicate(data)) : replicate(result)
           }
         }
