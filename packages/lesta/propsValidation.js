@@ -58,7 +58,7 @@ class Props {
               this.validation(context.proxy, prop, key, replicate(value), 'proxies')
             }
           },
-          isIndependent: () => this.props.proxies[key]?._independent || false
+          isIndependent: () => this.props.proxies[key]?.hasOwnProperty('_independent') ? this.props.proxies[key]._independent : true
         }
         let value = null
         const { store } = prop

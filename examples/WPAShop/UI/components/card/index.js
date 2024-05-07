@@ -77,11 +77,11 @@ export default {
           src: button,
           iterate: () => this.proxy.actions,
           proxies: {
-            value: (btn) => btn.text
+            value: ({ index }) => this.proxy.actions[index].text
           },
           params: {
-            name: (btn) => btn.name,
-            icon: (btn) => btn.icon,
+            name: ({ index }) => this.proxy.actions[index].name,
+            icon: ({ index }) => this.proxy.actions[index].icon,
             size: 'small',
             type: 'text'
           },

@@ -64,6 +64,9 @@ button {
     cursor: pointer;
     background-color: #ebebeb;
 }
+button[disabled] {
+    opacity: .7;
+}
 #root {
     height: 100vh;
 }

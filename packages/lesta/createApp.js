@@ -2,9 +2,7 @@ import { mount } from './mount'
 
 function createApp(app = {}) {
   app.mount = async ({ options, target, name = 'root', aborted, completed }) => {
-    const container = { target, nodepath: name }
-    await mount(options , container, { aborted, completed }, app)
-    return container
+    return await mount(options , { target, nodepath: name }, { aborted, completed }, app)
   } // !
   Object.preventExtensions(app) // !
   return app

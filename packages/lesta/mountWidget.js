@@ -22,8 +22,7 @@ async function mountWidget({ options, target, name = 'root', aborted, completed 
     target.innerHTML = options.template
     component.context.container = container
   }
-  await lifecycle(component, render, { aborted, completed })
-  return container
+  return await lifecycle(component, render, { aborted, completed })
 }
 
 export { mountWidget }

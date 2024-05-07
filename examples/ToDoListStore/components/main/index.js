@@ -3,7 +3,8 @@ import card from '../card'
 import search from '../search'
 import menu from '../menu'
 import notification from '../notification'
-import bottomPanel from '../bottomPanel'
+import controls from '../controls'
+import total from '../total'
 import { mapProps } from 'lesta'
 
 export default {
@@ -14,16 +15,16 @@ export default {
     <div class="bottom-panel"></div>`,
   props: {
     proxies: {
+      ...mapProps(['tasks', 'loading', 'isModify'], { store: 'tasks' })
       // tasks: { store: 'tasks' },
       // loading: { store: 'tasks' }
-      ...mapProps(['tasks', 'loading'], { store: 'tasks' })
     },
     methods: {
       ...mapProps(['addTask', 'searchTasks', 'filterTasks'], { store: 'tasks' })
     }
   },
   sources: {
-    cardButtons: () => import('../cardButtons'),
+    modify: () => import('../modify'),
   },
   nodes() {
     return {
@@ -43,7 +44,7 @@ export default {
             },
             end: {
               component: {
-                src: menu,
+                src: menu
               }
             }
           }
@@ -57,39 +58,50 @@ export default {
       bottom_panel: { // global selector function in createApp
         component: {
           induce: false, // order node before this.node.bottom_panel.induce(true)
-          src: bottomPanel
+          src: total
         }
       },
       cards: {
         _class: {
           loading: () => this.proxy.loading
         },
+        _html: () => {
+          if (this.proxy.tasks.length) return
+          return '<strong>Empty...</strong>'
+        },
         component: {
           src: card,
+          // async: true,
           iterate: () => this.proxy.tasks,
-          params: {
-            index: (node) => node.index,
-          },
           proxies: {
-            card: (node) => this.proxy.tasks[node.index]
+            card: ({ index }) => this.proxy.tasks[index]
           },
           spots: {
+            // DOM properties
             bottom: {
               component: {
-                src: this.source.cardButtons,
+                src: controls,
                 proxies: {
                   card: (node) => this.proxy.tasks[node.parent.index]
+                },
+                spots: {
+                  buttons: {
+                    component: {
+                      induce: () => this.proxy.isModify,
+                      src: this.source.modify,
+                      proxies: {
+                        card: (node) => this.proxy.tasks[node.parent.parent.index]
+                      },
+                      // aborted: (v) => console.log('aborted', v, this), // notify
+                    }
+                  }
                 }
               }
             }
           },
-          aborted: (v) => console.log(v, this), // notify
           completed: (v) => this.node.bottom_panel.induce(true)
         }
       }
     }
-  },
-  mounted() {
-    // this.node.cards.unmount()
   }
 }

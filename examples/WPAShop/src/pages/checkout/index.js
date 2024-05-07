@@ -21,7 +21,7 @@ export default {
         component: {
           src: tabs,
           proxies: {
-            items: [{label: 'Ship', icon: shipIcon}, {label: 'Pick up', icon: locationIcon}],
+            items: [{label: 'Ship', icon: shipIcon}, { label: 'Pick up', icon: locationIcon }],
             value: () => this.proxy.currentTab,
           },
           methods: {
@@ -33,6 +33,11 @@ export default {
               } else {
                 this.node.tabs.spot.content.mount({ src: this.source.pickUp })
               }
+            }
+          },
+          spots: {
+            content: {
+              component: {}
             }
           }
         }

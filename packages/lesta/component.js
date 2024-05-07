@@ -38,7 +38,7 @@ export default {
         if (typeof v === 'function' && v.name) {
           this.impress.collect = true
           const fn = (nodeElement) => v(nodeElement)
-          const value = v(this.nodeElement._current || this.nodeElement) // arr && v.length ? v(arr[index], index) :
+          const value = v(this.nodeElement._current || this.nodeElement)
           const ref = reactive(pr, fn)
           Object.assign(result, { [pr]: { _value: value, _independent: !ref } })
           // this.impress.clear()
@@ -47,7 +47,7 @@ export default {
     }
     return result
   },
-  async create(proxies, nodeElement, pc, value, index) {
+  async create(proxies, nodeElement, pc) {
     const { src, spots, aborted, completed, ssr } = pc
     // if (!src)
     //   return errorComponent(nodeElement.nodepath, 203); // !
@@ -56,13 +56,13 @@ export default {
       aborted,
       completed,
       ssr,
-      ...props.collect(pc, value, index),
-      proxies: proxies(pc.proxies, index) || {}
+      ...props.collect(pc, nodeElement),
+      proxies: proxies(pc.proxies) || {}
     }, this.app)
     this.nodeElement.created = true
     if (!spots) return
     for await (const [name, options] of Object.entries(spots)) {
-      if (!nodeElement.spot.hasOwnProperty(name)) {
+      if (!nodeElement.spot?.hasOwnProperty(name)) {
         errorComponent(nodeElement.nodepath, 202, name)
         continue
       }

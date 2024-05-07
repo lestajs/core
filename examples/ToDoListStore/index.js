@@ -7,7 +7,8 @@ const root = document.querySelector('#root')
 const app = createApp({
   selector: (name) => '.' + name.replace('_', '-'),
   store: {},
-  rootContainer: {}
+  rootContainer: {},
+  // directives: {} global directives
 })
 
 const stores = createStores(app, { tasks, notices })

@@ -4,15 +4,15 @@ async function lifecycle(component, render, props) {
   const hooks = [
     async () => await component.loaded(),
     async () => {
-      render() // component.context.container =
-      if (typeof document !== 'undefined') return await component.rendered()
-    },
-    async () => {
       await component.props(props)
       component.params()
       component.methods()
       component.proxies()
       return await component.created()
+    },
+    async () => {
+      render()
+      if (typeof document !== 'undefined') return await component.rendered()
     },
     async () => {
       await component.nodes()

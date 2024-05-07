@@ -1,8 +1,6 @@
 import { mount } from './mount'
 
 async function mountComponent({ options, target, name = 'root', aborted, completed }) {
-  const container = { target, nodepath: name }
-  await mount(options, container, { aborted, completed })
-  return container
+  return await mount(options, { target, nodepath: name }, { aborted, completed })
 }
 export { mountComponent }

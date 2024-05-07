@@ -1,11 +1,16 @@
-.notify {
+.notice {
     border-radius: 5px;
     background-color: #eee;
     padding: 10px 15px;
     display: flex;
     justify-content: space-between;
     margin-top: 4px;
+    opacity: 0;
+    transition: opacity .5s ease-in-out;
 }
-.notify .close {
+.notice .close {
     cursor: pointer;
+}
+.visible {
+    opacity: 1;
 }

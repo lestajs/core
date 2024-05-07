@@ -29,7 +29,6 @@ const products = {
       }
     },
     async addToCart({ product }) {
-      debugger
       const response = await cartApi.addToCart(product)
       
       if (response) {

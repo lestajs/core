@@ -107,6 +107,8 @@
   // packages/lesta/directives/_html.js
   var _html = {
     update: (node2, value) => {
+      if (value === void 0)
+        return;
       node2.innerHTML = "";
       value && node2.append(...cleanHTML(value));
     }
@@ -124,7 +126,11 @@
 
   // packages/lesta/directives/_text.js
   var _text = {
-    update: (node2, value) => node2.textContent = value !== Object(value) ? value : JSON.stringify(value)
+    update: (node2, value) => {
+      if (value === void 0)
+        return;
+      node2.textContent = value !== Object(value) ? value : JSON.stringify(value);
+    }
   };
 
   // packages/lesta/directives/_attr.js
@@ -479,16 +485,16 @@
     const hooks = [
       async () => await component2.loaded(),
       async () => {
-        render();
-        if (typeof document !== "undefined")
-          return await component2.rendered();
-      },
-      async () => {
         await component2.props(props2);
         component2.params();
         component2.methods();
         component2.proxies();
         return await component2.created();
+      },
+      async () => {
+        render();
+        if (typeof document !== "undefined")
+          return await component2.rendered();
       },
       async () => {
         await component2.nodes();
@@ -544,8 +550,7 @@
       target.innerHTML = options.template;
       component2.context.container = container;
     };
-    await lifecycle(component2, render, { aborted, completed });
-    return container;
+    return await lifecycle(component2, render, { aborted, completed });
   }
 
   // scripts/lesta.mountWidget.global.js

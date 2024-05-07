@@ -46,15 +46,12 @@ export default {
         _class: {
           hide: () => this.proxy.hide
         }
-      },
-      content: {
-        component: {}
       }
     }
   },
   methods: {
     resize() {
-      this.node.LstPanel.style.hide = this.node.LstContent.clientHeight + 'px'
+      this.node.LstPanel.target.style.hide = this.node.LstContent.clientHeight + 'px'
     }
   },
   mounted() {

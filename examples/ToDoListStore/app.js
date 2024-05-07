@@ -8,7 +8,7 @@ export default {
       <div class="popup"></div>
       <main></main>
     </div>`,
-  directives: {
+  directives: { // local directives
     _replace: {
       create: (node, options) => options().append(node)
     }
@@ -33,11 +33,13 @@ export default {
         component: {
           src: dialog,
           methods: {
-            onclose: () => this.node.popup.spot.content.unmount()
+            onclose: () => {
+              // return true // stop closing
+            }
           },
           spots: {
             content: {
-              component: {} // for mounting
+              component: {} // for later mounting
             }
           }
         }
@@ -62,15 +64,25 @@ export default {
             } else {
               this.method.addTask({ task })
             }
-            this.node.popup.proxy.opened.setValue(false) // similar to this.node.popup.method.close()
+            this.node.popup.method.close() // another not safe way: this.node.popup.proxy.opened.setValue(false)
           }
         }
       })
-      this.node.popup.proxy.opened.setValue(true) // similar to this.node.popup.method.show()
+      // this.node.popup.spot.content.unmount() // if necessary
+      this.node.popup.method.show() // another not safe way: this.node.popup.proxy.opened.setValue(true)
     }
   },
   loaded() {
     this.app.rootContainer = this.container
     // this.options
+  },
+  created() {
+    // this.proxy
+  },
+  rendered() {
+    // template in DOM
+  },
+  mounted() {
+    // this.node
   }
 }

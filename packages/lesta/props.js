@@ -1,7 +1,7 @@
 export default {
-  collect(propertyComponent, val, index) {
+  collect(propertyComponent, nodeElement) {
     return {
-      params: this.params(propertyComponent.params, val, index),
+      params: this.params(propertyComponent.params, nodeElement),
       methods: this.methods(propertyComponent.methods)
     }
   },
@@ -15,15 +15,11 @@ export default {
       }
     } return result
   },
-  params(params, val, index) {
+  params(params, nodeElement) {
     const result = {}
     if (params) {
-      for (const [pr, fn] of Object.entries(params)) {
-        let data = null
-        if (typeof fn === 'function' && fn.name) {
-          data = val ? fn(val, index) : fn()
-        } else data = fn
-        Object.assign(result, { [pr]: data })
+      for (const [pr, v] of Object.entries(params)) {
+        Object.assign(result, { [pr]: (typeof v === 'function' && v.name) ? v(nodeElement) : v })
       }
     } return result
   }

@@ -1,4 +1,5 @@
 import './index.css'
+import { mapProps } from 'lesta'
 
 export default {
   template:
@@ -6,14 +7,14 @@ export default {
       <div class="count"></div>
       <button class="filter blue"></button>
       <button class="add green">Add Task</button>
-      <button class="abort red">Abort</button>
+      <button class="mode"></button>
     </div>`,
   props: {
     proxies: {
-      isCompleted: { store: 'tasks' }
+      ...mapProps(['isCompleted', 'isModify'], { store: 'tasks' })
     },
     methods: {
-      filterTasks: { store: 'tasks' }
+      ...mapProps(['filterTasks', 'changeMode'], { store: 'tasks' })
     }
   },
   sources: {
@@ -33,6 +34,10 @@ export default {
       },
       add: {
         onclick: () => this.app.rootContainer.method.createForm({ mode: 'add' })
+      },
+      mode: {
+        _text: () => this.proxy.isModify ? 'Read Only' : 'Modify',
+        onclick: () => this.method.changeMode()
       }
     }
   }

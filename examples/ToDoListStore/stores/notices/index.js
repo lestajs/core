@@ -8,7 +8,7 @@ export default {
     async addNotice({ text }) {
       this.proxy.notices.unshift({ text })
       await delay(2000)
-      this.proxy.notices.pop()
+      // this.proxy.notices.pop()
     },
     removeNotice({ index }) {
       this.proxy.notices.splice(index, 1)

@@ -298,6 +298,8 @@ __export(directives_exports, {
 // packages/lesta/directives/_html.js
 var _html = {
   update: (node2, value) => {
+    if (value === void 0)
+      return;
     node2.innerHTML = "";
     value && node2.append(...cleanHTML(value));
   }
@@ -315,7 +317,11 @@ var _class = {
 
 // packages/lesta/directives/_text.js
 var _text = {
-  update: (node2, value) => node2.textContent = value !== Object(value) ? value : JSON.stringify(value)
+  update: (node2, value) => {
+    if (value === void 0)
+      return;
+    node2.textContent = value !== Object(value) ? value : JSON.stringify(value);
+  }
 };
 
 // packages/lesta/directives/_attr.js
@@ -634,7 +640,7 @@ var Props = class {
               this.validation(context.proxy, prop, key, replicate(value2), "proxies");
             }
           },
-          isIndependent: () => this.props.proxies[key]?._independent || false
+          isIndependent: () => this.props.proxies[key]?.hasOwnProperty("_independent") ? this.props.proxies[key]._independent : true
         };
         let value = null;
         const { store: store2 } = prop;
@@ -873,23 +879,6 @@ var DOMProperties_default = {
   }
 };
 
-class Queue {
-  _queue = Promise.resolve();
-
-  enqueue(fn) {
-    const result = this._queue.then(fn);
-    this._queue = result.then(() => {}, () => {});
-
-    // we changed return result to return result.then()
-    // to re-arm the promise
-    return result.then();
-  }
-
-  wait() {
-    return this._queue;
-  }
-}
-
 // packages/lesta/iterativeComponent.js
 var iterativeComponent_default = {
   async iterative(options) {
@@ -897,12 +886,11 @@ var iterativeComponent_default = {
       return errorComponent(this.nodeElement.nodepath, 205);
     this.name = null;
     this.nodeElement.children = [];
-    this.nodeElement.target.innerHTML = "";
     this.nodeOptions.component = options;
-    this.nodeElement.clear = () => this.remove.bind(this)(0);
+    this.nodeElement.clear = () => this.length.bind(this)(0);
     this.createIterate = async (index) => {
       this.nodeElement.children[index] = this.nodeElement._current = { parent: this.nodeElement, target: true, nodepath: this.nodeElement.nodepath + "." + index, index, isIterable: true };
-      await this.create(this.proxiesIterate.bind(this), this.nodeElement.children[index], options, this.data[index], index);
+      await this.create(this.proxiesIterate.bind(this), this.nodeElement.children[index], options);
     };
     this.impress.collect = true;
     this.data = options.iterate();
@@ -911,7 +899,6 @@ var iterativeComponent_default = {
         return errorComponent(this.nodeElement.nodepath, 206);
       this.name = this.impress.refs.at(-1);
       this.impress.clear();
-      // this.qty = this.data.length;
       this.nodeElement.isIterative = true;
       if (Object.getPrototypeOf(this.data).instance === "Proxy") {
         this.reactiveComponent([this.name], (v) => {
@@ -919,11 +906,9 @@ var iterativeComponent_default = {
           if (options.proxies) {
             for (const [pr, fn] of Object.entries(options.proxies)) {
               if (typeof fn === "function" && fn.name) {
-                // if (fn.length) {
-                  for (let i = 0; i < Math.min(this.nodeElement.target.children.length, v.length); i++) { // .target
-                    this.nodeElement.children[i]?.proxy?.[pr]?.setValue(fn(this.nodeElement.children[i]));
-                  }
-                // }
+                for (let i = 0; i < Math.min(this.nodeElement.target.children.length, v.length); i++) {
+                  this.nodeElement.children[i]?.proxy?.[pr]?.setValue(fn(this.nodeElement.children[i]));
+                }
               }
             }
           }
@@ -933,29 +918,15 @@ var iterativeComponent_default = {
       }
       const mount2 = async () => {
         this.data = options.iterate();
-        return await this.length(this.data.length);
+        await this.length(this.data.length);
       };
-      const induced = this.induced(async (permit) => permit ? await mount2() : this.nodeElement._clear());
+      const induced = this.induced(async (permit) => permit ? await mount2() : this.nodeElement.clear());
       if (induced)
         await mount2();
     }
   },
-  // sections(sections, target, index) {
-  //     if (sections) {
-  //         for (const [section, options] of Object.entries(sections)) {
-  //             for (const [p, f] of Object.entries(options.proxies)) {
-  //                 if (typeof f === 'function' && f.name) {
-  //                     if (f.length) {
-  //                         target.section[section]?.proxy[p]?.setValue(f(this.data[index], index))
-  //                         this.sections(options.sections, target.section[section], index)
-  //                     }
-  //                 }
-  //             }
-  //         }
-  //     }
-  // },
-  proxiesIterate(proxies, index) {
-    const nodeElement = this.nodeElement.children[index];
+  proxiesIterate(proxies) {
+    const nodeElement = this.nodeElement._current;
     const reactive = (pr, fn) => {
       if (this.impress.refs.some((ref) => ref.includes(this.name))) {
         this.reactiveComponent(this.impress.define(pr), (v, p) => {
@@ -964,14 +935,13 @@ var iterativeComponent_default = {
           if (p) {
             nodeElement.proxy[pr]?.setValue(v, p);
           } else {
-            // this.data = this.nodeOptions.component.iterate();
             nodeElement.proxy[pr]?.setValue(fn(nodeElement));
           }
         });
       } else {
         if (!this.nodeElement.created) {
           this.reactiveComponent(this.impress.define(pr), (v, p) => {
-            for (let i = 0; i < this.nodeElement.children.length; i++) {
+            for (let i = 0; i < this.nodeElement.target.children.length; i++) {
               const nodeChildren = this.nodeElement.children[i];
               p ? nodeChildren.proxy?.[pr]?.setValue(v, p) : nodeChildren.proxy?.[pr]?.setValue(fn(nodeChildren));
             }
@@ -983,28 +953,21 @@ var iterativeComponent_default = {
     return this.reactivate(proxies, reactive, nodeElement);
   },
   async length(length) {
-    // this.qty = length;
-    const qty = this.nodeElement.target.children.length; // .target
+    const qty = this.nodeElement.children.length;
     if (length > qty)
       await this.add(length, qty);
     if (length < qty)
       this.remove(length, qty);
   },
   async add(length, qty) {
-    // let qty = this.nodeElement.target.children.length; // .target
-    // this.nodeElement._refillNumber = this.qty - qty;
-    // const q = new Queue()
     while (length > qty) {
-      console.log('before', length, qty)
-      this.createIterate(qty)
-      // this.createIterate(qty);
-      console.log('add', length, qty)
-      // this.nodeElement._refillNumber = 0;
+      await this.createIterate(qty);
+      if (!this.nodeElement.target.children[qty])
+        return;
       qty++;
     }
   },
   remove(length, qty) {
-    // let qty = this.nodeElement.target.children.length; // .target
     while (length < qty) {
       qty--;
       deleteReactive(this.nodeElement.reactivity.component, this.name + "." + qty);
@@ -1036,9 +999,9 @@ var basicComponent_default = {
 
 // packages/lesta/props.js
 var props_default = {
-  collect(propertyComponent, val, index) {
+  collect(propertyComponent, nodeElement) {
     return {
-      params: this.params(propertyComponent.params, val, index),
+      params: this.params(propertyComponent.params, nodeElement),
       methods: this.methods(propertyComponent.methods)
     };
   },
@@ -1053,16 +1016,11 @@ var props_default = {
     }
     return result;
   },
-  params(params, val, index) {
+  params(params, nodeElement) {
     const result = {};
     if (params) {
-      for (const [pr, fn] of Object.entries(params)) {
-        let data = null;
-        if (typeof fn === "function" && fn.name) {
-          data = val ? fn(val, index) : fn();
-        } else
-          data = fn;
-        Object.assign(result, { [pr]: data });
+      for (const [pr, v] of Object.entries(params)) {
+        Object.assign(result, { [pr]: typeof v === "function" && v.name ? v(nodeElement) : v });
       }
     }
     return result;
@@ -1117,7 +1075,7 @@ var component_default = {
     }
     return result;
   },
-  async create(proxies, nodeElement, pc, value, index) {
+  async create(proxies, nodeElement, pc) {
     const { src, spots, aborted, completed, ssr } = pc;
     if (!src)
       return;
@@ -1126,14 +1084,14 @@ var component_default = {
       aborted,
       completed,
       ssr,
-      ...props_default.collect(pc, value, index),
-      proxies: proxies(pc.proxies, index) || {}
+      ...props_default.collect(pc, nodeElement),
+      proxies: proxies(pc.proxies) || {}
     }, this.app);
     this.nodeElement.created = true;
     if (!spots)
       return;
     for await (const [name, options] of Object.entries(spots)) {
-      if (!nodeElement.spot.hasOwnProperty(name)) {
+      if (!nodeElement.spot?.hasOwnProperty(name)) {
         errorComponent(nodeElement.nodepath, 202, name);
         continue;
       }
@@ -1190,6 +1148,9 @@ function factoryNodeComponent_default(...args) {
 // packages/lesta/renderComponent.js
 function renderComponent(nodeElement, component2, controller) {
   const options = { ...component2.context.options };
+  if (!options.template)
+    return errorComponent(nodeElement.nodepath, 209);
+  const getTemplate = (template) => typeof template === "function" ? template.bind(component2.context)() : template;
   const spots = (node2) => {
     if (options.spots?.length)
       node2.spot = {};
@@ -1197,10 +1158,9 @@ function renderComponent(nodeElement, component2, controller) {
   };
   if (nodeElement.isIterable) {
     const parent = nodeElement.parent;
-    if (!options.template)
-      return errorComponent(nodeElement.nodepath, 209);
-    const { _refillNumber } = parent;
-    parent.target.insertAdjacentHTML("beforeEnd", options.template);
+    if (parent.children.length === 1 && parent.target.childNodes.length)
+      parent.target.innerHTML = "";
+    parent.target.insertAdjacentHTML("beforeEnd", getTemplate(options.template));
     nodeElement.target = parent.target.children[nodeElement.index];
     spots(nodeElement);
     if (!parent.unmount)
@@ -1208,15 +1168,14 @@ function renderComponent(nodeElement, component2, controller) {
         component2.destroy(parent);
         parent.clear();
         delete parent.unmount;
-        controller.abort();
       };
     nodeElement.unmount = () => {
       component2.destroy(nodeElement);
       component2.unmount(nodeElement);
       controller.abort();
     };
-  } else if (options.template) {
-    nodeElement.target.innerHTML = options.template;
+  } else {
+    nodeElement.target.innerHTML = getTemplate(options.template);
     spots(nodeElement);
     nodeElement.unmount = () => {
       component2.destroy(nodeElement);
@@ -1224,7 +1183,6 @@ function renderComponent(nodeElement, component2, controller) {
       nodeElement.target.innerHTML = "";
       controller.abort();
     };
-    return nodeElement;
   }
 }
 
@@ -1233,16 +1191,16 @@ async function lifecycle(component2, render, props2) {
   const hooks = [
     async () => await component2.loaded(),
     async () => {
-      render();
-      if (typeof document !== "undefined")
-        return await component2.rendered();
-    },
-    async () => {
       await component2.props(props2);
       component2.params();
       component2.methods();
       component2.proxies();
       return await component2.created();
+    },
+    async () => {
+      render();
+      if (typeof document !== "undefined")
+        return await component2.rendered();
     },
     async () => {
       await component2.nodes();
@@ -1284,9 +1242,7 @@ async function mount(module, container, props2, app = {}) {
 // packages/lesta/createApp.js
 function createApp(app = {}) {
   app.mount = async ({ options, target, name = "root", aborted, completed }) => {
-    const container = { target, nodepath: name };
-    await mount(options, container, { aborted, completed }, app);
-    return container;
+    return await mount(options, { target, nodepath: name }, { aborted, completed }, app);
   };
   Object.preventExtensions(app);
   return app;
@@ -1757,7 +1713,7 @@ var Router = class extends BasicRouter {
     }
     if (target.layout) {
       if (from?.route.layout !== target.layout) {
-        this.currentLayout = await this.app.mount(this.app.router.layouts[target.layout], this.rootContainer, { ssr });
+        this.currentLayout = await this.app.mount({ options: this.app.router.layouts[target.layout], target: this.rootContainer, props: { ssr }});
         if (!this.currentLayout)
           return;
         this.contaner = this.rootContainer.querySelector("[router]");
@@ -1773,7 +1729,7 @@ var Router = class extends BasicRouter {
     this.rootContainer.setAttribute("page", target.name || "");
     if (from?.route.component !== target.component) {
       window.scrollTo(0, 0);
-      this.current = await this.app.mount(target.component, this.contaner, { ssr });
+      this.current = await this.app.mount({ options: target.component, target: this.contaner, props: { ssr }});
       if (!this.current)
         return;
     } else
@@ -1816,8 +1772,7 @@ async function mountWidget({ options, target, name = "root", aborted, completed 
     target.innerHTML = options.template;
     component2.context.container = container;
   };
-  await lifecycle(component2, render, { aborted, completed });
-  return container;
+  return await lifecycle(component2, render, { aborted, completed });
 }
 export {
   cleanHTML,

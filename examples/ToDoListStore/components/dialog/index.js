@@ -1,11 +1,13 @@
 import './index.css'
 
 export default {
-  template: `
-  <dialog class="dialog">
-    <div class="close"></div>
-    <div spot="content"></slot>
-  </dialog>`,
+  template() {
+    return `
+      <dialog class="dialog" ${this.proxy.opened ? 'open' : ''}>
+        <div class="close"></div>
+        <div spot="content"></slot>
+      </dialog>`
+  },
   props: {
     proxies: {
       opened: {
@@ -23,24 +25,25 @@ export default {
   },
   handlers: {
     opened(v) {
-      v ? this.method.show() : this.method.close()
+      v ? this.node.dialog.target.showModal() : this.node.dialog.target.close()
     }
   },
   nodes() {
     return {
       dialog: {},
       close: {
-        onclick: () => this.proxy.opened = false
+        onclick: () => {
+          if (this.container.proxy.opened.isIndependent() && !this.method.onclose?.()) this.proxy.opened = false
+        }
       }
     }
   },
   methods: {
     show() {
-      this.node.dialog.target.showModal()
+      if (this.container.proxy.opened.isIndependent()) this.proxy.opened = true
     },
     close() {
-      this.node.dialog.target.close()
-      this.method.onclose()
+      if (this.container.proxy.opened.isIndependent()) this.proxy.opened = false
     }
   }
 }

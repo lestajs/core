@@ -6,12 +6,11 @@ export default {
         if (typeof options.iterate !== 'function') return errorComponent(this.nodeElement.nodepath, 205)
         this.name = null
         this.nodeElement.children = []
-        this.nodeElement.target.innerHTML = ''
         this.nodeOptions.component = options
         this.nodeElement.clear = () => this.length.bind(this)(0)
         this.createIterate = async (index) => {
             this.nodeElement.children[index] = this.nodeElement._current = { parent: this.nodeElement, target: true, nodepath: this.nodeElement.nodepath + '.' + index, index, isIterable: true }
-            await this.create(this.proxiesIterate.bind(this), this.nodeElement.children[index], options, this.data[index], index)
+            await this.create(this.proxiesIterate.bind(this), this.nodeElement.children[index], options)
         }
         this.impress.collect = true
         this.data = options.iterate()
@@ -22,7 +21,7 @@ export default {
             this.nodeElement.isIterative = true // !
             if (Object.getPrototypeOf(this.data).instance === 'Proxy') {
                 this.reactiveComponent([this.name], (v) => {
-                    this.data = options.iterate()
+                        this.data = options.iterate() // ?
                         if (options.proxies) {
                             for (const [pr, fn] of Object.entries(options.proxies)) {
                                 if (typeof fn === 'function' && fn.name) {
@@ -37,16 +36,16 @@ export default {
                 this.reactiveComponent([this.name + '.length'], (v) => this.length(v))
             }
             const mount = async () => {
-                this.data = options.iterate()
-                this.length(this.data.length)
+                this.data = options.iterate() // ?
+                await this.length(this.data.length)
             }
     
-            const induced = this.induced(async (permit) => permit ? await mount(): this.nodeElement._clear())
+            const induced = this.induced(async (permit) => permit ? await mount(): this.nodeElement.clear())
             if (induced) await mount()
         }
     },
-    proxiesIterate(proxies, index) {
-        const nodeElement = this.nodeElement.children[index]
+    proxiesIterate(proxies) {
+        const nodeElement = this.nodeElement._current
         const reactive = (pr, fn) => {
             if (this.impress.refs.some(ref => ref.includes(this.name))) {
                 this.reactiveComponent(this.impress.define(pr), (v, p) => {
@@ -54,14 +53,14 @@ export default {
                     if (p) {
                         nodeElement.proxy[pr]?.setValue(v, p)
                     } else {
-                        this.data = this.nodeOptions.component.iterate() // ??
+                        // this.data = this.nodeOptions.component.iterate() // ??
                         nodeElement.proxy[pr]?.setValue(fn(nodeElement))
                     }
                 })
             } else {
                 if (!this.nodeElement.created) {
                     this.reactiveComponent(this.impress.define(pr), (v, p) => {
-                        for (let i = 0; i < this.nodeElement.children.length; i++) {
+                        for (let i = 0; i < this.nodeElement.target.children.length; i++) {
                             const nodeChildren = this.nodeElement.children[i]
                             p ? nodeChildren.proxy?.[pr]?.setValue(v, p) : nodeChildren.proxy?.[pr]?.setValue(fn(nodeChildren))
                         }
@@ -71,14 +70,15 @@ export default {
         }
         return this.reactivate(proxies, reactive, nodeElement)
     },
-    length(length) {
-        const qty = this.nodeElement.target.children.length
-        if (length > qty) this.add(length, qty)
+    async length(length) {
+        const qty = this.nodeElement.children.length /// - .target
+        if (length > qty) await this.add(length, qty)
         if (length < qty) this.remove(length, qty)
     },
-    add(length, qty) { // ! - length
+    async add(length, qty) { // ! - length
         while (length > qty) {
-            this.createIterate(qty)
+            await this.createIterate(qty)
+            if (!this.nodeElement.target.children[qty]) return
             qty++
         }
     },
