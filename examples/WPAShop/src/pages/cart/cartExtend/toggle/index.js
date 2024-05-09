@@ -22,11 +22,6 @@ export default {
           }
         }
     },
-    handlers: {
-      quantity(v) {
-        this.method.changeQuantity({ id: this.param.id, value: v })
-      }
-    },
     nodes() {
         return {
             plus: {
@@ -36,7 +31,7 @@ export default {
                         text: '+'
                     },
                     methods: {
-                        change: () => this.proxy.quantity++
+                        change: () => this.method.changeQuantity({ id: this.param.id, value: this.proxy.quantity + 1 })
                     }
                 }
             },
@@ -50,7 +45,7 @@ export default {
                         text: '-'
                     },
                     methods: {
-                        change: () => this.proxy.quantity > 1 ? this.proxy.quantity-- : ''
+                        change: () => this.method.changeQuantity({ id: this.param.id, value: this.proxy.quantity - 1 })
                     }
                 }
             }

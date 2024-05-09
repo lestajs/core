@@ -36,7 +36,9 @@ export default {
             }
           },
           sections: {
-            content: {}
+            content: {
+              src: this.source.ship
+            }
           }
         }
       }
