@@ -4,7 +4,7 @@ import card from '../../../UI/components/card/'
 import catalogApi from '../../../common/catalogApi.js'
 import './index.pcss'
 // import filter from './filters/index.js'
-import button from '../../../UI/components/buttonOld/index.js'
+import button from '../../../UI/components/button'
 import buttons from '../../../UI/components/buttons'
 import '../../../UI/components/spinner/index.css'
 import dropdown from '../../../UI/components/dropdown'
@@ -51,12 +51,14 @@ export default {
       categoryBar: {
         component: {
           src: buttons,
-          proxies: {
-            active: () => false,
+          params: {
             buttons: this.param.categories
           },
+          proxies: {
+            active: () => false,
+          },
           methods: {
-            change: async (value) => {
+            action: async ({ value }) => {
               this.proxy.hidden = false
               this.proxy.products = await catalogApi.getProductsByCategory(value)
               this.proxy.hidden = true
@@ -69,10 +71,10 @@ export default {
         component: {
           src: button,
           proxies: {
-            text: () => this.proxy.show ? 'Hide filters' : 'Show filters'
+            value: () => this.proxy.show ? 'Hide filters' : 'Show filters'
           },
           methods: {
-            change: () => this.proxy.show = !this.proxy.show
+            action: () => this.proxy.show = !this.proxy.show
           }
         }
       },
@@ -103,18 +105,18 @@ export default {
           src: card,
           iterate: () => this.proxy.products,
           params: {
-            index: (_, i) => i
+            index: ({ index }) => index
           },
           proxies: {
-            header: (product) => product.title,
+            header: ({ index }) => this.proxy.products[index].title,
             buttons: () => [{
               name: 'cart',
               text: 'Add to cart'
             }],
-            image: (product) => product.image,
+            image: ({ index }) => this.proxy.products[index].image,
             // content: (product) => product.description,
-            title: (product) => '$' + product.price,
-            url: (product) => '/product/' + product.id
+            title: ({ index }) => '$' + this.proxy.products[index].price,
+            url: ({ index }) => '/product/' + this.proxy.products[index].id
           },
           methods: {
             change: ({ index }) => {
@@ -132,17 +134,14 @@ export default {
     this.param.categories = await catalogApi.getAllCategories()
     // await delay(1500);
     this.proxy.hidden = true
-    console.dir(this.app.router.to.extra.sidebar)
-    const sidebarSections = this.app.router.to.extra.sidebar.section
-
-    await sidebarSections.content.mount({ src: cart })
-    await sidebarSections.bottom.mount({
+    await this.app.sidebar.spot.content.mount({ src: cart })
+    await this.app.sidebar.spot.bottom.mount({
       src: button,
       proxies: {
-        text: 'Go to Cart'
+        value: 'Go to Cart'
       },
       methods: {
-        change: () => this.app.router.push('/cart')
+        action: () => this.app.router.push('/cart')
       }
     })
   }

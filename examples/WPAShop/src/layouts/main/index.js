@@ -19,12 +19,16 @@ export default {
       header: {
         component: {
           src: header,
-          sections: {
+          spots: {
             left: {
-              src: left
+              component: {
+                src: left
+              }
             },
             right: {
-              src: right
+              component: {
+                src: right
+              }
             }
           }
         }
@@ -32,34 +36,25 @@ export default {
       sidebar: {
         component: {
           src: sidebar,
-          params: {
-            width: '400px'
-          },
           proxies: {
             opened: true
           },
-          sections: {
-            content: {
-              // src: cart,
-
-              // src: filter,
-              // params: {
-              //     header: 'New Filter'
-              // },
-              // methods: {
-              //     change: () => {},
-              //     priceFilter: (from, to) => {
-              //         this.proxy.products = this.param.products.filter((el) => el.price >= from && el.price <= to);
-              //     }
-              // }
+          spots: {
+            top: {
+              component: {}
             },
-            bottom: {}
+            content: {
+              component: {}
+            },
+            bottom: {
+              component: {}
+            }
           }
         }
       }
     }
   },
   mounted() {
-    this.app.router.to.extra.sidebar = this.node.sidebar
+    this.app.sidebar = this.node.sidebar
   }
 }

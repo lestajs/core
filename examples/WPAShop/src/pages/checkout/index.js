@@ -21,7 +21,7 @@ export default {
         component: {
           src: tabs,
           proxies: {
-            items: [{label: 'Ship', icon: shipIcon}, {label: 'Pick up', icon: locationIcon}],
+            items: [{label: 'Ship', icon: shipIcon}, { label: 'Pick up', icon: locationIcon }],
             value: () => this.proxy.currentTab,
           },
           methods: {
@@ -29,15 +29,15 @@ export default {
               console.log(this, index)
               this.proxy.currentTab = index
               if (index === 0) {
-                this.node.tabs.section.content.mount({ src: this.source.ship })
+                this.node.tabs.spot.content.mount({ src: this.source.ship })
               } else {
-                this.node.tabs.section.content.mount({ src: this.source.pickUp })
+                this.node.tabs.spot.content.mount({ src: this.source.pickUp })
               }
             }
           },
-          sections: {
+          spots: {
             content: {
-              src: this.source.ship
+              component: {}
             }
           }
         }

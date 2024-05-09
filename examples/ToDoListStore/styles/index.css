@@ -49,34 +49,43 @@ input, button {
     line-height: 1;
     font-size: 14px;
     color: inherit;
-    background-color: #ebebeb;
     border: 0;
     padding: 10px;
     border-radius: 5px;
 }
+input {
+    background-color: #f5f5f5;
+}
+input:focus {
+    outline: 0;
+    background-color: #f0f0f0;
+}
 button {
     cursor: pointer;
+    background-color: #ebebeb;
+}
+button[disabled] {
+    opacity: .7;
 }
 #root {
     height: 100vh;
 }
 .wrapper {
-    min-height: 100%;
-    background: #f8f8f8;
+    min-height: 100vh;
 }
 main {
     padding: 20px 3vmax;
 }
 
 div > .blue {
-    background-color: #b0f3ff;
+    background-color: #8feeff;
 }
 div > .green {
-    background-color: #d6ffb0;
+    background-color: #bdff81;
 }
 div > .red {
     background-color: #ffc8c8;
 }
 div > .yellow {
-    background-color: #fff7a7;
+    background-color: #fff485;
 }

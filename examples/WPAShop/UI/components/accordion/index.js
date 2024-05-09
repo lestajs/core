@@ -8,7 +8,7 @@ export default {
         <div class="LstTriggerIcon LstArrow"></div>
     </div>
     <div class="LstPanel">
-        <p class="LstContent" section="content"></p>
+        <p class="LstContent" spot="content"></p>
     </div>`,
   proxies: {
     hide: false
@@ -26,6 +26,7 @@ export default {
       change : {}
     }
   },
+  spots: ['content'],
   nodes() {
     return {
       LstTrigger: {
@@ -50,7 +51,7 @@ export default {
   },
   methods: {
     resize() {
-      this.node.LstPanel.style.hide = this.node.LstContent.clientHeight + 'px'
+      this.node.LstPanel.target.style.hide = this.node.LstContent.clientHeight + 'px'
     }
   },
   mounted() {

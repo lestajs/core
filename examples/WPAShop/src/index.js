@@ -10,7 +10,10 @@ import '../styles/index.css'
 const root = document.querySelector('#root')
 const app = createApp({
   axios,
-  filters
+  filters,
+  router: {},
+  store: {},
+  sidebar: {}
 })
 
 createStores(app, { products })

@@ -18,7 +18,7 @@ export default {
         _class: {
           spinner: () => this.proxy.completedCount === null
         },
-        textContent: () => this.proxy.completedCount
+        _text: () => this.proxy.completedCount
       }
     }
   }

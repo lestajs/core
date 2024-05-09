@@ -1,8 +1,10 @@
-import { mountComponent } from './mountComponent'
+import { mount } from './mount'
 
 function createApp(app = {}) {
-  app.use = (plugin, options) => plugin.setup(app, options)
-  app.mount = async (component, container, props) => await mountComponent(component, container, props, app)
+  app.mount = async ({ options, target, name = 'root', aborted, completed }) => {
+    return await mount(options , { target, nodepath: name }, { aborted, completed }, app)
+  } // !
+  Object.preventExtensions(app) // !
   return app
 }
 export { createApp }

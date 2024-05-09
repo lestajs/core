@@ -1,4 +1,4 @@
-import button from '../../../../UI/components/buttonOld'
+import button from '../../../../UI/components/button'
 import card from '../../../../UI/components/card'
 import './index.pcss'
 
@@ -20,7 +20,7 @@ export default {
     `,
   props: {
     proxies: {
-      _product: {}
+      product: {}
     },
     methods: {
       deleteFromCart: {
@@ -34,25 +34,25 @@ export default {
         component: {
           src: card,
           proxies: {
-            header: () => this.proxy._product.title,
-            content: () => 'Quantity: ' + this.proxy._product.quantity
+            header: () => this.proxy.product.title,
+            content: () => 'Quantity: ' + this.proxy.product.quantity
           }
         }
       },
       price: {
-        textContent: () => '$' + this.proxy._product.price
+        _text: () => '$' + this.proxy.product.price
       },
-      deleteBtn: {
-        component: {
-          src: button,
-          proxies: {
-            text: '🗑'
-          },
-          methods: {
-            change: (_, i) => this.method.deleteFromCart({ product: this.proxy._product })
-          }
-        }
-      }
+      // deleteBtn: {
+      //   component: {
+      //     src: button,
+      //     proxies: {
+      //       text: '🗑'
+      //     },
+      //     methods: {
+      //       change: (_, i) => this.method.deleteFromCart({ product: this.proxy.product })
+      //     }
+      //   }
+      // }
     }
   }
 }

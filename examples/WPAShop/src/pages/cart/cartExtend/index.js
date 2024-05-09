@@ -10,8 +10,8 @@ export default {
         component: {
           src: card,
           proxies: {
-            header: () => this.proxy._product.title,
-            content: () => this.app.filters.currencyUSD(this.proxy._product.price)
+            header: () => this.proxy.product.title,
+            content: () => this.app.filters.currencyUSD(this.proxy.product.price)
           }
         }
       },
@@ -19,15 +19,15 @@ export default {
         component: {
           src: toggle,
           params: {
-            id: () => this.proxy._product.id
+            id: () => this.proxy.product.id
           },
           proxies: {
-            quantity: () => this.proxy._product.quantity
+            quantity: () => this.proxy.product.quantity
           }
         }
       },
       price: {
-        textContent: () => this.app.filters.currencyUSD(this.proxy._product.price * this.proxy._product.quantity)
+        textContent: () => this.app.filters.currencyUSD(this.proxy.product.price * this.proxy.product.quantity)
       }
     }
   }

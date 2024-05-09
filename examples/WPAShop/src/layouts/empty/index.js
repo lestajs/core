@@ -13,12 +13,16 @@ export default {
       header: {
         component: {
           src: header,
-          sections: {
+          spots: {
             left: {
-              src: left
+              component: {
+                src: left
+              }
             },
             right: {
-              src: right
+              component: {
+                src: right
+              }
             }
           }
         }

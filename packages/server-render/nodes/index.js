@@ -1,4 +1,4 @@
-import props from '../../lesta/nodes/component/props.js'
+import props from '../../lesta/props.js'
 import renderComponent from '../renderComponent.js'
 import { errorComponent } from '../../utils/errors/component.js'
 

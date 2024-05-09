@@ -27,12 +27,16 @@ export default {
       icon: {}
     },
     methods: {
-      action: {
-        update(target, prop) {
-          target[prop] = !target[prop]
-        }
-      }
+      action: {}
     }
+  },
+  params: {
+    update(target, prop) {
+      target[prop] = !target[prop]
+    }
+  },
+  outwards: {
+    params: ['update']
   },
   nodes() {
     return {
@@ -48,7 +52,7 @@ export default {
         type: this.param.type,
         disabled: () => this.proxy.disabled,
         onclick: (event) => {
-          if (this.container.proxy.activated.isIndependent()) this.update.action(this.proxy, 'activated')
+          if (this.container.proxy.activated.isIndependent()) this.param.update(this.proxy, 'activated')
           this.method.action?.({ name: this.param.name, value: this.proxy.value, icon: event.target.closest('.lstBtnIcon'), activated: this.proxy.activated })
         }
       },

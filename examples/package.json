@@ -29,7 +29,7 @@
   "author": "",
   "license": "ISC",
   "alias": {
-    "lesta": "../scripts/lesta.js"
+    "lesta": "./lesta.esm.js"
   },
   "devDependencies": {
     "@parcel/transformer-inline-string": "^2.10.0",

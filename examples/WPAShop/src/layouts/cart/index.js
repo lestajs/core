@@ -16,21 +16,14 @@ export default {
   nodes() {
     return {
       cart: {
-        _text: () => {
-          if(!this.proxy.cartProducts.length) {return 'There is nothing in your cart yet...'}
-          //else { return 'Hello' }
-        },
         component: {
           src: cartCard,
           iterate: () => this.proxy.cartProducts,
           proxies: {
-            _product: (product) => product
+            product: ({ index }) => this.proxy.cartProducts[index]
           }
         }
       }
     }
-  },
-  mounted() {
-    console.log(this.node.cart.reactivity)
   }
 }

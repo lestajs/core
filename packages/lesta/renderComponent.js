@@ -1,45 +1,38 @@
 import { errorComponent } from '../utils/errors/component'
 
-export default function renderComponent(nodeElement, component, section, ssr) {
+export default function renderComponent(nodeElement, component, controller) { // - ssr
   const options = { ...component.context.options }
-  if (section) {
-    const sectionNode = nodeElement.section[section]
-    if (!sectionNode) return errorComponent(nodeElement.nodename, 202, section)
-    if (!ssr) sectionNode.innerHTML = options.template
-    sectionNode.nodepath = nodeElement.nodepath + '.' + section
-    sectionNode.nodename = section
-    sectionNode.unmount = () => {
-      component.destroy(sectionNode)
-      component.unmount(sectionNode)
-      sectionNode.innerHTML = ''
+  if (!options.template) return errorComponent(nodeElement.nodepath, 209)
+  const getTemplate = (template) => typeof template === 'function' ? template.bind(component.context)() : template
+  const spots = (node) => {
+    if (options.spots?.length) node.spot = {} // !
+    options.spots?.forEach(name => Object.assign(node.spot, { [name]: { target: node.target.querySelector(`[spot="${ name }"]`) }})) // !
+  }
+  if (nodeElement.isIterable) {
+    const parent = nodeElement.parent
+    if (parent.children.length === 1 && parent.target.childNodes.length) parent.target.innerHTML = ''
+    parent.target.insertAdjacentHTML('beforeEnd', getTemplate(options.template))
+    nodeElement.target = parent.target.children[nodeElement.index]
+    spots(nodeElement)
+    if (!parent.unmount) parent.unmount = () => {
+      component.destroy(parent)
+      parent.clear()
+      delete parent.unmount // ?
+      // controller.abort()
     }
-    return sectionNode
-  } else {
-    if (nodeElement.hasAttribute('iterate')) {
-      if (!options.template) return errorComponent(nodeElement.nodepath, 209)
-      if (!ssr) nodeElement.insertAdjacentHTML('beforeEnd', options.template)
-      const iterableElement = nodeElement.children[nodeElement.children.length - 1]
-      iterableElement.nodepath = nodeElement.nodepath
-      if (!nodeElement.unmount) nodeElement.unmount = () => {
-        component.destroy(nodeElement)
-        nodeElement.toEmpty()
-        delete nodeElement.unmount
-      }
-      iterableElement.setAttribute('iterable', '')
-      iterableElement.unmount = async () => {
-        component.destroy(iterableElement)
-        component.unmount(iterableElement)
-        iterableElement.remove()
-      }
-      return iterableElement
-    } else if (options.template && !ssr) {
-      nodeElement.innerHTML = options.template
+    nodeElement.unmount = () => { // ! - async
+      component.destroy(nodeElement) // for store
+      component.unmount(nodeElement)
+      controller.abort() // !
     }
-    nodeElement.unmount = () => {
+  } else { // ! - ssr
+    nodeElement.target.innerHTML = getTemplate(options.template); // !
+    spots(nodeElement)
+    nodeElement.unmount = () => { // !
       component.destroy(nodeElement)
       component.unmount(nodeElement)
-      nodeElement.innerHTML = ''
+      nodeElement.target.innerHTML = ''// !
+      controller.abort() // !
     }
-    return nodeElement
   }
 }

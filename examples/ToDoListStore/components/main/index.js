@@ -1,138 +1,107 @@
-import './index.css'
+import header from '../header'
 import card from '../card'
-import form from '../form'
 import search from '../search'
-import notifications from '../notifications'
+import menu from '../menu'
+import notification from '../notification'
+import controls from '../controls'
+import total from '../total'
 import { mapProps } from 'lesta'
 
 export default {
   template: `
-        <header>
-            <div class="search"></div>
-            <div class="btnGroup">
-              <div class="count"></div>
-              <button class="filter blue"></button>
-              <button class="add green">Add Task</button>
-            </div>
-        </header>
-        <div class="notifications"></div>
-        <div class="cards"></div>`,
+    <div class="header"></div>
+    <div class="notifications"></div>
+    <div class="cards"></div>
+    <div class="bottom-panel"></div>`,
   props: {
-    params: {
-      popup: {
-        ignore: true
-      }
-    },
     proxies: {
+      ...mapProps(['tasks', 'loading', 'isModify'], { store: 'tasks' })
       // tasks: { store: 'tasks' },
-      // test: { store: 'tasks' }
-      ...mapProps(['tasks', 'test'], { store: 'tasks' })
+      // loading: { store: 'tasks' }
     },
     methods: {
-      ...mapProps(['add', 'edit', 'remove', 'complete', 'search', 'filter', 'delayFilterStop'], { store: 'tasks' })
+      ...mapProps(['addTask', 'searchTasks', 'filterTasks'], { store: 'tasks' })
     }
-  },
-  handlers: {
-    showIncomplete(v) {
-      this.method.delayFilterStop()
-    }
-  },
-  proxies: {
-    showIncomplete: false
   },
   sources: {
-    count: () => import('../count')
+    modify: () => import('../modify'),
   },
   nodes() {
     return {
-      count: {
+      header: {
         component: {
-          src: this.source.count,
-          induce: () => this.proxy.showIncomplete
-        }
-      },
-      filter: {
-        textContent: () => this.proxy.showIncomplete ? 'Hide incomplete' : 'Show incomplete',
-        onclick: () => {
-          this.proxy.showIncomplete = !this.proxy.showIncomplete
-          this.method.filter({ incomplete: this.proxy.showIncomplete })
-        }
-      },
-      add: {
-        onclick: () => {
-          this.proxy.showIncomplete = false
-          this.method.popupAdd()
-        }
-      },
-      search: {
-        component: {
-          src: search,
-          methods: {
-            search: (value) => {
-              this.proxy.showIncomplete = false
-              this.method.search({ value })
+          src: header,
+          spots: {
+            start: {
+              component: {
+                src: search,
+                methods: {
+                  search: ({ value }) => {
+                    this.method.searchTasks({ value })
+                  }
+                }
+              }
+            },
+            end: {
+              component: {
+                src: menu
+              }
             }
           }
         }
       },
       notifications: {
         component: {
-          src: notifications
+          src: notification
+        }
+      },
+      bottom_panel: { // global selector function in createApp
+        component: {
+          induce: false, // order node before this.node.bottom_panel.induce(true)
+          src: total
         }
       },
       cards: {
-        textContent: () => !this.proxy.tasks.length ? 'empty...' : '',
+        _class: {
+          loading: () => this.proxy.loading
+        },
+        _html: () => {
+          if (this.proxy.tasks.length) return
+          return '<strong>Empty...</strong>'
+        },
         component: {
           src: card,
+          // async: true,
           iterate: () => this.proxy.tasks,
-          params: {
-            index: (task, index) => index,
-          },
           proxies: {
-            _card: (task) => task
+            card: ({ index }) => this.proxy.tasks[index]
           },
-          methods: {
-            complete: (task) => this.method.complete({ id: task.id }),
-            remove: (task) => {
-              this.method.remove({ id: task.id })
-              this.node.notifications.method.add({ text: task.name })
-            },
-            edit: this.method.popupEdit
-          }
+          spots: {
+            // DOM properties
+            bottom: {
+              component: {
+                src: controls,
+                proxies: {
+                  card: (node) => this.proxy.tasks[node.parent.index]
+                },
+                spots: {
+                  buttons: {
+                    component: {
+                      induce: () => this.proxy.isModify,
+                      src: this.source.modify,
+                      proxies: {
+                        card: (node) => this.proxy.tasks[node.parent.parent.index]
+                      },
+                      // aborted: (v) => console.log('aborted', v, this), // notify
+                    }
+                  }
+                }
+              }
+            }
+          },
+          completed: (v) => this.node.bottom_panel.induce(true)
         }
       }
-    }
-  },
-  methods: {
-    popupAdd() {
-      this.param.popup.section.content.mount({
-        src: form,
-        methods: {
-          save: (task) => {
-            this.method.add({ task })
-            this.param.popup.method.close()
-          }
-        }
-      })
-      this.param.popup.method.open()
-    },
-    popupEdit(task) {
-      this.param.popup.section.content.mount({
-        src: form,
-        params: {
-          card: task,
-        },
-        methods: {
-          save: ({ date, name, description }) => {
-            task.date = date
-            task.description = description
-            task.name = name
-            this.method.edit({ task })
-            this.param.popup.method.close()
-          }
-        }
-      })
-      this.param.popup.method.open()
     }
   }
 }

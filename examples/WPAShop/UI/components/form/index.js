@@ -38,7 +38,7 @@ export default {
           src: element,
           iterate: () => this.param.elements || [],
           params: {
-            element: (el) => el,
+            element: ({ index }) => this.param.elements[index],
             size: this.param.size
           },
           methods: {

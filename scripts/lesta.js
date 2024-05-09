@@ -3,13 +3,13 @@ import { createApp } from '../packages/lesta/createApp'
 import { createStores } from '../packages/store'
 import { createRouter } from '../packages/router'
 import { mountWidget } from '../packages/lesta/mountWidget'
-import { mountComponent } from '../packages/lesta/mountComponent'
+import { mount } from '../packages/lesta/mount'
 
 export {
   createApp,
   createStores,
   createRouter,
-  mountComponent,
+  mount,
   mountWidget,
   debounce,
   throttling,

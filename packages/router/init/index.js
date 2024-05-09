@@ -50,13 +50,7 @@ export default class Router extends BasicRouter {
     }
     if (target.layout) {
       if (from?.route.layout !== target.layout) {
-        if (this.abortControllerLayout) this.abortControllerLayout.abort()
-        this.abortControllerLayout = new AbortController()
-        this.currentLayout = await this.app.mount(this.app.router.layouts[target.layout], this.rootContainer, {
-          signal: this.abortControllerLayout.signal,
-          ssr
-        })
-        this.abortControllerLayout = null
+        this.currentLayout = await this.app.mount({ options: this.app.router.layouts[target.layout], target: this.rootContainer, props: { ssr }})
         if (!this.currentLayout) return
         this.contaner = this.rootContainer.querySelector('[router]')
         if (!this.contaner) {
@@ -71,11 +65,8 @@ export default class Router extends BasicRouter {
     this.rootContainer.setAttribute('page', target.name || '')
     
     if (from?.route.component !== target.component) {
-      if (this.abortController) this.abortController.abort()
-      this.abortController = new AbortController()
       window.scrollTo(0, 0)
-      this.current = await this.app.mount(target.component, this.contaner, { signal: this.abortController.signal, ssr })
-      this.abortController = null
+      this.current = await this.app.mount({ options: target.component, target: this.contaner, props: { ssr }})
       if (!this.current) return
     } else await this.emit(to, from, this.app)
     return to
