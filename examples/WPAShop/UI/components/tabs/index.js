@@ -28,16 +28,16 @@ export default {
           iterate: () => this.proxy.items,
           src: button,
           proxies: {
-            value: (el) => el.label || el,
-            disabled: (el) => el.disabled,
-            activated: (_, i) => this.proxy.value === i
+            value: ({ index }) => this.proxy.items[index].label || this.proxy.items[index],
+            disabled: ({ index }) => this.proxy.items[index].disabled,
+            activated: ({ index }) => this.proxy.value === index
           },
           params: {
-            name: (_, i) => i,
+            name: ({ index }) => this.proxy.items[index],
             type: 'text',
             size: this.param.size,
             reverse: this.param.reverse,
-            icon: (el) => el.icon
+            icon: ({ index }) => this.proxy.items[index].icon
           },
           methods: {
             action: ({ name }) => {
@@ -45,9 +45,6 @@ export default {
             }
           }
         }
-      },
-      content: {
-        component: {}
       }
     }
   }

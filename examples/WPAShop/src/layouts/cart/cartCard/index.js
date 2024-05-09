@@ -1,4 +1,4 @@
-import button from '../../../../UI/components/buttonOld'
+import button from '../../../../UI/components/button'
 import card from '../../../../UI/components/card'
 import './index.pcss'
 
@@ -40,19 +40,19 @@ export default {
         }
       },
       price: {
-        textContent: () => '$' + this.proxy.product.price
+        _text: () => '$' + this.proxy.product.price
       },
-      deleteBtn: {
-        component: {
-          src: button,
-          proxies: {
-            text: '🗑'
-          },
-          methods: {
-            change: (_, i) => this.method.deleteFromCart({ product: this.proxy.product })
-          }
-        }
-      }
+      // deleteBtn: {
+      //   component: {
+      //     src: button,
+      //     proxies: {
+      //       text: '🗑'
+      //     },
+      //     methods: {
+      //       change: (_, i) => this.method.deleteFromCart({ product: this.proxy.product })
+      //     }
+      //   }
+      // }
     }
   }
 }

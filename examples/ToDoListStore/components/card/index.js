@@ -1,5 +1,9 @@
 import './index.css'
-import { delay } from 'lesta'
+import {delay} from "../../../lesta.esm";
+
+function getRandomNumber(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 export default {
   template: `
@@ -10,15 +14,11 @@ export default {
         <div class="date"></div>
       </div>
       <div class="description"></div>
-      <div class="bottom"></div>
+      <div spot="bottom"></div>
     </div>
   </div>`,
+  spots: ['bottom'],
   props: {
-    params: {
-      bottomComponent: {
-        ignore: true
-      }
-    },
     proxies: {
       card: {}
     }
@@ -26,9 +26,14 @@ export default {
   nodes() {
     return {
       line: {
-        _class: {
-          yellow: () => this.proxy.card.completed
+        style: () => {
+          return {
+            backgroundColor: this.proxy.card.completed ? '#fff485' : ''
+          }
         }
+        // style: {
+        //   backgroundColor: '#fff485'
+        // }
       },
       name: {
         _text: () => this.proxy.card.name
@@ -38,20 +43,12 @@ export default {
       },
       date: {
         _text: () => new Date(this.proxy.card.date).toLocaleString().slice(0,-10),
-      },
-      bottom: {
-        component: {
-          src: this.param.bottomComponent.module,
-          proxies: {
-            card: () => this.proxy.card
-          }
-        }
       }
     }
   },
   async created() {
-    await delay(1000)
-    console.dir(this.container)
-    return this.proxy.card
+    const ms = getRandomNumber(0, 5000)
+    console.log(ms)
+    // await delay(1000) // imitate error
   }
 }

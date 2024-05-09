@@ -21,6 +21,7 @@
     padding: 8px;
     box-sizing: content-box;
     margin-bottom: 10px;
+    cursor: pointer;
 }
 .dialog .close:after {
     content: '';

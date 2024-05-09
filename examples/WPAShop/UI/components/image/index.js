@@ -35,18 +35,18 @@ export default {
         src: () => this.proxy.url,
         alt: () => this.proxy.alt,
         onload: () => {
-          this.node.LstPreload.classList.add('hide')
+          this.node.LstPreload.target.classList.add('hide')
         },
         onerror: () => {
           this.proxy.url = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
-          this.node.LstImageWr.classList.add('LstImageErr')
+          this.node.LstImageWr.target.classList.add('LstImageErr')
         }
       }
     }
   },
   mounted() {
-    this.node.LstImageWr.style.setProperty('--image-width', this.param.width || '100%')
-    this.node.LstImageWr.style.setProperty('--image-height', this.param.height || '100%')
-    this.node.LstImageWr.style.setProperty('--image-padding', (this.param.attitude && this.param.attitude * 100 || 56.3889) + '%')
+    this.node.LstImageWr.target.style.setProperty('--image-width', this.param.width || '100%')
+    this.node.LstImageWr.target.style.setProperty('--image-height', this.param.height || '100%')
+    this.node.LstImageWr.target.style.setProperty('--image-padding', (this.param.attitude && this.param.attitude * 100 || 56.3889) + '%')
   },
 }

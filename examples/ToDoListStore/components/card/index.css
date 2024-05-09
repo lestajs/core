@@ -10,13 +10,20 @@
     flex-wrap: wrap;
     padding: 20px 0;
 }
+/*
 .cards:not(:has(.card)):after {
     content: 'Empty...';
     display: block;
 }
+*/
+
 .grid-card {
     padding: 8px;
     width: 33.33333333333333%;
+}
+.card [spot="bottom"] {
+    padding: 15px;
+    display: flex;
 }
 .card {
     border-radius: 6px;

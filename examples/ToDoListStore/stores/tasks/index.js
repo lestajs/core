@@ -16,16 +16,18 @@ export default {
     tasks: [],
     total: 0,
     loading: true,
-    completedCount: null
+    completedCount: null,
+    isCompleted: false,
+    isModify: false
   },
   middlewares: {
     async addTask({ task }) {
-      task.id = uid()
-      task.completed = false
-      this.param.DB.unshift(task)
+      const { date, description, name } = task
+      const sample = { id: uid(), completed: false, date, description, name }
+      this.param.DB.unshift(sample)
       await this.param.updateDB()
       await this.method.setTotal()
-      return { task }
+      return { task: sample }
     },
     async editTask({ task }) {
       const index = this.param.DB.findIndex(e => e.id === task.id)
@@ -65,16 +67,15 @@ export default {
     },
     searchTasks({ value }) {
       this.proxy.tasks = this.param.DB.filter(task => task.name.toLowerCase().includes(value.toLowerCase()))
+      this.proxy.isCompleted = false
       this.proxy.loading = false
     },
-    filterStop() {
-      this.param.simulatedQuery?._reject()
-    },
-    filterTasks({ incomplete }) {
-      if (incomplete) {
+    filterTasks() {
+      this.proxy.isCompleted = !this.proxy.isCompleted
+      if (this.proxy.isCompleted) {
         this.param.simulatedQuery = delay(1000)
         this.param.simulatedQuery.then(() => {
-          this.proxy.tasks = this.param.DB.filter(task => task.completed !== incomplete)
+          this.proxy.tasks = this.param.DB.filter(task => task.completed === this.proxy.isCompleted)
           this.proxy.completedCount = this.proxy.tasks.length
           this.proxy.loading = false
         }).catch(()=> {})
@@ -86,11 +87,20 @@ export default {
       // this.proxy.tasks.unshift(this.param.DB[0])
       // this.proxy.tasks = this.param.DB
     },
+    changeMode() {
+      this.proxy.isModify = !this.proxy.isModify
+    }
+  },
+  setters: {
+    isCompleted(v) {
+      this.param.simulatedQuery?._reject?.()
+      return v
+    }
   },
   async loaded() {
     const data = await this.options.params.readDB()
     this.options.params.DB = data.sort((a, b) => (Date.parse(b.date) - Date.parse(a.date)))
-    this.options.proxies.tasks = new Array(data.length).fill({})
+    this.options.proxies.tasks = new Array(data.length).fill({ id: null, completed: false, date: null, description: null, name: null})
     this.options.proxies.total = data.length
   },
   async created() {

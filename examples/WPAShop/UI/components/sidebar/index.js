@@ -43,15 +43,6 @@ export default {
           'l-opened': () => this.proxy.opened,
           'l-mobile': () => this.proxy.mobile
         },
-      },
-      top: {
-        component: {}
-      },
-      content: {
-        component: {}
-      },
-      bottom: {
-        component: {}
       }
     }
   },

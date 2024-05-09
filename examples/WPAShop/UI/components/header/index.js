@@ -8,17 +8,17 @@ export default {
             <div spot="right"></div>
         </div>`,
     spots: ['left', 'center', 'right'],
-    nodes() {
-        return {
-            left: {
-                component: {}
-            },
-            center: {
-                component: {}
-            },
-            right: {
-                component: {}
-            }
-        }
-    }
+    // nodes() {
+    //     return {
+    //         left: {
+    //             component: {}
+    //         },
+    //         center: {
+    //             component: {}
+    //         },
+    //         right: {
+    //             component: {}
+    //         }
+    //     }
+    // }
 }

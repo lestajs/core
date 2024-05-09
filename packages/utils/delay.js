@@ -1,19 +1,23 @@
-function delay(delay) {
-  let timer, stop
+function delay(ms = 0) {
+  let timer, _reject
   const promise = new Promise((resolve, reject) => {
-    stop = () => {
-      promise.delaying = false
+    _reject = () => {
       clearTimeout(timer)
       reject()
+      promise._pending = false
+      promise.rejected = true
     }
     timer = setTimeout(() => {
-      promise.delaying = false
       clearTimeout(timer)
       resolve()
-    }, delay || 0)
+      promise._pending = false
+      promise._fulfilled = true
+    }, ms)
   })
-  promise.stop = stop
-  promise.delaying = true
+  promise._reject = _reject
+  promise._pending = true
+  promise._rejected = false
+  promise._fulfilled = false
   return promise
 }
 

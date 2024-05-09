@@ -39,12 +39,12 @@ export default {
           induce: () => this.proxy.buttons,
           iterate: () => this.proxy.buttons,
           proxies: {
-            value: (btn) => btn.text,
+            value: ({ index }) => this.proxy.buttons[index].text,
             active: () => this.proxy.active
           },
           params: {
-            name: (btn) => btn.name,
-            icon: (btn) => btn.icon,
+            name: ({ index }) => this.proxy.buttons[index].name,
+            icon: ({ index }) => this.proxy.buttons[index].icon,
             type: 'text'
           },
           methods: {

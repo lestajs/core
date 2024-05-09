@@ -4,34 +4,34 @@ import './index.pcss'
 import summary from "./summary"
 
 export default {
-    template: 
+  template:
     `
-        <div>
-            <div class="title">Your products</div>
-            <div class="cartContainer"></div>
-        </div>
+      <div>
+          <div class="title">Your products</div>
+          <div class="cartContainer"></div>
+      </div>
     `,
-    props: {
-        proxies: {
-            cartProducts: {
-                store: 'products',
-            }
-        }
-    },
-    nodes() {
-        return {
-            cartContainer: {
-                component: {
-                    src: cartExtend,
-                    iterate: () => this.proxy.cartProducts,
-                    proxies: {
-                        product: (product) => product,
-                    }
-                }
-            }
-        }
-    },
-    async created() {
-        await this.app.sidebar.spot.content.mount({ src: summary })
+  props: {
+    proxies: {
+      cartProducts: {
+        store: 'products',
+      }
     }
+  },
+  nodes() {
+    return {
+      cartContainer: {
+        component: {
+          src: cartExtend,
+          iterate: () => this.proxy.cartProducts,
+          proxies: {
+            product: ({ index }) => this.proxy.cartProducts[index],
+          }
+        }
+      }
+    }
+  },
+  async created() {
+    await this.app.sidebar.spot.content.mount({ src: summary })
+  }
 }

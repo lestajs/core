@@ -15,10 +15,14 @@ export default {
           src: header,
           spots: {
             left: {
-              src: left
+              component: {
+                src: left
+              }
             },
             right: {
-              src: right
+              component: {
+                src: right
+              }
             }
           }
         }

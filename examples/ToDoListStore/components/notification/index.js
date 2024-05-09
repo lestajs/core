@@ -16,12 +16,12 @@ export default {
       notices: {
         component: {
           src: notice,
-          iterate: () => this.proxy.notices,
+          iterate: () =>  this.proxy.notices,
           params: {
-            index: (_, index) => index
+            index: ({ index }) => index
           },
           proxies: {
-            notice: (notice) => notice
+            notice: ({ index }) => this.proxy.notices[index]
           },
           methods: {
             close: ({ index }) => this.method.removeNotice({ index })

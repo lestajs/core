@@ -20,13 +20,10 @@ export default {
           src: cartCard,
           iterate: () => this.proxy.cartProducts,
           proxies: {
-            product: (product) => product
+            product: ({ index }) => this.proxy.cartProducts[index]
           }
         }
       }
     }
-  },
-  mounted() {
-    console.log(this.node.cart.reactivity)
   }
 }

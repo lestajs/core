@@ -5,9 +5,10 @@ import { createApp, createStores } from 'lesta'
 
 const root = document.querySelector('#root')
 const app = createApp({
+  selector: (name) => '.' + name.replace('_', '-'),
   store: {},
-  popup: {},
-  selector: (name) => '.' + name.replace('_', '-')
+  rootContainer: {},
+  // directives: {} global directives
 })
 
 const stores = createStores(app, { tasks, notices })
@@ -16,4 +17,4 @@ const stores = createStores(app, { tasks, notices })
 // app.mount(component, root)
 // })
 
-app.mount(component, root)
+app.mount({ options: component, target: root })
