@@ -42,17 +42,17 @@ export default {
       price: {
         _text: () => '$' + this.proxy.product.price
       },
-      // deleteBtn: {
-      //   component: {
-      //     src: button,
-      //     proxies: {
-      //       text: '🗑'
-      //     },
-      //     methods: {
-      //       change: (_, i) => this.method.deleteFromCart({ product: this.proxy.product })
-      //     }
-      //   }
-      // }
+      deleteBtn: {
+        component: {
+          src: button,
+          proxies: {
+            value: '🗑'
+          },
+          methods: {
+            action: () => this.method.deleteFromCart({ product: this.proxy.product })
+          }
+        }
+      }
     }
   }
 }
