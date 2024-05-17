@@ -1354,6 +1354,8 @@ async function mount(module2, container, props2, app = {}) {
 
 // packages/lesta/createApp.js
 function createApp(app = {}) {
+  app.store = {};
+  app.stores = {};
   app.mount = async ({ options, target, name = "root", aborted, completed }) => {
     return await mount(options, { target, nodepath: name }, { aborted, completed }, app);
   };
