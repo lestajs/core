@@ -3,13 +3,10 @@ import consistent from '../consistent'
 import random from '../random'
 import group from '../group'
 import iterate from '../iterate'
-import sections from '../sections'
+import spots from '../spots'
 
 export default {
   template: `
-      <div class="panel">
-        <button class="stop">Stop</button>
-      </div>
       <div class="grid">
         <div class="A" status="0"></div>
         <div class="B" status="0"></div>
@@ -17,24 +14,18 @@ export default {
         <div class="D" status="0"></div>
         <div class="E" status="0"></div>
       </div>`,
-  params: {
-    controller: new AbortController()
-  },
   nodes() {
     return {
-      stop: {
-        onclick: () => this.param.controller.abort()
-      },
       A: {
         component: {
           src: consistent,
-          abortSignal: this.param.controller.signal,
           aborted: (v) => console.log('main: ', v)
         }
       },
       B: {
         component: {
           src: random,
+          async: true,
           aborted: (v) => console.log('main: ', v)
         }
       },
@@ -42,36 +33,37 @@ export default {
         component: {
           src: group,
           induce: () => true,
-          abortSignal: this.param.controller.signal,
           aborted: (v) => console.log('main: ', v)
         }
       },
       D: {
         component: {
           src: iterate,
-          abortSignal: this.param.controller.signal,
           aborted: (v) => console.log('main: ', v)
         }
       },
       E: {
         component: {
-          src: sections,
-          sections: {
+          src: spots,
+          spots: {
             first: {
-              src: random,
-              params: {
-                text: 'first'
+              component: {
+                src: random,
+                params: {
+                  text: 'first'
+                }
               }
             },
             second: {
-              src: consistent,
-              params: {
-                text: 'second'
+              component: {
+                src: consistent,
+                params: {
+                  text: 'second'
+                }
               }
             }
           },
-          abortSignal: this.param.controller.signal,
-          aborted: (v) => console.log('sections: ', v)
+          aborted: (v) => console.log('spots: ', v)
         }
       }
     }

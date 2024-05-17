@@ -1,7 +1,8 @@
-import { createWidget } from 'lesta'
+import { mountWidget } from 'lesta'
 const root = document.querySelector('#root')
 // return Promise
-const widget = createWidget({
+const widget = mountWidget({
+	options: {
     template: `
     <button class="prev">-</button>
     <span class="result"></span>
@@ -10,21 +11,22 @@ const widget = createWidget({
         count: 0
     },
     nodes() {
-        return {
-            result: {
-                textContent: () => this.proxy.count
-            },
-            prev: {
-                onclick: () => this.proxy.count--,
-                disabled: () => this.proxy.count === 0
-            },
-            next: {
-                onclick: () => this.proxy.count++,
-                disabled: () => this.proxy.count === 5
-            }
-        }
+			return {
+				result: {
+					textContent: () => this.proxy.count
+				},
+				prev: {
+					onclick: () => this.proxy.count--,
+					disabled: () => this.proxy.count === 0
+				},
+				next: {
+					onclick: () => this.proxy.count++,
+					disabled: () => this.proxy.count === 5
+				}
+			}
     }
-}, root)
+	},
+	target: root
+})
 
-// widget.update({ value: 3 })
 // widget.unmount()

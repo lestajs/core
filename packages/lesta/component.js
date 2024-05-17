@@ -12,6 +12,7 @@ export default {
       this.nodeElement.created = false
       options.iterate ? await this.iterative(options) : await this.basic(options)
     }
+    this.nodeElement.prepared = this.nodeOptions.prepared
     this.nodeOptions.component.async ? this.nodeElement.mount(this.nodeOptions.component) : await this.nodeElement.mount(this.nodeOptions.component)
   },
   induced(fn) {
@@ -48,14 +49,11 @@ export default {
     return result
   },
   async create(proxies, nodeElement, pc) {
-    const { src, spots, aborted, completed, ssr } = pc
-    // if (!src)
-    //   return errorComponent(nodeElement.nodepath, 203); // !
+    const { src, spots, aborted, completed } = pc
     if (!src) return
-    await mount(src, nodeElement, { // ! - container
+    await mount(src, nodeElement, {
       aborted,
       completed,
-      ssr,
       ...props.collect(pc, nodeElement),
       proxies: proxies(pc.proxies) || {}
     }, this.app)

@@ -1,5 +1,5 @@
-function deliver(target, path = '', value) {
-  const p = path.split('.')
+function deliver(target, path = [], value) {
+  const p = Array.isArray(path) ? path : path.split('.')
   let i
   try {
     for (i = 0; i < p.length - 1; i++) target = target[p[i]]

@@ -6,7 +6,7 @@ export default {
     `<div class="menu">
       <div class="count"></div>
       <button class="filter blue"></button>
-      <button class="add green">Add Task</button>
+      <button class="add green"></button>
       <button class="mode"></button>
     </div>`,
   props: {
@@ -33,6 +33,7 @@ export default {
         onclick: () => this.method.filterTasks()
       },
       add: {
+        _text: 'Add Task',
         onclick: () => this.app.rootContainer.method.createForm({ mode: 'add' })
       },
       mode: {

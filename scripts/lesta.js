@@ -1,4 +1,20 @@
-import { debounce, throttling, delay, replicate, deliver, mapProps, deleteReactive, cleanHTML, loadModule, uid, queue, deepFreeze, nextRepaint } from '../packages/utils'
+import {
+  isObject,
+  replicate,
+  deliver,
+  mapProps,
+  mapComponent,
+  debounce,
+  throttling,
+  delay,
+  loadModule,
+  deleteReactive,
+  cleanHTML,
+  uid,
+  queue,
+  deepFreeze,
+  nextRepaint
+} from '../packages/utils'
 import { createApp } from '../packages/lesta/createApp'
 import { createStores } from '../packages/store'
 import { createRouter } from '../packages/router'
@@ -11,15 +27,17 @@ export {
   createRouter,
   mount,
   mountWidget,
-  debounce,
-  throttling,
-  delay,
+  isObject,
   replicate,
   deliver,
   mapProps,
+  mapComponent,
+  debounce,
+  throttling,
+  delay,
+  loadModule,
   deleteReactive,
   cleanHTML,
-  loadModule,
   uid,
   queue,
   deepFreeze,

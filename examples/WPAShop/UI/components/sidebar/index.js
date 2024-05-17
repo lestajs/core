@@ -11,6 +11,7 @@ export default {
         </div>
         <div spot="bottom"></div>
       </div>
+      <div spot="extension"></div>
     </div>`,
   props: {
     proxies: {
@@ -28,7 +29,7 @@ export default {
       onclose: {}
     }
   },
-  spots: ['top', 'content', 'bottom'],
+  spots: ['top', 'content', 'bottom', 'extension'],
   outwards: {
     methods: ['open', 'close', 'toggle']
   },

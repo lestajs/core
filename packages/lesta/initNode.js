@@ -43,10 +43,9 @@ class InitNode extends InitBasic {
       const container = this.context.container
       const t = container.target
       for (const name in nodes) {
-        const s = nodes[name]?.selector || this.context.app.selector || `.${name}`
+        const s = nodes[name].selector || this.context.app.selector || `.${name}`
         const selector = typeof s === "function" ? s(name) : s;
-        const target = t.querySelector(selector) ||
-          (t.classList.contains(name) && t)
+        const target = t.querySelector(selector) || t.matches(selector) && t
         const nodepath = container.nodepath + '.' + name
         if (target) {
           if (container.spot && Object.values(container.spot).includes(target)) {

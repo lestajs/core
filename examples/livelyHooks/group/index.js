@@ -13,7 +13,6 @@ export default {
       C1: {
         component: {
           src: random,
-          abortSignal: this.abortSignal,
           aborted: (v) => console.log('group: ', v)
         }
       },
@@ -25,14 +24,12 @@ export default {
             time: 2000,
             text: 'induce'
           },
-          abortSignal: this.abortSignal,
           aborted: (v) => console.log('group: ', v)
         }
       },
       C3: {
         component: {
           src: consistent,
-          abortSignal: this.abortSignal,
           aborted: (v) => console.log('group: ', v)
         }
       }
