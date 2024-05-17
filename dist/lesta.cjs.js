@@ -28,7 +28,9 @@ __export(lesta_exports, {
   delay: () => delay,
   deleteReactive: () => deleteReactive,
   deliver: () => deliver,
+  isObject: () => isObject,
   loadModule: () => loadModule,
+  mapComponent: () => mapComponent,
   mapProps: () => mapProps,
   mount: () => mount,
   mountWidget: () => mountWidget,
@@ -40,6 +42,11 @@ __export(lesta_exports, {
 });
 module.exports = __toCommonJS(lesta_exports);
 
+// packages/utils/isObject.js
+function isObject(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 // packages/utils/replicate.js
 function replicate(data) {
   if (!data)
@@ -48,8 +55,8 @@ function replicate(data) {
 }
 
 // packages/utils/deliver.js
-function deliver(target, path = "", value) {
-  const p = path.split(".");
+function deliver(target, path = [], value) {
+  const p = Array.isArray(path) ? path : path.split(".");
   let i;
   try {
     for (i = 0; i < p.length - 1; i++)
@@ -65,6 +72,13 @@ function deliver(target, path = "", value) {
 function mapProps(arr, options) {
   const res = {};
   arr.forEach((key) => Object.assign(res, { [key]: options }));
+  return res;
+}
+
+// packages/utils/mapComponent.js
+function mapComponent(fn) {
+  const res = { params: {}, proxies: {}, methods: {}, spots: {} };
+  fn(res);
   return res;
 }
 
@@ -264,7 +278,8 @@ var node = {
   105: "node with this name was not found in the template.",
   106: "innerHTML method is not secure due to XXS attacks, use _html or _evalHTML directives.",
   107: 'node "%s" error, spot cannot be a node.',
-  108: '"selector" property is not supported within spots.'
+  108: '"selector" and "prepared" properties is not supported within spots.',
+  109: '"%s" property is not supported. Prepared node only supports "selector", "component" properties'
 };
 var component = {
   // 201: 'section "%s" is not found in the template.',
@@ -276,7 +291,7 @@ var component = {
   // 207: 'node is a section, the "component" property is not supported.',
   208: 'node is iterable, the "component" property is not supported.',
   209: "iterable component must have a template.",
-  210: "iterable component must have only one root tag in the template.",
+  210: "iterable component and component within prepared node must have only one root tag in the template.",
   211: "component should have object as the object type.",
   212: 'method "%s" is already in props.',
   213: 'param "%s" is already in props.',
@@ -287,7 +302,7 @@ var component = {
   // 218: '"aborted" property expects a function as a value.'
 };
 var props = {
-  301: 'props methods "%s" can take only one argument of type object.',
+  301: "props methods can take only one argument of type object.",
   302: "value %s does not match enum",
   303: "props is required.",
   304: 'value does not match type "%s".',
@@ -497,12 +512,10 @@ function diveProxy(_value, handler, path = "") {
       return Reflect.get(target, prop, receiver);
     },
     set(target, prop, value, receiver) {
-      let upd = false;
       const reject = handler.beforeSet(value, `${path}${prop}`, (v) => {
         value = v;
-        upd = true;
       });
-      if (reject || !(Reflect.get(target, prop, receiver) !== value || prop === "length" || upd))
+      if (reject || !(Reflect.get(target, prop, receiver) !== value || prop === "length"))
         return true;
       value = diveProxy(value, handler, `${path}${prop}.`);
       Reflect.set(target, prop, value, receiver);
@@ -592,15 +605,14 @@ var InitNode = class extends InitBasic {
     });
   }
   async nodes() {
-    var _a;
     if (this.component.nodes) {
       const nodes = this.component.nodes.bind(this.context)();
       const container = this.context.container;
       const t = container.target;
       for (const name in nodes) {
-        const s = ((_a = nodes[name]) == null ? void 0 : _a.selector) || this.context.app.selector || `.${name}`;
+        const s = nodes[name].selector || this.context.app.selector || `.${name}`;
         const selector = typeof s === "function" ? s(name) : s;
-        const target = t.querySelector(selector) || t.classList.contains(name) && t;
+        const target = t.querySelector(selector) || t.matches(selector) && t;
         const nodepath = container.nodepath + "." + name;
         if (target) {
           if (container.spot && Object.values(container.spot).includes(target)) {
@@ -838,6 +850,7 @@ function mixins(target) {
   if ((_a = target.mixins) == null ? void 0 : _a.length) {
     const properties = ["directives", "params", "proxies", "methods", "handlers", "setters", "sources"];
     const props2 = ["params", "proxies", "methods"];
+    const outwards = ["params", "methods"];
     const hooks = ["loaded", "rendered", "created", "mounted", "unmounted"];
     const result = { props: {}, outwards: { params: [], methods: [] }, spots: [] };
     const mergeProperties = (a, b, key) => {
@@ -846,32 +859,34 @@ function mixins(target) {
     const mergeArrays = (a, b) => {
       return [...a, ...b || []];
     };
+    const mergeShallow = (a = {}, b = {}) => {
+      const obj = {};
+      for (const key in b) {
+        obj[key] = { ...a[key] || {}, ...b[key] };
+      }
+      return obj;
+    };
     const mergeOptions = (options) => {
-      var _a2, _b;
       result.template = options.template || result.template;
-      result.outwards.params = mergeArrays(result.outwards.params, (_a2 = options.outwards) == null ? void 0 : _a2.params);
-      result.outwards.methods = mergeArrays(result.outwards.methods, (_b = options.outwards) == null ? void 0 : _b.methods);
+      outwards.forEach((key) => {
+        var _a2;
+        result.outwards[key] = mergeArrays(result.outwards[key], (_a2 = options.outwards) == null ? void 0 : _a2[key]);
+      });
       result.spots = mergeArrays(result.spots, options.spots);
       properties.forEach((key) => {
         result[key] = mergeProperties(result, options, key);
       });
       hooks.forEach((key) => {
-        const resultHook = result[key];
-        result[key] = async function() {
-          var _a3;
-          return ((_a3 = options[key]) == null ? void 0 : _a3.bind(this)()) || (resultHook == null ? void 0 : resultHook.bind(this)());
-        };
+        if (options[key])
+          result[key] = options[key];
       });
       props2.forEach((key) => {
         result.props[key] = mergeProperties(result.props, options.props || {}, key);
       });
       const resultNodes = result.nodes;
       result.nodes = function() {
-        var _a3;
-        return {
-          ...resultNodes == null ? void 0 : resultNodes.bind(this)(),
-          ...(_a3 = options.nodes) == null ? void 0 : _a3.bind(this)()
-        };
+        var _a2;
+        return mergeShallow(resultNodes == null ? void 0 : resultNodes.bind(this)(), (_a2 = options.nodes) == null ? void 0 : _a2.bind(this)());
       };
     };
     target.mixins.forEach((options) => {
@@ -1113,6 +1128,7 @@ var component_default = {
       this.nodeElement.created = false;
       options.iterate ? await this.iterative(options) : await this.basic(options);
     };
+    this.nodeElement.prepared = this.nodeOptions.prepared;
     this.nodeOptions.component.async ? this.nodeElement.mount(this.nodeOptions.component) : await this.nodeElement.mount(this.nodeOptions.component);
   },
   induced(fn) {
@@ -1152,14 +1168,12 @@ var component_default = {
   },
   async create(proxies, nodeElement, pc) {
     var _a;
-    const { src, spots, aborted, completed, ssr } = pc;
+    const { src, spots, aborted, completed } = pc;
     if (!src)
       return;
     await mount(src, nodeElement, {
-      // ! - container
       aborted,
       completed,
-      ssr,
       ...props_default.collect(pc, nodeElement),
       proxies: proxies(pc.proxies) || {}
     }, this.app);
@@ -1201,15 +1215,16 @@ var Node = class {
   async controller() {
     var _a;
     for (const key in this.nodeOptions) {
-      if (key in this.nodeElement.target) {
+      if (this.nodeOptions.prepared && !["selector", "component", "prepared"].includes(key))
+        return errorNode(this.nodeElement.nodepath, 109, key);
+      if (key in this.nodeElement.target)
         this.native(key);
-      } else if (key in this.context.directives) {
+      else if (key in this.context.directives)
         this.directives(key);
-      } else if (key === "component") {
+      else if (key === "component")
         await ((_a = this.component) == null ? void 0 : _a.call(this));
-      } else if (key === "selector") {
-        if (this.nodeElement.isSpot)
-          errorNode(this.nodeElement.nodepath, 108);
+      else if (key === "selector" || key === "prepared") {
+        this.nodeElement.isSpot && errorNode(this.nodeElement.nodepath, 108);
       } else
         errorNode(this.nodeElement.nodepath, 104, key);
     }
@@ -1227,7 +1242,13 @@ function renderComponent(nodeElement, component2, controller) {
   const options = { ...component2.context.options };
   if (!options.template)
     return errorComponent(nodeElement.nodepath, 209);
-  const getTemplate = (template) => typeof template === "function" ? template.bind(component2.context)() : template;
+  const getContent = (template) => {
+    const html = typeof template === "function" ? template.bind(component2.context)() : template;
+    const content = cleanHTML(html.trim());
+    if ((nodeElement.isIterable || nodeElement.prepared) && content.length > 1)
+      return errorComponent(nodeElement.nodepath, 210);
+    return content;
+  };
   const spots = (node2) => {
     var _a, _b;
     if ((_a = options.spots) == null ? void 0 : _a.length)
@@ -1238,8 +1259,9 @@ function renderComponent(nodeElement, component2, controller) {
     const parent = nodeElement.parent;
     if (parent.children.length === 1 && parent.target.childNodes.length)
       parent.target.innerHTML = "";
-    parent.target.insertAdjacentHTML("beforeEnd", getTemplate(options.template));
-    nodeElement.target = parent.target.children[nodeElement.index];
+    const content = getContent(options.template);
+    parent.target.append(...content);
+    nodeElement.target = parent.target.lastChild;
     spots(nodeElement);
     if (!parent.unmount)
       parent.unmount = () => {
@@ -1253,7 +1275,17 @@ function renderComponent(nodeElement, component2, controller) {
       controller.abort();
     };
   } else {
-    nodeElement.target.innerHTML = getTemplate(options.template);
+    if (nodeElement.prepared) {
+      const content = getContent(options.template);
+      const target = nodeElement.target;
+      nodeElement.target.before(...content);
+      nodeElement.target = target.previousSibling;
+      target.remove();
+    } else {
+      const content = getContent(options.template);
+      nodeElement.target.innerHTML = "";
+      content && nodeElement.target.append(...content);
+    }
     spots(nodeElement);
     nodeElement.unmount = () => {
       component2.destroy(nodeElement);
@@ -1268,23 +1300,25 @@ function renderComponent(nodeElement, component2, controller) {
 async function lifecycle(component2, render, props2) {
   var _a, _b, _c;
   const hooks = [
-    async () => await component2.loaded(),
+    async () => {
+      component2.context.props = props2;
+      await component2.loaded();
+    },
     async () => {
       await component2.props(props2);
       component2.params();
       component2.methods();
       component2.proxies();
+      delete component2.context.props;
       return await component2.created();
     },
     async () => {
       render();
-      if (typeof document !== "undefined")
-        return await component2.rendered();
+      return await component2.rendered();
     },
     async () => {
       await component2.nodes();
-      if (typeof document !== "undefined")
-        return await component2.mounted();
+      return await component2.mounted();
     }
   ];
   const result = (data) => {
@@ -1314,12 +1348,14 @@ async function mount(module2, container, props2, app = {}) {
   if (!options)
     return errorComponent(container.nodepath, 216);
   const component2 = new InitNodeComponent(mixins(options), container, app, signal, factoryNodeComponent_default);
-  const render = () => !props2.ssr && renderComponent(container, component2, controller);
+  const render = () => renderComponent(container, component2, controller);
   return await lifecycle(component2, render, props2);
 }
 
 // packages/lesta/createApp.js
 function createApp(app = {}) {
+  app.store = {};
+  app.stores = {};
   app.mount = async ({ options, target, name = "root", aborted, completed }) => {
     return await mount(options, { target, nodepath: name }, { aborted, completed }, app);
   };
@@ -1794,7 +1830,7 @@ var Router = class extends BasicRouter {
     }
     if (target.layout) {
       if ((from == null ? void 0 : from.route.layout) !== target.layout) {
-        this.currentLayout = await this.app.mount(this.app.router.layouts[target.layout], this.rootContainer, { ssr });
+        this.currentLayout = await this.app.mount({ options: this.app.router.layouts[target.layout], target: this.rootContainer, props: { ssr } });
         if (!this.currentLayout)
           return;
         this.contaner = this.rootContainer.querySelector("[router]");
@@ -1810,7 +1846,7 @@ var Router = class extends BasicRouter {
     this.rootContainer.setAttribute("page", target.name || "");
     if ((from == null ? void 0 : from.route.component) !== target.component) {
       window.scrollTo(0, 0);
-      this.current = await this.app.mount(target.component, this.contaner, { ssr });
+      this.current = await this.app.mount({ options: target.component, target: this.contaner, props: { ssr } });
       if (!this.current)
         return;
     } else
@@ -1866,7 +1902,9 @@ async function mountWidget({ options, target, name = "root", aborted, completed 
   delay,
   deleteReactive,
   deliver,
+  isObject,
   loadModule,
+  mapComponent,
   mapProps,
   mount,
   mountWidget,

@@ -1,38 +1,54 @@
 import { errorComponent } from '../utils/errors/component'
+import { cleanHTML } from '../utils'
 
-export default function renderComponent(nodeElement, component, controller) { // - ssr
+export default function renderComponent(nodeElement, component, controller) {
   const options = { ...component.context.options }
   if (!options.template) return errorComponent(nodeElement.nodepath, 209)
-  const getTemplate = (template) => typeof template === 'function' ? template.bind(component.context)() : template
+  const getContent = (template) => {
+    const html = typeof template === 'function' ? template.bind(component.context)() : template
+    const content = cleanHTML(html.trim())
+    if ((nodeElement.isIterable || nodeElement.prepared) && content.length > 1) return errorComponent(nodeElement.nodepath, 210)
+    return content
+  }
   const spots = (node) => {
-    if (options.spots?.length) node.spot = {} // !
-    options.spots?.forEach(name => Object.assign(node.spot, { [name]: { target: node.target.querySelector(`[spot="${ name }"]`) }})) // !
+    if (options.spots?.length) node.spot = {}
+    options.spots?.forEach(name => Object.assign(node.spot, { [name]: { target: node.target.querySelector(`[spot="${ name }"]`) }}))
   }
   if (nodeElement.isIterable) {
     const parent = nodeElement.parent
     if (parent.children.length === 1 && parent.target.childNodes.length) parent.target.innerHTML = ''
-    parent.target.insertAdjacentHTML('beforeEnd', getTemplate(options.template))
-    nodeElement.target = parent.target.children[nodeElement.index]
+    const content = getContent(options.template)
+    parent.target.append(...content)
+    nodeElement.target = parent.target.lastChild
     spots(nodeElement)
     if (!parent.unmount) parent.unmount = () => {
       component.destroy(parent)
       parent.clear()
-      delete parent.unmount // ?
-      // controller.abort()
+      delete parent.unmount
     }
-    nodeElement.unmount = () => { // ! - async
+    nodeElement.unmount = () => {
       component.destroy(nodeElement) // for store
       component.unmount(nodeElement)
       controller.abort() // !
     }
-  } else { // ! - ssr
-    nodeElement.target.innerHTML = getTemplate(options.template); // !
+  } else {
+    if (nodeElement.prepared) {
+      const content = getContent(options.template)
+      const target = nodeElement.target
+      nodeElement.target.before(...content)
+      nodeElement.target = target.previousSibling
+      target.remove()
+    } else {
+      const content = getContent(options.template)
+      nodeElement.target.innerHTML = ''
+      content && nodeElement.target.append(...content)
+    }
     spots(nodeElement)
-    nodeElement.unmount = () => { // !
+    nodeElement.unmount = () => {
       component.destroy(nodeElement)
       component.unmount(nodeElement)
-      nodeElement.target.innerHTML = ''// !
-      controller.abort() // !
+      nodeElement.target.innerHTML = ''
+      controller.abort()
     }
   }
 }

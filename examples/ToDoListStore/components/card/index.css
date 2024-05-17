@@ -43,7 +43,9 @@
     padding: 15px;
     min-height: 4em;
 }
-
+.card .completed.active {
+    background-color: var(--yellow);
+}
 .loading .card {
     position: relative;
     width: 100%;

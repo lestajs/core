@@ -28,7 +28,7 @@ export default {
       line: {
         style: () => {
           return {
-            backgroundColor: this.proxy.card.completed ? '#fff485' : ''
+            backgroundColor: this.proxy.card.completed ? 'var(--yellow)' : ''
           }
         }
         // style: {

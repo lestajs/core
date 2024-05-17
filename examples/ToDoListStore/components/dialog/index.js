@@ -3,7 +3,7 @@ import './index.css'
 export default {
   template() {
     return `
-      <dialog class="dialog" ${this.proxy.opened ? 'open' : ''}>
+      <dialog class="dialog" ${this.proxy.opened ? 'open' : ''} style="max-width: ${this.param.maxWidth}px">
         <div class="close"></div>
         <div spot="content"></slot>
       </dialog>`
@@ -18,10 +18,13 @@ export default {
       onclose: {}
     }
   },
+  params: {
+    maxWidth: 520
+  },
   spots: ['content'],
   outwards: {
     methods: ['show', 'close'],
-    // params: []
+    params: ['maxWidth']
   },
   handlers: {
     opened(v) {

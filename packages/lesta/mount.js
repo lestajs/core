@@ -12,7 +12,7 @@ async function mount(module, container, props, app = {}) {
   const options = await loadModule(module, signal)
   if (!options) return errorComponent(container.nodepath, 216)
   const component = new InitNodeComponent(mixins(options), container, app, signal, withComponent)
-  const render = () => !props.ssr && renderComponent(container, component, controller)
+  const render = () => renderComponent(container, component, controller)
   return await lifecycle(component, render, props)
 }
 
