@@ -84,5 +84,6 @@ export default {
   },
   mounted() {
     // this.node
+    console.log(`nodepath: ${this.node.popup.nodepath}, nodename: ${this.node.popup.nodename}, maxWidth: ${this.node.popup.param.maxWidth}`)
   }
 }

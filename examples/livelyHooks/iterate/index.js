@@ -3,6 +3,9 @@ import consistent from '../consistent'
 export default {
   ...consistent,
   template: `<div class="text">iterate</div><div class="D1"></div>`,
+  params: {
+    arr: [1, 2, 3]
+  },
   nodes() {
     return {
       D1: {
@@ -10,10 +13,9 @@ export default {
           src: consistent,
           iterate: () => [1, 2, 3],
           params: {
-            text: (el) => el,
-            time: 3000
+            text: ({ index }) => this.param.arr[index],
+            time: 1000
           },
-          abortSignal: this.abortSignal,
           aborted: (v) => console.log('iterable: ', v)
         }
       }

@@ -5,7 +5,8 @@ const node = {
   105: 'node with this name was not found in the template.',
   106: 'innerHTML method is not secure due to XXS attacks, use _html or _evalHTML directives.',
   107: 'node "%s" error, spot cannot be a node.',
-  108: '"selector" property is not supported within spots.'
+  108: '"selector" and "prepared" properties is not supported within spots.',
+  109: '"%s" property is not supported. Prepared node only supports "selector", "component" properties'
 }
 const component = {
   // 201: 'section "%s" is not found in the template.',
@@ -17,7 +18,7 @@ const component = {
   // 207: 'node is a section, the "component" property is not supported.',
   208: 'node is iterable, the "component" property is not supported.',
   209: 'iterable component must have a template.',
-  210: 'iterable component must have only one root tag in the template.',
+  210: 'iterable component and component within prepared node must have only one root tag in the template.',
   211: 'component should have object as the object type.',
   212: 'method "%s" is already in props.',
   213: 'param "%s" is already in props.',
@@ -28,7 +29,7 @@ const component = {
   // 218: '"aborted" property expects a function as a value.'
 }
 const props = {
-  301: 'props methods "%s" can take only one argument of type object.',
+  301: 'props methods can take only one argument of type object.',
   302: 'value %s does not match enum',
   303: 'props is required.',
   304: 'value does not match type "%s".',

@@ -19,14 +19,12 @@ export default class Node {
   }
   async controller() {
     for (const key in this.nodeOptions) {
-      if (key in this.nodeElement.target) {
-        this.native(key)
-      } else if (key in this.context.directives) {
-        this.directives(key)
-      } else if (key === 'component') {
-        await this.component?.()
-      } else if (key === 'selector') {
-        if (this.nodeElement.isSpot) errorNode(this.nodeElement.nodepath, 108)
+      if (this.nodeOptions.prepared && !['selector', 'component', 'prepared'].includes(key)) return errorNode(this.nodeElement.nodepath, 109, key)
+      if (key in this.nodeElement.target) this.native(key)
+      else if (key in this.context.directives) this.directives(key)
+      else if (key === 'component') await this.component?.()
+      else if (key === 'selector' || key === 'prepared') {
+        this.nodeElement.isSpot && errorNode(this.nodeElement.nodepath, 108)
       } else errorNode(this.nodeElement.nodepath, 104, key)
     }
   }

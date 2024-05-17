@@ -68,7 +68,7 @@ function buildCjs(name) {
 }
 
 buildGlobal('lesta.mountWidget.global')
-buildGlobal('lesta.mountComponent.global')
+buildGlobal('lesta.mount.global')
 
 buildEsm('lesta')
 buildCjs('lesta')

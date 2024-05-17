@@ -16,8 +16,6 @@ export default {
   props: {
     proxies: {
       ...mapProps(['tasks', 'loading', 'isModify'], { store: 'tasks' })
-      // tasks: { store: 'tasks' },
-      // loading: { store: 'tasks' }
     },
     methods: {
       ...mapProps(['addTask', 'searchTasks', 'filterTasks'], { store: 'tasks' })
@@ -25,6 +23,12 @@ export default {
   },
   sources: {
     modify: () => import('../modify'),
+  },
+  setters: {
+    loading(v) {
+      this.node.bottom_panel.induce(true)
+      return v // if the value is not returned the proxy will not be updated
+    }
   },
   nodes() {
     return {
@@ -72,12 +76,14 @@ export default {
         component: {
           src: card,
           // async: true,
+          // completed: (v) => {},
+          // aborted: (v) => {},
           iterate: () => this.proxy.tasks,
           proxies: {
             card: ({ index }) => this.proxy.tasks[index]
           },
           spots: {
-            // DOM properties
+            // node properties supported
             bottom: {
               component: {
                 src: controls,
@@ -91,15 +97,13 @@ export default {
                       src: this.source.modify,
                       proxies: {
                         card: (node) => this.proxy.tasks[node.parent.parent.index]
-                      },
-                      // aborted: (v) => console.log('aborted', v, this), // notify
+                      }
                     }
                   }
                 }
               }
             }
-          },
-          completed: (v) => this.node.bottom_panel.induce(true)
+          }
         }
       }
     }

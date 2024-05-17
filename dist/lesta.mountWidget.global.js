@@ -63,7 +63,8 @@
     105: "node with this name was not found in the template.",
     106: "innerHTML method is not secure due to XXS attacks, use _html or _evalHTML directives.",
     107: 'node "%s" error, spot cannot be a node.',
-    108: '"selector" property is not supported within spots.'
+    108: '"selector" and "prepared" properties is not supported within spots.',
+    109: '"%s" property is not supported. Prepared node only supports "selector", "component" properties'
   };
   var component = {
     // 201: 'section "%s" is not found in the template.',
@@ -75,7 +76,7 @@
     // 207: 'node is a section, the "component" property is not supported.',
     208: 'node is iterable, the "component" property is not supported.',
     209: "iterable component must have a template.",
-    210: "iterable component must have only one root tag in the template.",
+    210: "iterable component and component within prepared node must have only one root tag in the template.",
     211: "component should have object as the object type.",
     212: 'method "%s" is already in props.',
     213: 'param "%s" is already in props.',
@@ -264,12 +265,10 @@
         return Reflect.get(target, prop, receiver);
       },
       set(target, prop, value, receiver) {
-        let upd = false;
         const reject = handler.beforeSet(value, `${path}${prop}`, (v) => {
           value = v;
-          upd = true;
         });
-        if (reject || !(Reflect.get(target, prop, receiver) !== value || prop === "length" || upd))
+        if (reject || !(Reflect.get(target, prop, receiver) !== value || prop === "length"))
           return true;
         value = diveProxy(value, handler, `${path}${prop}.`);
         Reflect.set(target, prop, value, receiver);
@@ -360,9 +359,9 @@
         const container = this.context.container;
         const t = container.target;
         for (const name in nodes) {
-          const s = nodes[name]?.selector || this.context.app.selector || `.${name}`;
+          const s = nodes[name].selector || this.context.app.selector || `.${name}`;
           const selector = typeof s === "function" ? s(name) : s;
-          const target = t.querySelector(selector) || t.classList.contains(name) && t;
+          const target = t.querySelector(selector) || t.matches(selector) && t;
           const nodepath = container.nodepath + "." + name;
           if (target) {
             if (container.spot && Object.values(container.spot).includes(target)) {
@@ -465,15 +464,16 @@
     }
     async controller() {
       for (const key in this.nodeOptions) {
-        if (key in this.nodeElement.target) {
+        if (this.nodeOptions.prepared && !["selector", "component", "prepared"].includes(key))
+          return errorNode(this.nodeElement.nodepath, 109, key);
+        if (key in this.nodeElement.target)
           this.native(key);
-        } else if (key in this.context.directives) {
+        else if (key in this.context.directives)
           this.directives(key);
-        } else if (key === "component") {
+        else if (key === "component")
           await this.component?.();
-        } else if (key === "selector") {
-          if (this.nodeElement.isSpot)
-            errorNode(this.nodeElement.nodepath, 108);
+        else if (key === "selector" || key === "prepared") {
+          this.nodeElement.isSpot && errorNode(this.nodeElement.nodepath, 108);
         } else
           errorNode(this.nodeElement.nodepath, 104, key);
       }
@@ -483,23 +483,25 @@
   // packages/lesta/lifecycle.js
   async function lifecycle(component2, render, props2) {
     const hooks = [
-      async () => await component2.loaded(),
+      async () => {
+        component2.context.props = props2;
+        await component2.loaded();
+      },
       async () => {
         await component2.props(props2);
         component2.params();
         component2.methods();
         component2.proxies();
+        delete component2.context.props;
         return await component2.created();
       },
       async () => {
         render();
-        if (typeof document !== "undefined")
-          return await component2.rendered();
+        return await component2.rendered();
       },
       async () => {
         await component2.nodes();
-        if (typeof document !== "undefined")
-          return await component2.mounted();
+        return await component2.mounted();
       }
     ];
     const result = (data) => {
