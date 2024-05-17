@@ -1,2 +1,0 @@
-import {mount, mountWidget, replicate, deliver, deleteReactive, cleanHTML, loadModule, queue} from './lesta.js'
-window.lesta = { mountComponent: mount, mountWidget, replicate, deliver, deleteReactive, cleanHTML, loadModule, queue }
