@@ -1,11 +1,12 @@
 import { mount } from './mount'
 
 function createApp(app = {}) {
-  app.store = {}
-  app.stores = {}
-  app.mount = async ({ options, target, name = 'root', aborted, completed }) => {
-    return await mount(options , { target, nodepath: name }, { aborted, completed }, app)
+  const container = {}
+  app.mount = async ({ options, target, name = 'root', props = {} }) => {
+    Object.assign(container, { target, nodepath: name })
+    return await mount(options , { target, nodepath: name }, props, app)
   }
+  app.unmount = () => container.unmount?.()
   Object.preventExtensions(app)
   return app
 }

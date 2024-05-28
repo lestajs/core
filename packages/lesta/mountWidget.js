@@ -6,6 +6,7 @@ import { errorComponent } from '../utils/errors/component'
 async function mountWidget({ options, target, name = 'root', aborted, completed }) {
   if (!options) return errorComponent(name, 216)
   if (!target) return errorComponent(name, 217)
+  const src = { ...options }
   const controller = new AbortController() // !
   const signal = controller.signal
   const container = { // ???
@@ -17,9 +18,9 @@ async function mountWidget({ options, target, name = 'root', aborted, completed 
       controller.abort()
     }
   }
-  const component = new InitNode(options, container, {}, signal, withoutComponent)
+  const component = new InitNode(src, container, {}, signal, withoutComponent)
   const render = () => {
-    target.innerHTML = options.template
+    target.innerHTML = src.template
     component.context.container = container
   }
   return await lifecycle(component, render, { aborted, completed })

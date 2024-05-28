@@ -11,7 +11,7 @@ async function loadModule(src, signal) {
       }
     }
     const res = await load()
-    return res?.default
-  } return src
+    return { ...res?.default }
+  } return { ...src }
 }
 export { loadModule }
