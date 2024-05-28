@@ -6,8 +6,7 @@
     "clean": "rimraf .parcel-cache",
     "CounterWidget": "parcel CounterWidget/index.html",
     "ToDoListStore": "parcel ToDoListStore/index.html",
-    "livelyHooks": "parcel livelyHooks/index.html",
-    "build": "parcel build --target SSGi18n"
+    "livelyHooks": "parcel livelyHooks/index.html"
   },
   "author": "",
   "license": "ISC",

@@ -1,0 +1,2 @@
+import { createApp, mountWidget, replicate, deliver, deleteReactive, cleanHTML, loadModule } from './lesta.js'
+window.lesta = { createApp, mountWidget, replicate, deliver, deleteReactive, cleanHTML, loadModule }

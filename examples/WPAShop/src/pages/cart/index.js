@@ -2,6 +2,7 @@ import cartCard from "../../layouts/cart/cartCard"
 import cartExtend from "./cartExtend"
 import './index.pcss'
 import summary from "./summary"
+import button from '../../../UI/components/button'
 
 export default {
   template:
@@ -33,5 +34,14 @@ export default {
   },
   async created() {
     await this.app.sidebar.spot.content.mount({ src: summary })
+    await this.app.sidebar.spot.bottom.mount({ 
+      src: button,
+      proxies: {
+        value: 'Checkout'
+      },
+      methods: {
+        action: () => this.app.router.push('/checkout')
+      }
+    })
   }
 }

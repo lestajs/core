@@ -12,9 +12,11 @@ export default {
         </div>
     `,
     props: {
+        params: {
+            index: {},
+        },
         proxies: {
             shop: {},
-            index: {},
             active: {}
         }
     },

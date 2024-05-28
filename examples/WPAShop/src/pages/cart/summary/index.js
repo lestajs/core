@@ -19,7 +19,6 @@ export default {
 					<div>Total</div>
 					<div class="totalPrice"></div>
 				</div>
-				<div class="checkoutBtn"></div>
 			</div>
     `,
 	props: {
@@ -58,17 +57,6 @@ export default {
 			totalPrice: {
 				_text: () => this.app.filters.currencyUSD(this.method.subSum())
 			},
-			checkoutBtn: {
-				component: {
-					src: button,
-					proxies: {
-						value: 'Checkout'
-					},
-					methods: {
-						action: () => this.app.router.push('/checkout')
-					}
-				}
-			}
 		}
 	},
 	methods: {
