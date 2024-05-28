@@ -17,8 +17,8 @@ export default {
                     src: menu,
                     iterate: () => this.param.lis,
                     params: {
-                        text: (li) => li.text,
-                        url: (li) => li.url,
+                        text: ({ index }) => this.param.lis[index].text,
+                        url: ({ index }) => this.param.lis[index].url,
                     }
                 }
             }

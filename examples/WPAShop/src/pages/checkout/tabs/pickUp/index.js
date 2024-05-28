@@ -22,9 +22,11 @@ export default {
                 component: {
                     src: pickUpCard,
                     iterate: () => this.proxy.shops,
+                    params: {
+                        index: ({ index }) => index,
+                    },
                     proxies: {
-                        shop: (v) => v,
-                        index: (v, i) => i,
+                        shop: ({ index }) => this.proxy.shops[index],
                     }
                 }
             }

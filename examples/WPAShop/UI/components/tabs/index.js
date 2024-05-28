@@ -33,7 +33,7 @@ export default {
             activated: ({ index }) => this.proxy.value === index
           },
           params: {
-            name: ({ index }) => this.proxy.items[index],
+            name: ({ index }) => index,
             type: 'text',
             size: this.param.size,
             reverse: this.param.reverse,
