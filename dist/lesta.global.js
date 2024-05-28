@@ -42,9 +42,9 @@
         }
       };
       const res = await load();
-      return res?.default;
+      return { ...res?.default };
     }
-    return src;
+    return { ...src };
   }
 
   // packages/utils/deleteReactive.js
@@ -1132,6 +1132,18 @@
     return await lifecycle(component2, render, props2);
   }
 
+  // packages/lesta/createApp.js
+  function createApp(app = {}) {
+    const container = {};
+    app.mount = async ({ options, target, name = "root", props: props2 = {} }) => {
+      Object.assign(container, { target, nodepath: name });
+      return await mount(options, { target, nodepath: name }, props2, app);
+    };
+    app.unmount = () => container.unmount?.();
+    Object.preventExtensions(app);
+    return app;
+  }
+
   // packages/lesta/factoryNode.js
   function factoryNode_default(...args) {
     Object.assign(Node.prototype, DOMProperties_default, directiveProperties_default);
@@ -1144,6 +1156,7 @@
       return errorComponent(name, 216);
     if (!target)
       return errorComponent(name, 217);
+    const src = { ...options };
     const controller = new AbortController();
     const signal = controller.signal;
     const container = {
@@ -1156,14 +1169,14 @@
         controller.abort();
       }
     };
-    const component2 = new InitNode(options, container, {}, signal, factoryNode_default);
+    const component2 = new InitNode(src, container, {}, signal, factoryNode_default);
     const render = () => {
-      target.innerHTML = options.template;
+      target.innerHTML = src.template;
       component2.context.container = container;
     };
     return await lifecycle(component2, render, { aborted, completed });
   }
 
-  // scripts/lesta.mount.global.js
-  window.lesta = { mount, mountWidget, replicate, deliver, deleteReactive, cleanHTML, loadModule };
+  // scripts/lesta.global.js
+  window.lesta = { createApp, mountWidget, replicate, deliver, deleteReactive, cleanHTML, loadModule };
 })();
