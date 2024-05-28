@@ -32,7 +32,6 @@ __export(lesta_exports, {
   loadModule: () => loadModule,
   mapComponent: () => mapComponent,
   mapProps: () => mapProps,
-  mount: () => mount,
   mountWidget: () => mountWidget,
   nextRepaint: () => nextRepaint,
   queue: () => queue,
@@ -148,9 +147,9 @@ async function loadModule(src, signal) {
       }
     };
     const res = await load();
-    return res == null ? void 0 : res.default;
+    return { ...res == null ? void 0 : res.default };
   }
-  return src;
+  return { ...src };
 }
 
 // packages/utils/deleteReactive.js
@@ -1354,10 +1353,14 @@ async function mount(module2, container, props2, app = {}) {
 
 // packages/lesta/createApp.js
 function createApp(app = {}) {
-  app.store = {};
-  app.stores = {};
-  app.mount = async ({ options, target, name = "root", aborted, completed }) => {
-    return await mount(options, { target, nodepath: name }, { aborted, completed }, app);
+  const container = {};
+  app.mount = async ({ options, target, name = "root", props: props2 = {} }) => {
+    Object.assign(container, { target, nodepath: name });
+    return await mount(options, { target, nodepath: name }, props2, app);
+  };
+  app.unmount = () => {
+    var _a;
+    return (_a = container.unmount) == null ? void 0 : _a.call(container);
   };
   Object.preventExtensions(app);
   return app;
@@ -1872,6 +1875,7 @@ async function mountWidget({ options, target, name = "root", aborted, completed 
     return errorComponent(name, 216);
   if (!target)
     return errorComponent(name, 217);
+  const src = { ...options };
   const controller = new AbortController();
   const signal = controller.signal;
   const container = {
@@ -1884,9 +1888,9 @@ async function mountWidget({ options, target, name = "root", aborted, completed 
       controller.abort();
     }
   };
-  const component2 = new InitNode(options, container, {}, signal, factoryNode_default);
+  const component2 = new InitNode(src, container, {}, signal, factoryNode_default);
   const render = () => {
-    target.innerHTML = options.template;
+    target.innerHTML = src.template;
     component2.context.container = container;
   };
   return await lifecycle(component2, render, { aborted, completed });
@@ -1906,7 +1910,6 @@ async function mountWidget({ options, target, name = "root", aborted, completed 
   loadModule,
   mapComponent,
   mapProps,
-  mount,
   mountWidget,
   nextRepaint,
   queue,

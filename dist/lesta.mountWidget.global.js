@@ -535,6 +535,7 @@
       return errorComponent(name, 216);
     if (!target)
       return errorComponent(name, 217);
+    const src = { ...options };
     const controller = new AbortController();
     const signal = controller.signal;
     const container = {
@@ -547,9 +548,9 @@
         controller.abort();
       }
     };
-    const component2 = new InitNode(options, container, {}, signal, factoryNode_default);
+    const component2 = new InitNode(src, container, {}, signal, factoryNode_default);
     const render = () => {
-      target.innerHTML = options.template;
+      target.innerHTML = src.template;
       component2.context.container = container;
     };
     return await lifecycle(component2, render, { aborted, completed });
