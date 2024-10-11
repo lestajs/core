@@ -21,26 +21,27 @@ export default {
             this.nodeElement.isIterative = true // !
             if (Object.getPrototypeOf(this.data).instance === 'Proxy') {
                 this.reactiveComponent([this.name], (v) => {
-                        this.data = options.iterate() // ?
-                        if (options.proxies) {
+                    this.data = options.iterate()
+                    if (options.proxies) {
+                        const f = (i) => {
                             for (const [pr, fn] of Object.entries(options.proxies)) {
-                                if (typeof fn === 'function' && fn.name) {
-                                    for (let i = 0; i < Math.min(this.nodeElement.target.children.length, v.length); i++) {
-                                        this.nodeElement.children[i]?.proxy?.[pr]?.setValue(fn(this.nodeElement.children[i])) // - this.data[i], i
-                                    }
+                                if (typeof fn === "function" && fn.name) {
+                                    this.nodeElement.children[i].proxy?.[pr]?.setValue(fn(this.nodeElement.children[i])) // - ?
                                 }
                             }
                         }
+                        this.portions(Math.min(this.nodeElement.target.children.length, v.length), 0, f)
+                    }
                     this.length(v.length)
                 })
                 this.reactiveComponent([this.name + '.length'], (v) => this.length(v))
             }
             const mount = async () => {
-                this.data = options.iterate() // ?
+                this.data = options.iterate()
                 await this.length(this.data.length)
             }
-    
-            const induced = this.induced(async (permit) => permit ? await mount(): this.nodeElement.clear())
+
+            const induced = this.induced(async (permit) => permit ? await mount() : this.nodeElement.clear())
             if (induced) await mount()
         }
     },
@@ -48,47 +49,49 @@ export default {
         const nodeElement = this.nodeElement._current
         const reactive = (pr, fn) => {
             if (this.impress.refs.some(ref => ref.includes(this.name))) {
-                this.reactiveComponent(this.impress.define(pr), (v, p) => {
-                    if (!nodeElement.proxy) return
-                    if (p) {
-                        nodeElement.proxy[pr]?.setValue(v, p)
-                    } else {
-                        // this.data = this.nodeOptions.component.iterate() // ??
-                        nodeElement.proxy[pr]?.setValue(fn(nodeElement))
-                    }
-                })
+                this.reactiveComponent(this.impress.define(pr), (v, p) => p ? nodeElement.proxy?.[pr]?.setValue(v, p) : nodeElement.proxy?.[pr]?.setValue(fn(nodeElement)))
             } else {
                 if (!this.nodeElement.created) {
                     this.reactiveComponent(this.impress.define(pr), (v, p) => {
-                        for (let i = 0; i < this.nodeElement.target.children.length; i++) {
-                            const nodeChildren = this.nodeElement.children[i]
+                        const children = this.nodeElement.children
+                        const f = (i) => {
+                            const nodeChildren = children[i]
                             p ? nodeChildren.proxy?.[pr]?.setValue(v, p) : nodeChildren.proxy?.[pr]?.setValue(fn(nodeChildren))
                         }
+                        this.portions(children.length, 0, f)
                     })
                 } else this.impress.clear()
             }
         }
         return this.reactivate(proxies, reactive, nodeElement)
     },
-    async length(length) {
-        const qty = this.nodeElement.children.length /// - .target
-        if (length > qty) await this.add(length, qty)
-        if (length < qty) this.remove(length, qty)
-    },
-    async add(length, qty) { // ! - length
-        while (length > qty) {
-            await this.createIterate(qty)
-            if (!this.nodeElement.target.children[qty]) return
-            qty++
+    async portions(length, qty, fn) {
+        const { portion } = this.nodeOptions.component
+        let r = null
+        let f = false
+        if (qty < length - portion) {
+            const next = () => this.portions(length, qty, fn)
+            setTimeout(() => f ? next() : new Promise(resolve => r = resolve).then(_ => next()))
         }
+        do {
+            await fn(qty)
+            qty++
+        } while (this.nodeElement.target.children[qty - 1] && qty < length && qty % portion !== 0)
+        f = true
+        r?.()
     },
-    remove(length, qty) {
-        while (length < qty) {
-            qty--
-            deleteReactive(this.nodeElement.reactivity.component, this.name + "." + qty)
-            this.nodeElement.children[qty].unmount?.() // !
-            this.nodeElement.children[qty].target.remove() // !
-            this.nodeElement.children.splice(qty, 1)
+    async length(length) {
+        let qty = this.nodeElement.children.length
+        if (length > qty) await this.portions(length, qty, async (index) => await this.createIterate(index))
+        if (length < qty) {
+            while (length < qty) {
+                qty--
+                const children = this.nodeElement.children
+                deleteReactive(this.nodeElement.reactivity.component, this.name + "." + qty)
+                children[qty].unmount?.()
+                children[qty].target.remove()
+                children.splice(qty, 1)
+            }
         }
     }
 }

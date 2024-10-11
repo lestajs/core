@@ -424,19 +424,19 @@
     general(key) {
       if (key === "innerHTML")
         return errorNode(this.nodeElement.nodepath, 106);
+      const set = (v) => {
+        if (this.nodeElement.target[key] !== null && typeof this.nodeElement.target[key] === "object") {
+          v !== null && typeof v === "object" ? Object.assign(this.nodeElement.target[key], v) : errorNode(this.nodeElement.nodepath, 103, key);
+        } else
+          this.nodeElement.target[key] = v;
+      };
       if (typeof this.nodeOptions[key] === "function") {
-        const active2 = () => {
-          const val = this.nodeOptions[key].bind(this.context)();
-          if (this.nodeElement.target[key] !== null && typeof this.nodeElement.target[key] === "object") {
-            val !== null && typeof val === "object" ? Object.assign(this.nodeElement.target[key], val) : errorNode(this.nodeElement.nodepath, 103, key);
-          } else
-            this.nodeElement.target[key] = val;
-        };
+        const active2 = () => set(this.nodeOptions[key].bind(this.context)());
         this.impress.collect = true;
         active2();
         this.reactiveNode(this.impress.define(), active2);
       } else
-        this.nodeElement.target[key] = this.nodeOptions[key];
+        set(this.nodeOptions[key]);
     },
     native(key) {
       key.startsWith("on") ? this.listeners(key) : this.general(key);
