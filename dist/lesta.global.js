@@ -734,19 +734,19 @@
     general(key) {
       if (key === "innerHTML")
         return errorNode(this.nodeElement.nodepath, 106);
+      const set = (v) => {
+        if (this.nodeElement.target[key] !== null && typeof this.nodeElement.target[key] === "object") {
+          v !== null && typeof v === "object" ? Object.assign(this.nodeElement.target[key], v) : errorNode(this.nodeElement.nodepath, 103, key);
+        } else
+          this.nodeElement.target[key] = v;
+      };
       if (typeof this.nodeOptions[key] === "function") {
-        const active2 = () => {
-          const val = this.nodeOptions[key].bind(this.context)();
-          if (this.nodeElement.target[key] !== null && typeof this.nodeElement.target[key] === "object") {
-            val !== null && typeof val === "object" ? Object.assign(this.nodeElement.target[key], val) : errorNode(this.nodeElement.nodepath, 103, key);
-          } else
-            this.nodeElement.target[key] = val;
-        };
+        const active2 = () => set(this.nodeOptions[key].bind(this.context)());
         this.impress.collect = true;
         active2();
         this.reactiveNode(this.impress.define(), active2);
       } else
-        this.nodeElement.target[key] = this.nodeOptions[key];
+        set(this.nodeOptions[key]);
     },
     native(key) {
       key.startsWith("on") ? this.listeners(key) : this.general(key);
@@ -778,13 +778,14 @@
           this.reactiveComponent([this.name], (v) => {
             this.data = options.iterate();
             if (options.proxies) {
-              for (const [pr, fn] of Object.entries(options.proxies)) {
-                if (typeof fn === "function" && fn.name) {
-                  for (let i = 0; i < Math.min(this.nodeElement.target.children.length, v.length); i++) {
-                    this.nodeElement.children[i]?.proxy?.[pr]?.setValue(fn(this.nodeElement.children[i]));
+              const f = (i) => {
+                for (const [pr, fn] of Object.entries(options.proxies)) {
+                  if (typeof fn === "function" && fn.name) {
+                    this.nodeElement.children[i].proxy?.[pr]?.setValue(fn(this.nodeElement.children[i]));
                   }
                 }
-              }
+              };
+              this.portions(Math.min(this.nodeElement.target.children.length, v.length), 0, f);
             }
             this.length(v.length);
           });
@@ -803,22 +804,16 @@
       const nodeElement = this.nodeElement._current;
       const reactive = (pr, fn) => {
         if (this.impress.refs.some((ref) => ref.includes(this.name))) {
-          this.reactiveComponent(this.impress.define(pr), (v, p) => {
-            if (!nodeElement.proxy)
-              return;
-            if (p) {
-              nodeElement.proxy[pr]?.setValue(v, p);
-            } else {
-              nodeElement.proxy[pr]?.setValue(fn(nodeElement));
-            }
-          });
+          this.reactiveComponent(this.impress.define(pr), (v, p) => p ? nodeElement.proxy?.[pr]?.setValue(v, p) : nodeElement.proxy?.[pr]?.setValue(fn(nodeElement)));
         } else {
           if (!this.nodeElement.created) {
             this.reactiveComponent(this.impress.define(pr), (v, p) => {
-              for (let i = 0; i < this.nodeElement.target.children.length; i++) {
-                const nodeChildren = this.nodeElement.children[i];
+              const children = this.nodeElement.children;
+              const f = (i) => {
+                const nodeChildren = children[i];
                 p ? nodeChildren.proxy?.[pr]?.setValue(v, p) : nodeChildren.proxy?.[pr]?.setValue(fn(nodeChildren));
-              }
+              };
+              this.portions(children.length, 0, f);
             });
           } else
             this.impress.clear();
@@ -826,28 +821,34 @@
       };
       return this.reactivate(proxies, reactive, nodeElement);
     },
-    async length(length) {
-      const qty = this.nodeElement.children.length;
-      if (length > qty)
-        await this.add(length, qty);
-      if (length < qty)
-        this.remove(length, qty);
-    },
-    async add(length, qty) {
-      while (length > qty) {
-        await this.createIterate(qty);
-        if (!this.nodeElement.target.children[qty])
-          return;
-        qty++;
+    async portions(length, qty, fn) {
+      const { portion } = this.nodeOptions.component;
+      let r = null;
+      let f = false;
+      if (qty < length - portion) {
+        const next = () => this.portions(length, qty, fn);
+        setTimeout(() => f ? next() : new Promise((resolve) => r = resolve).then((_) => next()));
       }
+      do {
+        await fn(qty);
+        qty++;
+      } while (this.nodeElement.target.children[qty - 1] && qty < length && qty % portion !== 0);
+      f = true;
+      r?.();
     },
-    remove(length, qty) {
-      while (length < qty) {
-        qty--;
-        deleteReactive(this.nodeElement.reactivity.component, this.name + "." + qty);
-        this.nodeElement.children[qty].unmount?.();
-        this.nodeElement.children[qty].target.remove();
-        this.nodeElement.children.splice(qty, 1);
+    async length(length) {
+      let qty = this.nodeElement.children.length;
+      if (length > qty)
+        await this.portions(length, qty, async (index) => await this.createIterate(index));
+      if (length < qty) {
+        while (length < qty) {
+          qty--;
+          const children = this.nodeElement.children;
+          deleteReactive(this.nodeElement.reactivity.component, this.name + "." + qty);
+          children[qty].unmount?.();
+          children[qty].target.remove();
+          children.splice(qty, 1);
+        }
       }
     }
   };

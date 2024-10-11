@@ -940,19 +940,19 @@ var DOMProperties_default = {
   general(key) {
     if (key === "innerHTML")
       return errorNode(this.nodeElement.nodepath, 106);
+    const set = (v) => {
+      if (this.nodeElement.target[key] !== null && typeof this.nodeElement.target[key] === "object") {
+        v !== null && typeof v === "object" ? Object.assign(this.nodeElement.target[key], v) : errorNode(this.nodeElement.nodepath, 103, key);
+      } else
+        this.nodeElement.target[key] = v;
+    };
     if (typeof this.nodeOptions[key] === "function") {
-      const active2 = () => {
-        const val = this.nodeOptions[key].bind(this.context)();
-        if (this.nodeElement.target[key] !== null && typeof this.nodeElement.target[key] === "object") {
-          val !== null && typeof val === "object" ? Object.assign(this.nodeElement.target[key], val) : errorNode(this.nodeElement.nodepath, 103, key);
-        } else
-          this.nodeElement.target[key] = val;
-      };
+      const active2 = () => set(this.nodeOptions[key].bind(this.context)());
       this.impress.collect = true;
       active2();
       this.reactiveNode(this.impress.define(), active2);
     } else
-      this.nodeElement.target[key] = this.nodeOptions[key];
+      set(this.nodeOptions[key]);
   },
   native(key) {
     key.startsWith("on") ? this.listeners(key) : this.general(key);
@@ -982,16 +982,17 @@ var iterativeComponent_default = {
       this.nodeElement.isIterative = true;
       if (Object.getPrototypeOf(this.data).instance === "Proxy") {
         this.reactiveComponent([this.name], (v) => {
-          var _a, _b, _c;
           this.data = options.iterate();
           if (options.proxies) {
-            for (const [pr, fn] of Object.entries(options.proxies)) {
-              if (typeof fn === "function" && fn.name) {
-                for (let i = 0; i < Math.min(this.nodeElement.target.children.length, v.length); i++) {
-                  (_c = (_b = (_a = this.nodeElement.children[i]) == null ? void 0 : _a.proxy) == null ? void 0 : _b[pr]) == null ? void 0 : _c.setValue(fn(this.nodeElement.children[i]));
+            const f = (i) => {
+              var _a, _b;
+              for (const [pr, fn] of Object.entries(options.proxies)) {
+                if (typeof fn === "function" && fn.name) {
+                  (_b = (_a = this.nodeElement.children[i].proxy) == null ? void 0 : _a[pr]) == null ? void 0 : _b.setValue(fn(this.nodeElement.children[i]));
                 }
               }
-            }
+            };
+            this.portions(Math.min(this.nodeElement.target.children.length, v.length), 0, f);
           }
           this.length(v.length);
         });
@@ -1011,23 +1012,19 @@ var iterativeComponent_default = {
     const reactive = (pr, fn) => {
       if (this.impress.refs.some((ref) => ref.includes(this.name))) {
         this.reactiveComponent(this.impress.define(pr), (v, p) => {
-          var _a, _b;
-          if (!nodeElement.proxy)
-            return;
-          if (p) {
-            (_a = nodeElement.proxy[pr]) == null ? void 0 : _a.setValue(v, p);
-          } else {
-            (_b = nodeElement.proxy[pr]) == null ? void 0 : _b.setValue(fn(nodeElement));
-          }
+          var _a, _b, _c, _d;
+          return p ? (_b = (_a = nodeElement.proxy) == null ? void 0 : _a[pr]) == null ? void 0 : _b.setValue(v, p) : (_d = (_c = nodeElement.proxy) == null ? void 0 : _c[pr]) == null ? void 0 : _d.setValue(fn(nodeElement));
         });
       } else {
         if (!this.nodeElement.created) {
           this.reactiveComponent(this.impress.define(pr), (v, p) => {
-            var _a, _b, _c, _d;
-            for (let i = 0; i < this.nodeElement.target.children.length; i++) {
-              const nodeChildren = this.nodeElement.children[i];
+            const children = this.nodeElement.children;
+            const f = (i) => {
+              var _a, _b, _c, _d;
+              const nodeChildren = children[i];
               p ? (_b = (_a = nodeChildren.proxy) == null ? void 0 : _a[pr]) == null ? void 0 : _b.setValue(v, p) : (_d = (_c = nodeChildren.proxy) == null ? void 0 : _c[pr]) == null ? void 0 : _d.setValue(fn(nodeChildren));
-            }
+            };
+            this.portions(children.length, 0, f);
           });
         } else
           this.impress.clear();
@@ -1035,29 +1032,35 @@ var iterativeComponent_default = {
     };
     return this.reactivate(proxies, reactive, nodeElement);
   },
-  async length(length) {
-    const qty = this.nodeElement.children.length;
-    if (length > qty)
-      await this.add(length, qty);
-    if (length < qty)
-      this.remove(length, qty);
-  },
-  async add(length, qty) {
-    while (length > qty) {
-      await this.createIterate(qty);
-      if (!this.nodeElement.target.children[qty])
-        return;
-      qty++;
+  async portions(length, qty, fn) {
+    const { portion } = this.nodeOptions.component;
+    let r = null;
+    let f = false;
+    if (qty < length - portion) {
+      const next = () => this.portions(length, qty, fn);
+      setTimeout(() => f ? next() : new Promise((resolve) => r = resolve).then((_) => next()));
     }
+    do {
+      await fn(qty);
+      qty++;
+    } while (this.nodeElement.target.children[qty - 1] && qty < length && qty % portion !== 0);
+    f = true;
+    r == null ? void 0 : r();
   },
-  remove(length, qty) {
+  async length(length) {
     var _a, _b;
-    while (length < qty) {
-      qty--;
-      deleteReactive(this.nodeElement.reactivity.component, this.name + "." + qty);
-      (_b = (_a = this.nodeElement.children[qty]).unmount) == null ? void 0 : _b.call(_a);
-      this.nodeElement.children[qty].target.remove();
-      this.nodeElement.children.splice(qty, 1);
+    let qty = this.nodeElement.children.length;
+    if (length > qty)
+      await this.portions(length, qty, async (index) => await this.createIterate(index));
+    if (length < qty) {
+      while (length < qty) {
+        qty--;
+        const children = this.nodeElement.children;
+        deleteReactive(this.nodeElement.reactivity.component, this.name + "." + qty);
+        (_b = (_a = children[qty]).unmount) == null ? void 0 : _b.call(_a);
+        children[qty].target.remove();
+        children.splice(qty, 1);
+      }
     }
   }
 };
