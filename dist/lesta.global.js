@@ -26,22 +26,28 @@
     }
   }
 
+  // packages/utils/revocablePromise.js
+  async function revocablePromise(promise, signal, aborted) {
+    return new Promise((resolve, reject) => {
+      const abortListener = () => {
+        reject();
+        aborted?.();
+        signal.removeEventListener("abort", abortListener);
+      };
+      signal.addEventListener("abort", abortListener);
+      if (signal.aborted)
+        abortListener();
+      promise.then(resolve).catch(reject);
+    });
+  }
+
   // packages/utils/loadModule.js
-  async function loadModule(src, signal) {
+  async function loadModule(src, signal, aborted) {
     if (typeof src === "function") {
       const module = src();
-      if (!(module instanceof Promise) || signal?.aborted)
-        return;
-      const load = async () => {
-        if (signal) {
-          if (signal.aborted)
-            return;
-          return await Promise.race([module, new Promise((resolve) => signal.addEventListener("abort", () => resolve()))]);
-        } else {
-          return await module;
-        }
-      };
-      const res = await load();
+      if (!(module instanceof Promise))
+        return module;
+      const res = await revocablePromise(module, signal, aborted);
       return { ...res?.default };
     }
     return { ...src };
@@ -102,7 +108,7 @@
         clean(node2);
       }
     }
-    const html = stringToHTML(str);
+    const html = stringToHTML(str.trim());
     removeScripts(html);
     clean(html);
     return html.childNodes;
@@ -116,20 +122,19 @@
     105: "node with this name was not found in the template.",
     106: "innerHTML method is not secure due to XXS attacks, use _html or _evalHTML directives.",
     107: 'node "%s" error, spot cannot be a node.',
-    108: '"selector" and "prepared" properties is not supported within spots.',
+    108: '"selector" and "replaced" properties is not supported within spots.',
     109: '"%s" property is not supported. Prepared node only supports "selector", "component" properties'
   };
   var component = {
     // 201: 'section "%s" is not found in the template.',
     202: 'spot "%s" is not defined.',
     // 203: '"src" property must not be empty.',
-    // 204: 'section mounting is not available for iterable components. You can set the default component in the "sections".',
-    205: '"iterate" property expects a function.',
-    206: '"iterate" function must return an array.',
+    204: '"iterate" property is not supported for "replaced" node.',
+    205: '"iterate" property expects a function that returns an array',
     // 207: 'node is a section, the "component" property is not supported.',
     208: 'node is iterable, the "component" property is not supported.',
     209: "iterable component must have a template.",
-    210: "iterable component and component within prepared node must have only one root tag in the template.",
+    210: "iterable component and component within replaced node must have only one root tag in the template.",
     211: "component should have object as the object type.",
     212: 'method "%s" is already in props.',
     213: 'param "%s" is already in props.',
@@ -237,7 +242,7 @@
 
   // packages/lesta/initBasic.js
   var InitBasic = class {
-    constructor(component2, container, app = {}, signal) {
+    constructor(component2, container, app = {}, controller) {
       this.component = component2;
       this.app = app;
       this.impress = impress_default;
@@ -247,7 +252,8 @@
         container,
         options: component2,
         phase: 0,
-        abortSignal: signal,
+        abort: () => controller.abort(),
+        abortSignal: controller.signal,
         node: {},
         param: {},
         method: {},
@@ -579,9 +585,9 @@
     }
   };
   var propsValidation_default = {
-    async init(props2, componentProps, context, app) {
+    init(props2, componentProps, context, app) {
       const p = new Props(props2, context, app);
-      return await p.setup(componentProps);
+      return p.setup(componentProps);
     }
   };
 
@@ -758,37 +764,26 @@
     async iterative(options) {
       if (typeof options.iterate !== "function")
         return errorComponent(this.nodeElement.nodepath, 205);
+      if (this.nodeElement.replaced)
+        return errorComponent(this.nodeElement.nodepath, 204);
       this.name = null;
+      this.repeat = 0;
       this.nodeElement.children = [];
       this.nodeOptions.component = options;
       this.nodeElement.clear = () => this.length.bind(this)(0);
       this.createIterate = async (index) => {
-        this.nodeElement.children[index] = this.nodeElement._current = { parent: this.nodeElement, target: true, nodepath: this.nodeElement.nodepath + "." + index, index, isIterable: true };
-        await this.create(this.proxiesIterate.bind(this), this.nodeElement.children[index], options);
+        this.nodeElement.children[index] = this.nodeElement._current = { parent: this.nodeElement, target: true, nodepath: this.nodeElement.nodepath + "." + index, index, iterated: true };
+        await this.create(this.proxiesIterate.bind(this), this.nodeElement._current, options);
       };
       this.impress.collect = true;
       this.data = options.iterate();
       if (this.data) {
         if (!Array.isArray(this.data))
-          return errorComponent(this.nodeElement.nodepath, 206);
+          return errorComponent(this.nodeElement.nodepath, 205);
         this.name = this.impress.refs.at(-1);
         this.impress.clear();
-        this.nodeElement.isIterative = true;
         if (Object.getPrototypeOf(this.data).instance === "Proxy") {
-          this.reactiveComponent([this.name], (v) => {
-            this.data = options.iterate();
-            if (options.proxies) {
-              const f = (i) => {
-                for (const [pr, fn] of Object.entries(options.proxies)) {
-                  if (typeof fn === "function" && fn.name) {
-                    this.nodeElement.children[i].proxy?.[pr]?.setValue(fn(this.nodeElement.children[i]));
-                  }
-                }
-              };
-              this.portions(Math.min(this.nodeElement.target.children.length, v.length), 0, f);
-            }
-            this.length(v.length);
-          });
+          this.reactiveComponent([this.name], (v) => this.length(v.length));
           this.reactiveComponent([this.name + ".length"], (v) => this.length(v));
         }
         const mount2 = async () => {
@@ -804,16 +799,21 @@
       const nodeElement = this.nodeElement._current;
       const reactive = (pr, fn) => {
         if (this.impress.refs.some((ref) => ref.includes(this.name))) {
-          this.reactiveComponent(this.impress.define(pr), (v, p) => p ? nodeElement.proxy?.[pr]?.setValue(v, p) : nodeElement.proxy?.[pr]?.setValue(fn(nodeElement)));
+          this.reactiveComponent(this.impress.define(pr), (v, p) => {
+            const setValue = (...arg) => nodeElement.proxy?.[pr]?.setValue(...arg);
+            p ? setValue(v, p) : setValue(fn(nodeElement));
+          });
         } else {
           if (!this.nodeElement.created) {
             this.reactiveComponent(this.impress.define(pr), (v, p) => {
               const children = this.nodeElement.children;
               const f = (i) => {
                 const nodeChildren = children[i];
-                p ? nodeChildren.proxy?.[pr]?.setValue(v, p) : nodeChildren.proxy?.[pr]?.setValue(fn(nodeChildren));
+                const setValue = (...arg) => nodeChildren.proxy?.[pr]?.setValue(...arg);
+                p ? setValue(v, p) : setValue(fn(nodeChildren));
               };
               this.portions(children.length, 0, f);
+              this.repeat++;
             });
           } else
             this.impress.clear();
@@ -821,22 +821,33 @@
       };
       return this.reactivate(proxies, reactive, nodeElement);
     },
-    async portions(length, qty, fn) {
+    async portions(length, index, fn) {
+      if (!length)
+        return;
       const { portion } = this.nodeOptions.component;
       let r = null;
       let f = false;
-      if (qty < length - portion) {
-        const next = () => this.portions(length, qty, fn);
+      if (index < length - portion) {
+        const next = () => {
+          if (this.repeat > 1)
+            return this.repeat--;
+          this.portions(length, index, fn);
+        };
         setTimeout(() => f ? next() : new Promise((resolve) => r = resolve).then((_) => next()));
       }
       do {
-        await fn(qty);
-        qty++;
-      } while (this.nodeElement.target.children[qty - 1] && qty < length && qty % portion !== 0);
+        await fn(index);
+        index++;
+        if (index >= length) {
+          this.repeat = 0;
+          break;
+        }
+      } while (index % portion !== 0);
       f = true;
       r?.();
     },
     async length(length) {
+      this.repeat++;
       let qty = this.nodeElement.children.length;
       if (length > qty)
         await this.portions(length, qty, async (index) => await this.createIterate(index));
@@ -846,7 +857,7 @@
           const children = this.nodeElement.children;
           deleteReactive(this.nodeElement.reactivity.component, this.name + "." + qty);
           children[qty].unmount?.();
-          children[qty].target.remove();
+          children[qty].target.remove?.();
           children.splice(qty, 1);
         }
       }
@@ -857,16 +868,17 @@
   var basicComponent_default = {
     async basic(options) {
       this.nodeOptions.component = options;
-      const mount2 = async () => await this.create(this.proxies.bind(this), this.nodeElement, options);
-      const induced = this.induced(async (permit) => permit ? await mount2() : this.nodeElement.unmount?.());
+      const create = () => this.create(this.proxies.bind(this), this.nodeElement, options);
+      const induced = this.induced(async (permit) => permit ? await create() : this.nodeElement.unmount?.());
       if (induced)
-        await mount2();
+        await create();
     },
     proxies(proxies) {
       if (!proxies)
         return;
       const reactive = (pr, fn) => this.reactiveComponent(this.impress.define(pr), (v, p) => {
-        p ? this.nodeElement.proxy?.[pr]?.setValue(v, p) : this.nodeElement.proxy?.[pr]?.setValue(fn(this.nodeElement));
+        const setValue = (...arg) => this.nodeElement.proxy?.[pr]?.setValue(...arg);
+        p ? setValue(v, p) : setValue(fn(this.nodeElement));
       });
       return this.reactivate(proxies, reactive);
     }
@@ -906,15 +918,16 @@
   var component_default = {
     async component() {
       this.nodeElement.reactivity.component = /* @__PURE__ */ new Map();
-      if (this.nodeElement.isIterable)
+      if (this.nodeElement.iterated)
         return errorComponent(this.nodeElement.nodepath, 208);
-      this.nodeElement.mount = async (options) => {
+      this.nodeElement.mount = (options) => {
         this.nodeElement.unmount?.();
         this.nodeElement.created = false;
-        options.iterate ? await this.iterative(options) : await this.basic(options);
+        return options.iterate ? this.iterative(options) : this.basic(options);
       };
-      this.nodeElement.prepared = this.nodeOptions.prepared;
-      this.nodeOptions.component.async ? this.nodeElement.mount(this.nodeOptions.component) : await this.nodeElement.mount(this.nodeOptions.component);
+      const mount2 = () => this.nodeElement.mount(this.nodeOptions.component);
+      this.nodeElement.replaced = this.nodeOptions.replaced;
+      this.nodeOptions.component.async ? mount2() : await mount2();
     },
     induced(fn) {
       if (this.nodeOptions.component.hasOwnProperty("induce")) {
@@ -970,7 +983,7 @@
           continue;
         }
         const spotElement = nodeElement.spot[name];
-        Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + "." + name, nodename: name, isSpot: true });
+        Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + "." + name, nodename: name, spoted: true });
         const n = factoryNodeComponent_default(options, this.context, spotElement, this.impress, this.app);
         await n.controller();
       }
@@ -996,20 +1009,21 @@
     reactiveNode(refs, active2) {
       this.reactive(refs, active2, this.nodeElement.reactivity.node);
     }
-    async controller() {
+    controller() {
+      const nodepath = this.nodeElement.nodepath;
       for (const key in this.nodeOptions) {
-        if (this.nodeOptions.prepared && !["selector", "component", "prepared"].includes(key))
-          return errorNode(this.nodeElement.nodepath, 109, key);
+        if (this.nodeOptions.replaced && !["selector", "component", "replaced"].includes(key))
+          return errorNode(nodepath, 109, key);
         if (key in this.nodeElement.target)
           this.native(key);
         else if (key in this.context.directives)
           this.directives(key);
         else if (key === "component")
-          await this.component?.();
-        else if (key === "selector" || key === "prepared") {
-          this.nodeElement.isSpot && errorNode(this.nodeElement.nodepath, 108);
+          return this.component?.();
+        else if (key === "selector" || key === "replaced") {
+          this.nodeElement.spoted && errorNode(nodepath, 108);
         } else
-          errorNode(this.nodeElement.nodepath, 104, key);
+          errorNode(nodepath, 104, key);
       }
     }
   };
@@ -1021,14 +1035,14 @@
   }
 
   // packages/lesta/renderComponent.js
-  function renderComponent(nodeElement, component2, controller) {
+  function renderComponent(nodeElement, component2) {
     const options = { ...component2.context.options };
     if (!options.template)
       return errorComponent(nodeElement.nodepath, 209);
     const getContent = (template) => {
       const html = typeof template === "function" ? template.bind(component2.context)() : template;
-      const content = cleanHTML(html.trim());
-      if ((nodeElement.isIterable || nodeElement.prepared) && content.length > 1)
+      const content = cleanHTML(html);
+      if ((nodeElement.iterated || nodeElement.replaced) && content.length > 1)
         return errorComponent(nodeElement.nodepath, 210);
       return content;
     };
@@ -1037,7 +1051,7 @@
         node2.spot = {};
       options.spots?.forEach((name) => Object.assign(node2.spot, { [name]: { target: node2.target.querySelector(`[spot="${name}"]`) } }));
     };
-    if (nodeElement.isIterable) {
+    if (nodeElement.iterated) {
       const parent = nodeElement.parent;
       if (parent.children.length === 1 && parent.target.childNodes.length)
         parent.target.innerHTML = "";
@@ -1049,15 +1063,14 @@
         parent.unmount = () => {
           component2.destroy(parent);
           parent.clear();
-          delete parent.unmount;
         };
       nodeElement.unmount = () => {
         component2.destroy(nodeElement);
         component2.unmount(nodeElement);
-        controller.abort();
+        component2.context.abort?.();
       };
     } else {
-      if (nodeElement.prepared) {
+      if (nodeElement.replaced) {
         const content = getContent(options.template);
         const target = nodeElement.target;
         nodeElement.target.before(...content);
@@ -1073,72 +1086,65 @@
         component2.destroy(nodeElement);
         component2.unmount(nodeElement);
         nodeElement.target.innerHTML = "";
-        controller.abort();
+        component2.context.abort?.();
       };
     }
   }
 
   // packages/lesta/lifecycle.js
-  async function lifecycle(component2, render, props2) {
+  async function lifecycle(component2, render, propsData, aborted) {
     const hooks = [
+      async () => await component2.loaded(propsData),
       async () => {
-        component2.context.props = props2;
-        await component2.loaded();
-      },
-      async () => {
-        await component2.props(props2);
+        await component2.props(propsData);
         component2.params();
         component2.methods();
         component2.proxies();
-        delete component2.context.props;
-        return await component2.created();
+        await component2.created();
       },
       async () => {
         render();
-        return await component2.rendered();
+        await component2.rendered();
       },
       async () => {
         await component2.nodes();
-        return await component2.mounted();
+        await component2.mounted();
+      },
+      () => {
+        delete component2.context.abort;
       }
     ];
-    const result = (data) => {
-      return {
-        container: component2.context.container,
-        phase: component2.context.phase,
-        data
-      };
-    };
-    for await (const hook of hooks) {
-      const data = await hook();
-      component2.context.phase++;
-      if (component2.context.abortSignal?.aborted || data) {
-        props2.aborted?.(result(replicate(data)));
-        return;
+    try {
+      for await (const hook of hooks) {
+        await revocablePromise(hook(), component2.context.abortSignal);
+        component2.context.phase++;
       }
+    } catch (error) {
+      aborted();
     }
-    props2.completed?.(result(null));
+    propsData.completed?.();
     return component2.context.container;
   }
 
   // packages/lesta/mount.js
-  async function mount(module, container, props2, app = {}) {
+  async function mount(module, container, propsData, app = {}) {
     const controller = new AbortController();
-    const signal = controller.signal;
-    const options = await loadModule(module, signal);
+    container.unmount = () => controller.abort();
+    const aborted = () => propsData.aborted?.({ phase: component2 ? component2.context.phase : 0, reason: controller.signal.reason });
+    const options = await loadModule(module, controller.signal, aborted);
     if (!options)
       return errorComponent(container.nodepath, 216);
-    const component2 = new InitNodeComponent(mixins(options), container, app, signal, factoryNodeComponent_default);
-    const render = () => renderComponent(container, component2, controller);
-    return await lifecycle(component2, render, props2);
+    const component2 = new InitNodeComponent(mixins(options), container, app, controller, factoryNodeComponent_default);
+    const render = () => renderComponent(container, component2);
+    return await lifecycle(component2, render, propsData, aborted);
   }
 
   // packages/lesta/createApp.js
   function createApp(app = {}) {
     const container = {};
-    app.mount = async ({ options, target, name = "root", props: props2 = {} }) => {
+    app.mount = async ({ options, target, name = "root" }, propsData = {}) => {
       Object.assign(container, { target, nodepath: name });
-      return await mount(options, { target, nodepath: name }, props2, app);
+      return await mount(options, { target, nodepath: name }, propsData, app);
     };
     app.unmount = () => container.unmount?.();
     Object.preventExtensions(app);
@@ -1152,32 +1158,30 @@
   }
 
   // packages/lesta/mountWidget.js
-  async function mountWidget({ options, target, name = "root", aborted, completed }) {
+  async function mountWidget({ options, target, name = "root" }, propsData) {
     if (!options)
       return errorComponent(name, 216);
     if (!target)
       return errorComponent(name, 217);
     const src = { ...options };
     const controller = new AbortController();
-    const signal = controller.signal;
     const container = {
-      // ???
       target,
       nodepath: name,
       unmount() {
-        delete component2.context.container;
+        component2.context.abort?.();
         target.innerHTML = "";
-        controller.abort();
       }
     };
-    const component2 = new InitNode(src, container, {}, signal, factoryNode_default);
+    const component2 = new InitNode(src, container, {}, controller, factoryNode_default);
+    const aborted = () => propsData.aborted?.({ phase: component2.context.phase, reason: controller.signal.reason });
     const render = () => {
-      target.innerHTML = src.template;
+      target.innerHTML = cleanHTML(src.template);
       component2.context.container = container;
     };
-    return await lifecycle(component2, render, { aborted, completed });
+    return await lifecycle(component2, render, propsData, aborted);
   }
 
   // scripts/lesta.global.js
-  window.lesta = { createApp, mountWidget, replicate, deliver, deleteReactive, cleanHTML, loadModule };
+  window.lesta = { createApp, mountWidget, replicate, deliver, deleteReactive, cleanHTML, loadModule, revocablePromise };
 })();

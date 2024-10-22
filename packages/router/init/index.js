@@ -39,7 +39,6 @@ export default class Router extends BasicRouter {
     if (to.pushed) history[to.replace ? 'replaceState' : 'pushState'](null, null, to.fullPath)
     const target = to.route
     const from = this.app.router.from
-    const ssr = target.ssr
     if (this.current && from?.route.component !== target.component) {
       this.current?.unmount?.();
       this.current = null
@@ -50,7 +49,7 @@ export default class Router extends BasicRouter {
     }
     if (target.layout) {
       if (from?.route.layout !== target.layout) {
-        this.currentLayout = await this.app.mount({ options: this.app.router.layouts[target.layout], target: this.rootContainer, props: { ssr }})
+        this.currentLayout = await this.app.mount({ options: this.app.router.layouts[target.layout], target: this.rootContainer }, this.propsData)
         if (!this.currentLayout) return
         this.contaner = this.rootContainer.querySelector('[router]')
         if (!this.contaner) {
@@ -66,7 +65,7 @@ export default class Router extends BasicRouter {
     
     if (from?.route.component !== target.component) {
       window.scrollTo(0, 0)
-      this.current = await this.app.mount({ options: target.component, target: this.contaner, props: { ssr }})
+      this.current = await this.app.mount({ options: target.component, target: this.contaner }, this.propsData)
       if (!this.current) return
     } else await this.emit(to, from, this.app)
     return to

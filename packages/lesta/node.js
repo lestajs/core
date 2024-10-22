@@ -17,15 +17,16 @@ export default class Node {
   reactiveNode(refs, active) {
     this.reactive(refs, active, this.nodeElement.reactivity.node)
   }
-  async controller() {
+  controller() {
+    const nodepath = this.nodeElement.nodepath
     for (const key in this.nodeOptions) {
-      if (this.nodeOptions.prepared && !['selector', 'component', 'prepared'].includes(key)) return errorNode(this.nodeElement.nodepath, 109, key)
+      if (this.nodeOptions.replaced && !['selector', 'component', 'replaced'].includes(key)) return errorNode(nodepath, 109, key)
       if (key in this.nodeElement.target) this.native(key)
       else if (key in this.context.directives) this.directives(key)
-      else if (key === 'component') await this.component?.()
-      else if (key === 'selector' || key === 'prepared') {
-        this.nodeElement.isSpot && errorNode(this.nodeElement.nodepath, 108)
-      } else errorNode(this.nodeElement.nodepath, 104, key)
+      else if (key === 'component') return this.component?.()
+      else if (key === 'selector' || key === 'replaced') {
+        this.nodeElement.spoted && errorNode(nodepath, 108)
+      } else errorNode(nodepath, 104, key)
     }
   }
 }

@@ -40,7 +40,7 @@ function cleanHTML(str) {
     }
   }
   
-  const html = stringToHTML(str)
+  const html = stringToHTML(str.trim())
   removeScripts(html)
   clean(html)
   return html.childNodes

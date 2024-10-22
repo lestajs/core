@@ -12,6 +12,21 @@
     return typeof data === "object" ? JSON.parse(JSON.stringify(data)) : data;
   }
 
+  // packages/utils/revocablePromise.js
+  async function revocablePromise(promise, signal, aborted) {
+    return new Promise((resolve, reject) => {
+      const abortListener = () => {
+        reject();
+        aborted?.();
+        signal.removeEventListener("abort", abortListener);
+      };
+      signal.addEventListener("abort", abortListener);
+      if (signal.aborted)
+        abortListener();
+      promise.then(resolve).catch(reject);
+    });
+  }
+
   // packages/utils/cleanHTML.js
   function cleanHTML(str) {
     function stringToHTML(str2) {
@@ -49,7 +64,7 @@
         clean(node2);
       }
     }
-    const html = stringToHTML(str);
+    const html = stringToHTML(str.trim());
     removeScripts(html);
     clean(html);
     return html.childNodes;
@@ -63,20 +78,19 @@
     105: "node with this name was not found in the template.",
     106: "innerHTML method is not secure due to XXS attacks, use _html or _evalHTML directives.",
     107: 'node "%s" error, spot cannot be a node.',
-    108: '"selector" and "prepared" properties is not supported within spots.',
+    108: '"selector" and "replaced" properties is not supported within spots.',
     109: '"%s" property is not supported. Prepared node only supports "selector", "component" properties'
   };
   var component = {
     // 201: 'section "%s" is not found in the template.',
     202: 'spot "%s" is not defined.',
     // 203: '"src" property must not be empty.',
-    // 204: 'section mounting is not available for iterable components. You can set the default component in the "sections".',
-    205: '"iterate" property expects a function.',
-    206: '"iterate" function must return an array.',
+    204: '"iterate" property is not supported for "replaced" node.',
+    205: '"iterate" property expects a function that returns an array',
     // 207: 'node is a section, the "component" property is not supported.',
     208: 'node is iterable, the "component" property is not supported.',
     209: "iterable component must have a template.",
-    210: "iterable component and component within prepared node must have only one root tag in the template.",
+    210: "iterable component and component within replaced node must have only one root tag in the template.",
     211: "component should have object as the object type.",
     212: 'method "%s" is already in props.',
     213: 'param "%s" is already in props.',
@@ -175,7 +189,7 @@
 
   // packages/lesta/initBasic.js
   var InitBasic = class {
-    constructor(component2, container, app = {}, signal) {
+    constructor(component2, container, app = {}, controller) {
       this.component = component2;
       this.app = app;
       this.impress = impress_default;
@@ -185,7 +199,8 @@
         container,
         options: component2,
         phase: 0,
-        abortSignal: signal,
+        abort: () => controller.abort(),
+        abortSignal: controller.signal,
         node: {},
         param: {},
         method: {},
@@ -462,64 +477,57 @@
     reactiveNode(refs, active2) {
       this.reactive(refs, active2, this.nodeElement.reactivity.node);
     }
-    async controller() {
+    controller() {
+      const nodepath = this.nodeElement.nodepath;
       for (const key in this.nodeOptions) {
-        if (this.nodeOptions.prepared && !["selector", "component", "prepared"].includes(key))
-          return errorNode(this.nodeElement.nodepath, 109, key);
+        if (this.nodeOptions.replaced && !["selector", "component", "replaced"].includes(key))
+          return errorNode(nodepath, 109, key);
         if (key in this.nodeElement.target)
           this.native(key);
         else if (key in this.context.directives)
           this.directives(key);
         else if (key === "component")
-          await this.component?.();
-        else if (key === "selector" || key === "prepared") {
-          this.nodeElement.isSpot && errorNode(this.nodeElement.nodepath, 108);
+          return this.component?.();
+        else if (key === "selector" || key === "replaced") {
+          this.nodeElement.spoted && errorNode(nodepath, 108);
         } else
-          errorNode(this.nodeElement.nodepath, 104, key);
+          errorNode(nodepath, 104, key);
       }
     }
   };
 
   // packages/lesta/lifecycle.js
-  async function lifecycle(component2, render, props2) {
+  async function lifecycle(component2, render, propsData, aborted) {
     const hooks = [
+      async () => await component2.loaded(propsData),
       async () => {
-        component2.context.props = props2;
-        await component2.loaded();
-      },
-      async () => {
-        await component2.props(props2);
+        await component2.props(propsData);
         component2.params();
         component2.methods();
         component2.proxies();
-        delete component2.context.props;
-        return await component2.created();
+        await component2.created();
       },
       async () => {
         render();
-        return await component2.rendered();
+        await component2.rendered();
       },
       async () => {
         await component2.nodes();
-        return await component2.mounted();
+        await component2.mounted();
+      },
+      () => {
+        delete component2.context.abort;
       }
     ];
-    const result = (data) => {
-      return {
-        container: component2.context.container,
-        phase: component2.context.phase,
-        data
-      };
-    };
-    for await (const hook of hooks) {
-      const data = await hook();
-      component2.context.phase++;
-      if (component2.context.abortSignal?.aborted || data) {
-        props2.aborted?.(result(replicate(data)));
-        return;
+    try {
+      for await (const hook of hooks) {
+        await revocablePromise(hook(), component2.context.abortSignal);
+        component2.context.phase++;
       }
+    } catch (error) {
+      aborted();
     }
-    props2.completed?.(result(null));
+    propsData.completed?.();
     return component2.context.container;
   }
 
@@ -530,30 +538,28 @@
   }
 
   // packages/lesta/mountWidget.js
-  async function mountWidget({ options, target, name = "root", aborted, completed }) {
+  async function mountWidget({ options, target, name = "root" }, propsData) {
     if (!options)
       return errorComponent(name, 216);
     if (!target)
       return errorComponent(name, 217);
     const src = { ...options };
     const controller = new AbortController();
-    const signal = controller.signal;
     const container = {
-      // ???
       target,
       nodepath: name,
       unmount() {
-        delete component2.context.container;
+        component2.context.abort?.();
         target.innerHTML = "";
-        controller.abort();
       }
     };
-    const component2 = new InitNode(src, container, {}, signal, factoryNode_default);
+    const component2 = new InitNode(src, container, {}, controller, factoryNode_default);
+    const aborted = () => propsData.aborted?.({ phase: component2.context.phase, reason: controller.signal.reason });
     const render = () => {
-      target.innerHTML = src.template;
+      target.innerHTML = cleanHTML(src.template);
       component2.context.container = container;
     };
-    return await lifecycle(component2, render, { aborted, completed });
+    return await lifecycle(component2, render, propsData, aborted);
   }
 
   // scripts/lesta.mountWidget.global.js

@@ -4,7 +4,7 @@ import { replicate } from '../utils'
 import { errorComponent } from '../utils/errors/component.js'
 
 export default class InitBasic {
-  constructor(component, container, app = {}, signal) {
+  constructor(component, container, app = {}, controller) {
     this.component = component
     this.app = app
     this.impress = impress
@@ -14,7 +14,8 @@ export default class InitBasic {
       container,
       options: component,
       phase: 0,
-      abortSignal: signal,
+      abort: () => controller.abort(),
+      abortSignal: controller.signal,
       node: {},
       param: {},
       method: {},

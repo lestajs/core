@@ -6,14 +6,15 @@ import withComponent from './factoryNodeComponent'
 import renderComponent from './renderComponent'
 import { lifecycle } from './lifecycle'
 
-async function mount(module, container, props, app = {}) {
+async function mount(module, container, propsData, app = {}) {
   const controller = new AbortController()
-  const signal = controller.signal
-  const options = await loadModule(module, signal)
+  container.unmount = () => controller.abort()
+  const aborted = () => propsData.aborted?.({ phase: component ? component.context.phase : 0, reason: controller.signal.reason })
+  const options = await loadModule(module, controller.signal, aborted)
   if (!options) return errorComponent(container.nodepath, 216)
-  const component = new InitNodeComponent(mixins(options), container, app, signal, withComponent)
-  const render = () => renderComponent(container, component, controller)
-  return await lifecycle(component, render, props)
+  const component = new InitNodeComponent(mixins(options), container, app, controller, withComponent)
+  const render = () => renderComponent(container, component)
+  return await lifecycle(component, render, propsData, aborted)
 }
 
 export { mount }

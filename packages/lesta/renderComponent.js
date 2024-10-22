@@ -1,20 +1,20 @@
 import { errorComponent } from '../utils/errors/component'
 import { cleanHTML } from '../utils'
 
-export default function renderComponent(nodeElement, component, controller) {
+export default function renderComponent(nodeElement, component) {
   const options = { ...component.context.options }
   if (!options.template) return errorComponent(nodeElement.nodepath, 209)
   const getContent = (template) => {
     const html = typeof template === 'function' ? template.bind(component.context)() : template
-    const content = cleanHTML(html.trim())
-    if ((nodeElement.isIterable || nodeElement.prepared) && content.length > 1) return errorComponent(nodeElement.nodepath, 210)
+    const content = cleanHTML(html)
+    if ((nodeElement.iterated || nodeElement.replaced) && content.length > 1) return errorComponent(nodeElement.nodepath, 210)
     return content
   }
   const spots = (node) => {
     if (options.spots?.length) node.spot = {}
     options.spots?.forEach(name => Object.assign(node.spot, { [name]: { target: node.target.querySelector(`[spot="${ name }"]`) }}))
   }
-  if (nodeElement.isIterable) {
+  if (nodeElement.iterated) {
     const parent = nodeElement.parent
     if (parent.children.length === 1 && parent.target.childNodes.length) parent.target.innerHTML = ''
     const content = getContent(options.template)
@@ -24,15 +24,14 @@ export default function renderComponent(nodeElement, component, controller) {
     if (!parent.unmount) parent.unmount = () => {
       component.destroy(parent)
       parent.clear()
-      delete parent.unmount
     }
     nodeElement.unmount = () => {
       component.destroy(nodeElement) // for store
       component.unmount(nodeElement)
-      controller.abort() // !
+      component.context.abort?.()
     }
   } else {
-    if (nodeElement.prepared) {
+    if (nodeElement.replaced) {
       const content = getContent(options.template)
       const target = nodeElement.target
       nodeElement.target.before(...content)
@@ -48,7 +47,7 @@ export default function renderComponent(nodeElement, component, controller) {
       component.destroy(nodeElement)
       component.unmount(nodeElement)
       nodeElement.target.innerHTML = ''
-      controller.abort()
+      component.context.abort?.()
     }
   }
 }

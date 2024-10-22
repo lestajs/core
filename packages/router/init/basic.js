@@ -3,8 +3,9 @@ import link from '../link.js'
 import collectorRoutes from '../collectorRoutes.js'
 
 export default class BasicRouter {
-  constructor(app, options) {
+  constructor(app, options, propsData) {
     this.app = app
+    this.propsData = propsData
     this.app.router = {
       layouts: options.layouts || {},
       collection: [],
@@ -61,7 +62,6 @@ export default class BasicRouter {
       to.replace = replace
       this.app.router.from = this.form
       this.app.router.to = to
-      this.app.router.to.route.ssr = this.app.router.type === 'ssr' && document.querySelector('html').getAttribute('ssr')
       if (await this.beforeHooks(this.beforeEnter)) return
       if (await this.beforeHooks(target.beforeEnter)) return
       if (target.redirect) {

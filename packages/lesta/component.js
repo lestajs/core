@@ -6,14 +6,15 @@ import props from './props'
 export default {
   async component() {
     this.nodeElement.reactivity.component = new Map()
-    if (this.nodeElement.isIterable) return errorComponent(this.nodeElement.nodepath, 208)
-    this.nodeElement.mount = async (options) => {
+    if (this.nodeElement.iterated) return errorComponent(this.nodeElement.nodepath, 208)
+    this.nodeElement.mount = (options) => {
       this.nodeElement.unmount?.()
       this.nodeElement.created = false
-      options.iterate ? await this.iterative(options) : await this.basic(options)
+      return options.iterate ? this.iterative(options) : this.basic(options)
     }
-    this.nodeElement.prepared = this.nodeOptions.prepared
-    this.nodeOptions.component.async ? this.nodeElement.mount(this.nodeOptions.component) : await this.nodeElement.mount(this.nodeOptions.component)
+    const mount = () => this.nodeElement.mount(this.nodeOptions.component)
+    this.nodeElement.replaced = this.nodeOptions.replaced
+    this.nodeOptions.component.async ? mount() : await mount()
   },
   induced(fn) {
     if (this.nodeOptions.component.hasOwnProperty('induce')) {
@@ -65,7 +66,7 @@ export default {
         continue
       }
       const spotElement = nodeElement.spot[name]
-      Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + '.' + name, nodename: name, isSpot: true })
+      Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + '.' + name, nodename: name, spoted: true })
       const n = withComponent(options, this.context, spotElement, this.impress, this.app)
       await n.controller()
     }

@@ -1,44 +1,37 @@
-import { replicate } from '../utils/index'
+import { revocablePromise } from '../utils'
 
-async function lifecycle(component, render, props) {
+async function lifecycle(component, render, propsData, aborted) {
   const hooks = [
+    async () => await component.loaded(propsData),
     async () => {
-      component.context.props = props
-      await component.loaded()
-    },
-    async () => {
-      await component.props(props)
+      await component.props(propsData)
       component.params()
       component.methods()
       component.proxies()
-      delete component.context.props
-      return await component.created()
+      await component.created()
     },
     async () => {
       render()
-      return await component.rendered()
+      await component.rendered()
     },
     async () => {
       await component.nodes()
-      return await component.mounted()
+      await component.mounted()
+    },
+    () => {
+      delete component.context.abort
     }
   ]
-  const result = (data) => {
-    return {
-      container: component.context.container,
-      phase: component.context.phase,
-      data
+  try {
+    for await (const hook of hooks) {
+      await revocablePromise(hook(), component.context.abortSignal)
+      component.context.phase++
+      // if (abortSignal?.aborted) return
     }
+  } catch (error) {
+    aborted()
   }
-  for await (const hook of hooks) {
-    const data = await hook()
-    component.context.phase++
-    if (component.context.abortSignal?.aborted || data) {
-      props.aborted?.(result(replicate(data)))
-      return
-    }
-  }
-  props.completed?.(result(null))
+  propsData.completed?.()
   return component.context.container
 }
 

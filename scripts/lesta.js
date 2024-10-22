@@ -8,10 +8,10 @@ import {
   throttling,
   delay,
   loadModule,
+  revocablePromise,
   deleteReactive,
   cleanHTML,
   uid,
-  queue,
   deepFreeze,
   nextRepaint
 } from '../packages/utils'
@@ -34,10 +34,10 @@ export {
   throttling,
   delay,
   loadModule,
+  revocablePromise,
   deleteReactive,
   cleanHTML,
   uid,
-  queue,
   deepFreeze,
   nextRepaint
 }

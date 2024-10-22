@@ -120,8 +120,8 @@ class Props {
 }
 
 export default {
-  async init(props, componentProps, context, app) {
+  init(props, componentProps, context, app) {
     const p = new Props(props, context, app)
-    return await p.setup(componentProps)
+    return p.setup(componentProps)
   }
 }
