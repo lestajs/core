@@ -9,12 +9,13 @@ const node = {
   109: '"%s" property is not supported. Prepared node only supports "selector", "component" properties'
 }
 const component = {
-  // 201: 'section "%s" is not found in the template.',
+  // 201:
   202: 'spot "%s" is not defined.',
-  // 203: '"src" property must not be empty.',
+  // 203:
   204: '"iterate" property is not supported for "replaced" node.',
   205: '"iterate" property expects a function that returns an array',
-  // 207: 'node is a section, the "component" property is not supported.',
+  // 206:
+  // 207:
   208: 'node is iterable, the "component" property is not supported.',
   209: 'iterable component must have a template.',
   210: 'iterable component and component within replaced node must have only one root tag in the template.',
@@ -22,10 +23,9 @@ const component = {
   212: 'method "%s" is already in props.',
   213: 'param "%s" is already in props.',
   214: 'proxy "%s" is already in props.',
-  // 215: '"iterate", "induce", "sections" property is not supported within sections.',
+  // 215:
   216: 'component options is not defined.',
-  217: 'target is not defined.',
-  // 218: '"aborted" property expects a function as a value.'
+  217: 'target is not defined.'
 }
 const props = {
   301: 'props methods can take only one argument of type object.',
@@ -39,7 +39,7 @@ const props = {
 const store = {
   401: 'object with stores in not define.',
   402: 'store module "%s" in not define.',
-  // 403: 'method "%s" can take only one argument of type object.',
+  // 403:
   404: 'middleware "%s" returns a value not of the object type'
 }
 const router = {

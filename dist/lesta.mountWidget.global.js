@@ -82,12 +82,13 @@
     109: '"%s" property is not supported. Prepared node only supports "selector", "component" properties'
   };
   var component = {
-    // 201: 'section "%s" is not found in the template.',
+    // 201:
     202: 'spot "%s" is not defined.',
-    // 203: '"src" property must not be empty.',
+    // 203:
     204: '"iterate" property is not supported for "replaced" node.',
     205: '"iterate" property expects a function that returns an array',
-    // 207: 'node is a section, the "component" property is not supported.',
+    // 206:
+    // 207:
     208: 'node is iterable, the "component" property is not supported.',
     209: "iterable component must have a template.",
     210: "iterable component and component within replaced node must have only one root tag in the template.",
@@ -95,10 +96,9 @@
     212: 'method "%s" is already in props.',
     213: 'param "%s" is already in props.',
     214: 'proxy "%s" is already in props.',
-    // 215: '"iterate", "induce", "sections" property is not supported within sections.',
+    // 215:
     216: "component options is not defined.",
     217: "target is not defined."
-    // 218: '"aborted" property expects a function as a value.'
   };
 
   // packages/utils/errors/component.js
@@ -514,9 +514,6 @@
       async () => {
         await component2.nodes();
         await component2.mounted();
-      },
-      () => {
-        delete component2.context.abort;
       }
     ];
     try {
@@ -549,7 +546,7 @@
       target,
       nodepath: name,
       unmount() {
-        component2.context.abort?.();
+        controller.abort();
         target.innerHTML = "";
       }
     };

@@ -61,7 +61,7 @@ export default {
     },
     async portions(length, index, fn) {
         if (!length) return
-        const { portion } = this.nodeOptions.component
+        let { portion } = this.nodeOptions.component
         let r = null
         let f = false
         if (index < length - portion) {
@@ -74,10 +74,11 @@ export default {
         do {
             await fn(index)
             index++
+            if (r) portion = 1
             if (index >= length) {
                 this.repeat = 0
                 break
-              }
+            }
         } while (index % portion !== 0)
         f = true
         r?.()

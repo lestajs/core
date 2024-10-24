@@ -13,7 +13,7 @@ async function mountWidget({ options, target, name = 'root' }, propsData) {
     target,
     nodepath: name,
     unmount() {
-      component.context.abort?.()
+      controller.abort()
       target.innerHTML = ''
     }
   }

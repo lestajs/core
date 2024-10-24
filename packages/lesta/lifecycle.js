@@ -17,16 +17,12 @@ async function lifecycle(component, render, propsData, aborted) {
     async () => {
       await component.nodes()
       await component.mounted()
-    },
-    () => {
-      delete component.context.abort
     }
   ]
   try {
     for await (const hook of hooks) {
       await revocablePromise(hook(), component.context.abortSignal)
       component.context.phase++
-      // if (abortSignal?.aborted) return
     }
   } catch (error) {
     aborted()

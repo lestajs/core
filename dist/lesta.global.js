@@ -126,12 +126,13 @@
     109: '"%s" property is not supported. Prepared node only supports "selector", "component" properties'
   };
   var component = {
-    // 201: 'section "%s" is not found in the template.',
+    // 201:
     202: 'spot "%s" is not defined.',
-    // 203: '"src" property must not be empty.',
+    // 203:
     204: '"iterate" property is not supported for "replaced" node.',
     205: '"iterate" property expects a function that returns an array',
-    // 207: 'node is a section, the "component" property is not supported.',
+    // 206:
+    // 207:
     208: 'node is iterable, the "component" property is not supported.',
     209: "iterable component must have a template.",
     210: "iterable component and component within replaced node must have only one root tag in the template.",
@@ -139,10 +140,9 @@
     212: 'method "%s" is already in props.',
     213: 'param "%s" is already in props.',
     214: 'proxy "%s" is already in props.',
-    // 215: '"iterate", "induce", "sections" property is not supported within sections.',
+    // 215:
     216: "component options is not defined.",
     217: "target is not defined."
-    // 218: '"aborted" property expects a function as a value.'
   };
   var props = {
     301: "props methods can take only one argument of type object.",
@@ -824,7 +824,7 @@
     async portions(length, index, fn) {
       if (!length)
         return;
-      const { portion } = this.nodeOptions.component;
+      let { portion } = this.nodeOptions.component;
       let r = null;
       let f = false;
       if (index < length - portion) {
@@ -838,6 +838,8 @@
       do {
         await fn(index);
         index++;
+        if (r)
+          portion = 1;
         if (index >= length) {
           this.repeat = 0;
           break;
@@ -1067,7 +1069,7 @@
       nodeElement.unmount = () => {
         component2.destroy(nodeElement);
         component2.unmount(nodeElement);
-        component2.context.abort?.();
+        component2.context.abort();
       };
     } else {
       if (nodeElement.replaced) {
@@ -1086,7 +1088,7 @@
         component2.destroy(nodeElement);
         component2.unmount(nodeElement);
         nodeElement.target.innerHTML = "";
-        component2.context.abort?.();
+        component2.context.abort();
       };
     }
   }
@@ -1109,9 +1111,6 @@
       async () => {
         await component2.nodes();
         await component2.mounted();
-      },
-      () => {
-        delete component2.context.abort;
       }
     ];
     try {
@@ -1169,7 +1168,7 @@
       target,
       nodepath: name,
       unmount() {
-        component2.context.abort?.();
+        controller.abort();
         target.innerHTML = "";
       }
     };

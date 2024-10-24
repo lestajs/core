@@ -28,7 +28,7 @@ export default function renderComponent(nodeElement, component) {
     nodeElement.unmount = () => {
       component.destroy(nodeElement) // for store
       component.unmount(nodeElement)
-      component.context.abort?.()
+      component.context.abort()
     }
   } else {
     if (nodeElement.replaced) {
@@ -47,7 +47,7 @@ export default function renderComponent(nodeElement, component) {
       component.destroy(nodeElement)
       component.unmount(nodeElement)
       nodeElement.target.innerHTML = ''
-      component.context.abort?.()
+      component.context.abort()
     }
   }
 }
