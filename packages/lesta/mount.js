@@ -6,7 +6,7 @@ import withComponent from './factoryNodeComponent'
 import renderComponent from './renderComponent'
 import { lifecycle } from './lifecycle'
 
-async function mount(module, container, propsData, app = {}) {
+async function mount(module, container, propsData = {}, app = {}) {
   const controller = new AbortController()
   container.unmount = () => controller.abort()
   const aborted = () => propsData.aborted?.({ phase: component ? component.context.phase : 0, reason: controller.signal.reason })
@@ -14,7 +14,7 @@ async function mount(module, container, propsData, app = {}) {
   if (!options) return errorComponent(container.nodepath, 216)
   const component = new InitNodeComponent(mixins(options), container, app, controller, withComponent)
   const render = () => renderComponent(container, component)
-  return await lifecycle(component, render, propsData, aborted)
+  return await lifecycle(component, render, propsData, aborted, propsData.completed)
 }
 
 export { mount }

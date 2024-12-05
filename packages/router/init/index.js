@@ -48,7 +48,7 @@ export default class Router extends BasicRouter {
       this.currentLayout = null
     }
     if (target.layout) {
-      if (from?.route.layout !== target.layout) {
+      if (to.reload || from?.route.layout !== target.layout) {
         this.currentLayout = await this.app.mount({ options: this.app.router.layouts[target.layout], target: this.rootContainer }, this.propsData)
         if (!this.currentLayout) return
         this.contaner = this.rootContainer.querySelector('[router]')
@@ -63,7 +63,7 @@ export default class Router extends BasicRouter {
     document.title = target.title || 'Lesta'
     this.rootContainer.setAttribute('page', target.name || '')
     
-    if (from?.route.component !== target.component) {
+    if (to.reload || from?.route.component !== target.component) {
       window.scrollTo(0, 0)
       this.current = await this.app.mount({ options: target.component, target: this.contaner }, this.propsData)
       if (!this.current) return

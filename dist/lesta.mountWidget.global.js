@@ -90,8 +90,8 @@
     // 206:
     // 207:
     208: 'node is iterable, the "component" property is not supported.',
-    209: "iterable component must have a template.",
-    210: "iterable component and component within replaced node must have only one root tag in the template.",
+    // 209
+    210: 'an iterable component or a component with a "replaced" property must have a "template" property with a single tag',
     211: "component should have object as the object type.",
     212: 'method "%s" is already in props.',
     213: 'param "%s" is already in props.',
@@ -497,7 +497,7 @@
   };
 
   // packages/lesta/lifecycle.js
-  async function lifecycle(component2, render, propsData, aborted) {
+  async function lifecycle(component2, render, propsData, aborted, completed) {
     const hooks = [
       async () => await component2.loaded(propsData),
       async () => {
@@ -524,7 +524,7 @@
     } catch (error) {
       aborted();
     }
-    propsData.completed?.();
+    completed?.();
     return component2.context.container;
   }
 
@@ -535,7 +535,7 @@
   }
 
   // packages/lesta/mountWidget.js
-  async function mountWidget({ options, target, name = "root" }, propsData) {
+  async function mountWidget({ options, target, name = "root", completed, aborted }, app = {}) {
     if (!options)
       return errorComponent(name, 216);
     if (!target)
@@ -550,13 +550,13 @@
         target.innerHTML = "";
       }
     };
-    const component2 = new InitNode(src, container, {}, controller, factoryNode_default);
-    const aborted = () => propsData.aborted?.({ phase: component2.context.phase, reason: controller.signal.reason });
+    const component2 = new InitNode(src, container, app, controller, factoryNode_default);
     const render = () => {
-      target.innerHTML = cleanHTML(src.template);
+      if (src.template)
+        target.innerHTML = cleanHTML(src.template);
       component2.context.container = container;
     };
-    return await lifecycle(component2, render, propsData, aborted);
+    return await lifecycle(component2, render, {}, () => aborted?.({ phase: component2.context.phase, reason: controller.signal.reason }), completed);
   }
 
   // scripts/lesta.mountWidget.global.js

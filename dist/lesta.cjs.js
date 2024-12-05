@@ -269,8 +269,8 @@ var component = {
   // 206:
   // 207:
   208: 'node is iterable, the "component" property is not supported.',
-  209: "iterable component must have a template.",
-  210: "iterable component and component within replaced node must have only one root tag in the template.",
+  // 209
+  210: 'an iterable component or a component with a "replaced" property must have a "template" property with a single tag',
   211: "component should have object as the object type.",
   212: 'method "%s" is already in props.',
   213: 'param "%s" is already in props.',
@@ -826,55 +826,57 @@ var InitNodeComponent = class extends InitNode {
 // packages/lesta/mixins.js
 function mixins(target) {
   var _a;
-  if ((_a = target.mixins) == null ? void 0 : _a.length) {
-    const properties = ["directives", "params", "proxies", "methods", "handlers", "setters", "sources"];
-    const props2 = ["params", "proxies", "methods"];
-    const outwards = ["params", "methods"];
-    const hooks = ["loaded", "rendered", "created", "mounted", "unmounted"];
-    const result = { props: {}, outwards: { params: [], methods: [] }, spots: [] };
-    const mergeProperties = (a, b, key) => {
-      return { ...a[key], ...b[key] };
-    };
-    const mergeArrays = (a, b) => {
-      return [...a, ...b || []];
-    };
-    const mergeShallow = (a = {}, b = {}) => {
-      const obj = {};
-      for (const key in b) {
-        obj[key] = { ...a[key] || {}, ...b[key] };
-      }
-      return obj;
-    };
-    const mergeOptions = (options) => {
-      result.template = options.template || result.template;
-      outwards.forEach((key) => {
-        var _a2;
-        result.outwards[key] = mergeArrays(result.outwards[key], (_a2 = options.outwards) == null ? void 0 : _a2[key]);
-      });
-      result.spots = mergeArrays(result.spots, options.spots);
-      properties.forEach((key) => {
-        result[key] = mergeProperties(result, options, key);
-      });
-      hooks.forEach((key) => {
-        if (options[key])
-          result[key] = options[key];
-      });
-      props2.forEach((key) => {
-        result.props[key] = mergeProperties(result.props, options.props || {}, key);
-      });
-      const resultNodes = result.nodes;
-      result.nodes = function() {
-        var _a2;
-        return mergeShallow(resultNodes == null ? void 0 : resultNodes.bind(this)(), (_a2 = options.nodes) == null ? void 0 : _a2.bind(this)());
-      };
-    };
-    target.mixins.forEach((options) => {
-      mergeOptions(mixins(options));
+  if (!((_a = target.mixins) == null ? void 0 : _a.length))
+    return target;
+  const properties = ["directives", "params", "proxies", "methods", "handlers", "setters", "sources"];
+  const props2 = ["params", "proxies", "methods"];
+  const outwards = ["params", "methods"];
+  const hooks = ["loaded", "rendered", "created", "mounted", "unmounted"];
+  const result = { props: {}, outwards: { params: [], methods: [] }, spots: [] };
+  const nodes = [];
+  const resultNodes = {};
+  const mergeProperties = (a, b, key) => {
+    return { ...a[key], ...b[key] };
+  };
+  const mergeArrays = (a, b) => {
+    return [...a, ...b || []];
+  };
+  const mergeShallow = (a = {}, b = {}) => {
+    for (const key in b) {
+      a[key] = { ...a[key] || {}, ...b[key] };
+    }
+    return a;
+  };
+  const mergeOptions = (options) => {
+    result.template = options.template || result.template;
+    outwards.forEach((key) => {
+      var _a2;
+      result.outwards[key] = mergeArrays(result.outwards[key], (_a2 = options.outwards) == null ? void 0 : _a2[key]);
     });
-    mergeOptions(target);
-    return result;
-  }
-  return target;
+    result.spots = mergeArrays(result.spots, options.spots);
+    properties.forEach((key) => {
+      result[key] = mergeProperties(result, options, key);
+    });
+    hooks.forEach((key) => {
+      if (options[key])
+        result[key] = options[key];
+    });
+    props2.forEach((key) => {
+      result.props[key] = mergeProperties(result.props, options.props || {}, key);
+    });
+    options.nodes && nodes.push(options.nodes);
+  };
+  result.nodes = function() {
+    nodes.forEach((fn) => {
+      mergeShallow(resultNodes, fn.bind(this)());
+    });
+    return resultNodes;
+  };
+  target.mixins.forEach((options) => {
+    mergeOptions(mixins(options));
+  });
+  mergeOptions(target);
+  return result;
 }
 
 // packages/lesta/directiveProperties.js
@@ -1235,12 +1237,15 @@ function factoryNodeComponent_default(...args) {
 // packages/lesta/renderComponent.js
 function renderComponent(nodeElement, component2) {
   const options = { ...component2.context.options };
-  if (!options.template)
-    return errorComponent(nodeElement.nodepath, 209);
   const getContent = (template) => {
     const html = typeof template === "function" ? template.bind(component2.context)() : template;
-    const content = cleanHTML(html);
-    if ((nodeElement.iterated || nodeElement.replaced) && content.length > 1)
+    return cleanHTML(html);
+  };
+  const checkContent = (template) => {
+    if (!template)
+      return errorComponent(nodeElement.nodepath, 210);
+    const content = getContent(template);
+    if (content.length > 1)
       return errorComponent(nodeElement.nodepath, 210);
     return content;
   };
@@ -1254,7 +1259,7 @@ function renderComponent(nodeElement, component2) {
     const parent = nodeElement.parent;
     if (parent.children.length === 1 && parent.target.childNodes.length)
       parent.target.innerHTML = "";
-    const content = getContent(options.template);
+    const content = checkContent(options.template);
     parent.target.append(...content);
     nodeElement.target = parent.target.lastChild;
     spots(nodeElement);
@@ -1270,15 +1275,17 @@ function renderComponent(nodeElement, component2) {
     };
   } else {
     if (nodeElement.replaced) {
-      const content = getContent(options.template);
+      const content = checkContent(options.template);
       const target = nodeElement.target;
       nodeElement.target.before(...content);
       nodeElement.target = target.previousSibling;
       target.remove();
     } else {
+      if (!options.template)
+        return;
       const content = getContent(options.template);
       nodeElement.target.innerHTML = "";
-      content && nodeElement.target.append(...content);
+      nodeElement.target.append(...content);
     }
     spots(nodeElement);
     nodeElement.unmount = () => {
@@ -1291,8 +1298,7 @@ function renderComponent(nodeElement, component2) {
 }
 
 // packages/lesta/lifecycle.js
-async function lifecycle(component2, render, propsData, aborted) {
-  var _a;
+async function lifecycle(component2, render, propsData, aborted, completed) {
   const hooks = [
     async () => await component2.loaded(propsData),
     async () => {
@@ -1319,12 +1325,12 @@ async function lifecycle(component2, render, propsData, aborted) {
   } catch (error) {
     aborted();
   }
-  (_a = propsData.completed) == null ? void 0 : _a.call(propsData);
+  completed == null ? void 0 : completed();
   return component2.context.container;
 }
 
 // packages/lesta/mount.js
-async function mount(module2, container, propsData, app = {}) {
+async function mount(module2, container, propsData = {}, app = {}) {
   const controller = new AbortController();
   container.unmount = () => controller.abort();
   const aborted = () => {
@@ -1336,13 +1342,13 @@ async function mount(module2, container, propsData, app = {}) {
     return errorComponent(container.nodepath, 216);
   const component2 = new InitNodeComponent(mixins(options), container, app, controller, factoryNodeComponent_default);
   const render = () => renderComponent(container, component2);
-  return await lifecycle(component2, render, propsData, aborted);
+  return await lifecycle(component2, render, propsData, aborted, propsData.completed);
 }
 
 // packages/lesta/createApp.js
 function createApp(app = {}) {
   const container = {};
-  app.mount = async ({ options, target, name = "root" }, propsData = {}) => {
+  app.mount = async ({ options, target, name = "root" }, propsData) => {
     Object.assign(container, { target, nodepath: name });
     return await mount(options, { target, nodepath: name }, propsData, app);
   };
@@ -1647,24 +1653,24 @@ function link(v, t, l) {
 }
 
 // packages/router/collectorRoutes.js
-function collectorRoutes(routes, collection, parentPath = "", parentParams = {}, parentExtras = {}) {
+function collectorRoutes(routes, collection, parent = { path: "" }) {
   routes.forEach((route) => {
     if (!route.hasOwnProperty("path"))
       return errorRouter(route.name, 557);
-    const params = { ...parentParams, ...route.params };
-    route.params = params;
-    const extra = { ...parentExtras, ...route.extra };
-    route.extra = extra;
-    const collectorRoute = (path) => {
+    route.params = { ...parent.params, ...route.params };
+    route.extra = { ...parent.extra, ...route.extra };
+    route.beforeEnter = route.beforeEnter || parent.beforeEnter;
+    route.afterEnter = route.afterEnter || parent.afterEnter;
+    const collectorRoute = (path = "") => {
       if (!route.children) {
         collection.push({ name: route.name, path: path.replace(/\/$/, "") || "/", route });
       } else {
-        collectorRoutes(route.children, collection, path, params, extra);
+        collectorRoutes(route.children, collection, { path, params: route.params, extra: route.extra, beforeEnter: route.beforeEnter, afterEnter: route.afterEnter });
       }
     };
-    collectorRoute(parentPath + "/" + route.path.replace(/^\/|\/$/g, ""));
+    collectorRoute(parent.path + "/" + route.path.replace(/^\/|\/$/g, ""));
     if (route.alias) {
-      const aliasPath = (path) => path.charAt(0) === "/" ? path : parentPath + "/" + path;
+      const aliasPath = (path) => path.charAt(0) === "/" ? path : parent.path + "/" + path;
       if (Array.isArray(route.alias)) {
         for (const path of route.alias) {
           collectorRoute(aliasPath(path));
@@ -1720,7 +1726,7 @@ var BasicRouter = class {
     if (typeof path !== "string")
       return path;
     const url = new URL((this.app.origin || location.origin) + path);
-    return await this.update(url, true, typeof v === "object" ? v.replace : false);
+    return await this.update(url, true, typeof v === "object" ? v.replace : false, v.reload);
   }
   async beforeHooks(hook) {
     if (hook) {
@@ -1736,7 +1742,7 @@ var BasicRouter = class {
     if (hook)
       await hook(this.app.router.to, this.app.router.from, this.app);
   }
-  async update(url, pushed = false, replace = false) {
+  async update(url, pushed = false, replace = false, reload = false) {
     let res = null;
     if (await this.beforeHooks(this.beforeEach))
       return;
@@ -1745,6 +1751,7 @@ var BasicRouter = class {
     if (target) {
       to.pushed = pushed;
       to.replace = replace;
+      to.reload = reload;
       this.app.router.from = this.form;
       this.app.router.to = to;
       if (await this.beforeHooks(this.beforeEnter))
@@ -1819,7 +1826,7 @@ var Router = class extends BasicRouter {
       this.currentLayout = null;
     }
     if (target.layout) {
-      if ((from == null ? void 0 : from.route.layout) !== target.layout) {
+      if (to.reload || (from == null ? void 0 : from.route.layout) !== target.layout) {
         this.currentLayout = await this.app.mount({ options: this.app.router.layouts[target.layout], target: this.rootContainer }, this.propsData);
         if (!this.currentLayout)
           return;
@@ -1834,7 +1841,7 @@ var Router = class extends BasicRouter {
     this.rootContainer.setAttribute("layout", target.layout || "");
     document.title = target.title || "Lesta";
     this.rootContainer.setAttribute("page", target.name || "");
-    if ((from == null ? void 0 : from.route.component) !== target.component) {
+    if (to.reload || (from == null ? void 0 : from.route.component) !== target.component) {
       window.scrollTo(0, 0);
       this.current = await this.app.mount({ options: target.component, target: this.contaner }, this.propsData);
       if (!this.current)
@@ -1846,7 +1853,7 @@ var Router = class extends BasicRouter {
 };
 
 // packages/router/index.js
-function createRouter(app, options, propsData) {
+function createRouter(app, options, propsData = {}) {
   return new Router(app, options, propsData);
 }
 
@@ -1857,7 +1864,7 @@ function factoryNode_default(...args) {
 }
 
 // packages/lesta/mountWidget.js
-async function mountWidget({ options, target, name = "root" }, propsData) {
+async function mountWidget({ options, target, name = "root", completed, aborted }, app = {}) {
   if (!options)
     return errorComponent(name, 216);
   if (!target)
@@ -1872,16 +1879,13 @@ async function mountWidget({ options, target, name = "root" }, propsData) {
       target.innerHTML = "";
     }
   };
-  const component2 = new InitNode(src, container, {}, controller, factoryNode_default);
-  const aborted = () => {
-    var _a;
-    return (_a = propsData.aborted) == null ? void 0 : _a.call(propsData, { phase: component2.context.phase, reason: controller.signal.reason });
-  };
+  const component2 = new InitNode(src, container, app, controller, factoryNode_default);
   const render = () => {
-    target.innerHTML = cleanHTML(src.template);
+    if (src.template)
+      target.innerHTML = cleanHTML(src.template);
     component2.context.container = container;
   };
-  return await lifecycle(component2, render, propsData, aborted);
+  return await lifecycle(component2, render, {}, () => aborted == null ? void 0 : aborted({ phase: component2.context.phase, reason: controller.signal.reason }), completed);
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

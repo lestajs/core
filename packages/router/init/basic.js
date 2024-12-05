@@ -38,7 +38,7 @@ export default class BasicRouter {
     const path = this.link(v)
     if (typeof path !== 'string') return path
     const url = new URL((this.app.origin || location.origin) + path)
-    return await this.update(url, true, typeof v === 'object' ? v.replace : false)
+    return await this.update(url, true, typeof v === 'object' ? v.replace : false, v.reload)
   }
   async beforeHooks(hook) {
     if (hook) {
@@ -52,7 +52,7 @@ export default class BasicRouter {
   async afterHooks(hook) {
     if (hook) await hook(this.app.router.to, this.app.router.from, this.app)
   }
-  async update(url, pushed = false, replace = false ) {
+  async update(url, pushed = false, replace = false, reload = false ) {
     let res = null
     if (await this.beforeHooks(this.beforeEach)) return
     const to = route.init(this.app.router.collection, url)
@@ -60,6 +60,7 @@ export default class BasicRouter {
     if (target) {
       to.pushed = pushed
       to.replace = replace
+      to.reload = reload
       this.app.router.from = this.form
       this.app.router.to = to
       if (await this.beforeHooks(this.beforeEnter)) return

@@ -134,8 +134,8 @@
     // 206:
     // 207:
     208: 'node is iterable, the "component" property is not supported.',
-    209: "iterable component must have a template.",
-    210: "iterable component and component within replaced node must have only one root tag in the template.",
+    // 209
+    210: 'an iterable component or a component with a "replaced" property must have a "template" property with a single tag',
     211: "component should have object as the object type.",
     212: 'method "%s" is already in props.',
     213: 'param "%s" is already in props.',
@@ -648,53 +648,56 @@
 
   // packages/lesta/mixins.js
   function mixins(target) {
-    if (target.mixins?.length) {
-      const properties = ["directives", "params", "proxies", "methods", "handlers", "setters", "sources"];
-      const props2 = ["params", "proxies", "methods"];
-      const outwards = ["params", "methods"];
-      const hooks = ["loaded", "rendered", "created", "mounted", "unmounted"];
-      const result = { props: {}, outwards: { params: [], methods: [] }, spots: [] };
-      const mergeProperties = (a, b, key) => {
-        return { ...a[key], ...b[key] };
-      };
-      const mergeArrays = (a, b) => {
-        return [...a, ...b || []];
-      };
-      const mergeShallow = (a = {}, b = {}) => {
-        const obj = {};
-        for (const key in b) {
-          obj[key] = { ...a[key] || {}, ...b[key] };
-        }
-        return obj;
-      };
-      const mergeOptions = (options) => {
-        result.template = options.template || result.template;
-        outwards.forEach((key) => {
-          result.outwards[key] = mergeArrays(result.outwards[key], options.outwards?.[key]);
-        });
-        result.spots = mergeArrays(result.spots, options.spots);
-        properties.forEach((key) => {
-          result[key] = mergeProperties(result, options, key);
-        });
-        hooks.forEach((key) => {
-          if (options[key])
-            result[key] = options[key];
-        });
-        props2.forEach((key) => {
-          result.props[key] = mergeProperties(result.props, options.props || {}, key);
-        });
-        const resultNodes = result.nodes;
-        result.nodes = function() {
-          return mergeShallow(resultNodes?.bind(this)(), options.nodes?.bind(this)());
-        };
-      };
-      target.mixins.forEach((options) => {
-        mergeOptions(mixins(options));
+    if (!target.mixins?.length)
+      return target;
+    const properties = ["directives", "params", "proxies", "methods", "handlers", "setters", "sources"];
+    const props2 = ["params", "proxies", "methods"];
+    const outwards = ["params", "methods"];
+    const hooks = ["loaded", "rendered", "created", "mounted", "unmounted"];
+    const result = { props: {}, outwards: { params: [], methods: [] }, spots: [] };
+    const nodes = [];
+    const resultNodes = {};
+    const mergeProperties = (a, b, key) => {
+      return { ...a[key], ...b[key] };
+    };
+    const mergeArrays = (a, b) => {
+      return [...a, ...b || []];
+    };
+    const mergeShallow = (a = {}, b = {}) => {
+      for (const key in b) {
+        a[key] = { ...a[key] || {}, ...b[key] };
+      }
+      return a;
+    };
+    const mergeOptions = (options) => {
+      result.template = options.template || result.template;
+      outwards.forEach((key) => {
+        result.outwards[key] = mergeArrays(result.outwards[key], options.outwards?.[key]);
       });
-      mergeOptions(target);
-      return result;
-    }
-    return target;
+      result.spots = mergeArrays(result.spots, options.spots);
+      properties.forEach((key) => {
+        result[key] = mergeProperties(result, options, key);
+      });
+      hooks.forEach((key) => {
+        if (options[key])
+          result[key] = options[key];
+      });
+      props2.forEach((key) => {
+        result.props[key] = mergeProperties(result.props, options.props || {}, key);
+      });
+      options.nodes && nodes.push(options.nodes);
+    };
+    result.nodes = function() {
+      nodes.forEach((fn) => {
+        mergeShallow(resultNodes, fn.bind(this)());
+      });
+      return resultNodes;
+    };
+    target.mixins.forEach((options) => {
+      mergeOptions(mixins(options));
+    });
+    mergeOptions(target);
+    return result;
   }
 
   // packages/lesta/directiveProperties.js
@@ -1039,12 +1042,15 @@
   // packages/lesta/renderComponent.js
   function renderComponent(nodeElement, component2) {
     const options = { ...component2.context.options };
-    if (!options.template)
-      return errorComponent(nodeElement.nodepath, 209);
     const getContent = (template) => {
       const html = typeof template === "function" ? template.bind(component2.context)() : template;
-      const content = cleanHTML(html);
-      if ((nodeElement.iterated || nodeElement.replaced) && content.length > 1)
+      return cleanHTML(html);
+    };
+    const checkContent = (template) => {
+      if (!template)
+        return errorComponent(nodeElement.nodepath, 210);
+      const content = getContent(template);
+      if (content.length > 1)
         return errorComponent(nodeElement.nodepath, 210);
       return content;
     };
@@ -1057,7 +1063,7 @@
       const parent = nodeElement.parent;
       if (parent.children.length === 1 && parent.target.childNodes.length)
         parent.target.innerHTML = "";
-      const content = getContent(options.template);
+      const content = checkContent(options.template);
       parent.target.append(...content);
       nodeElement.target = parent.target.lastChild;
       spots(nodeElement);
@@ -1073,15 +1079,17 @@
       };
     } else {
       if (nodeElement.replaced) {
-        const content = getContent(options.template);
+        const content = checkContent(options.template);
         const target = nodeElement.target;
         nodeElement.target.before(...content);
         nodeElement.target = target.previousSibling;
         target.remove();
       } else {
+        if (!options.template)
+          return;
         const content = getContent(options.template);
         nodeElement.target.innerHTML = "";
-        content && nodeElement.target.append(...content);
+        nodeElement.target.append(...content);
       }
       spots(nodeElement);
       nodeElement.unmount = () => {
@@ -1094,7 +1102,7 @@
   }
 
   // packages/lesta/lifecycle.js
-  async function lifecycle(component2, render, propsData, aborted) {
+  async function lifecycle(component2, render, propsData, aborted, completed) {
     const hooks = [
       async () => await component2.loaded(propsData),
       async () => {
@@ -1121,12 +1129,12 @@
     } catch (error) {
       aborted();
     }
-    propsData.completed?.();
+    completed?.();
     return component2.context.container;
   }
 
   // packages/lesta/mount.js
-  async function mount(module, container, propsData, app = {}) {
+  async function mount(module, container, propsData = {}, app = {}) {
     const controller = new AbortController();
     container.unmount = () => controller.abort();
     const aborted = () => propsData.aborted?.({ phase: component2 ? component2.context.phase : 0, reason: controller.signal.reason });
@@ -1135,13 +1143,13 @@
       return errorComponent(container.nodepath, 216);
     const component2 = new InitNodeComponent(mixins(options), container, app, controller, factoryNodeComponent_default);
     const render = () => renderComponent(container, component2);
-    return await lifecycle(component2, render, propsData, aborted);
+    return await lifecycle(component2, render, propsData, aborted, propsData.completed);
   }
 
   // packages/lesta/createApp.js
   function createApp(app = {}) {
     const container = {};
-    app.mount = async ({ options, target, name = "root" }, propsData = {}) => {
+    app.mount = async ({ options, target, name = "root" }, propsData) => {
       Object.assign(container, { target, nodepath: name });
       return await mount(options, { target, nodepath: name }, propsData, app);
     };
@@ -1157,7 +1165,7 @@
   }
 
   // packages/lesta/mountWidget.js
-  async function mountWidget({ options, target, name = "root" }, propsData) {
+  async function mountWidget({ options, target, name = "root", completed, aborted }, app = {}) {
     if (!options)
       return errorComponent(name, 216);
     if (!target)
@@ -1172,13 +1180,13 @@
         target.innerHTML = "";
       }
     };
-    const component2 = new InitNode(src, container, {}, controller, factoryNode_default);
-    const aborted = () => propsData.aborted?.({ phase: component2.context.phase, reason: controller.signal.reason });
+    const component2 = new InitNode(src, container, app, controller, factoryNode_default);
     const render = () => {
-      target.innerHTML = cleanHTML(src.template);
+      if (src.template)
+        target.innerHTML = cleanHTML(src.template);
       component2.context.container = container;
     };
-    return await lifecycle(component2, render, propsData, aborted);
+    return await lifecycle(component2, render, {}, () => aborted?.({ phase: component2.context.phase, reason: controller.signal.reason }), completed);
   }
 
   // scripts/lesta.global.js

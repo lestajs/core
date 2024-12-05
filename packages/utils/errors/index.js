@@ -17,8 +17,8 @@ const component = {
   // 206:
   // 207:
   208: 'node is iterable, the "component" property is not supported.',
-  209: 'iterable component must have a template.',
-  210: 'iterable component and component within replaced node must have only one root tag in the template.',
+  // 209
+  210: 'an iterable component or a component with a "replaced" property must have a "template" property with a single tag',
   211: 'component should have object as the object type.',
   212: 'method "%s" is already in props.',
   213: 'param "%s" is already in props.',
