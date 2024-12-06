@@ -78,20 +78,19 @@
     105: "node with this name was not found in the template.",
     106: "innerHTML method is not secure due to XXS attacks, use _html or _evalHTML directives.",
     107: 'node "%s" error, spot cannot be a node.',
-    108: '"selector" and "replaced" properties is not supported within spots.',
-    109: '"%s" property is not supported. Prepared node only supports "selector", "component" properties'
+    108: '"%s" property is not supported. Replaced node only supports "selector", "component" properties'
   };
   var component = {
     // 201:
     202: 'spot "%s" is not defined.',
     // 203:
-    204: '"iterate" property is not supported for "replaced" node.',
+    204: '"iterate" property is not supported for replaced node.',
     205: '"iterate" property expects a function that returns an array',
     // 206:
     // 207:
     208: 'node is iterable, the "component" property is not supported.',
     // 209
-    210: 'an iterable component or a component with a "replaced" property must have a "template" property with a single tag',
+    210: "an iterable component and a component with a replaced node must have a template with a single root HTML element",
     211: "component should have object as the object type.",
     212: 'method "%s" is already in props.',
     213: 'param "%s" is already in props.',
@@ -479,22 +478,28 @@
     }
     controller() {
       const nodepath = this.nodeElement.nodepath;
+      const replaced = this.nodeElement.target.tagName === "TEMPLATE";
+      this.nodeElement.replaced = replaced;
       for (const key in this.nodeOptions) {
-        if (this.nodeOptions.replaced && !["selector", "component", "replaced"].includes(key))
-          return errorNode(nodepath, 109, key);
+        if (replaced && !["selector", "component"].includes(key))
+          return errorNode(nodepath, 108, key);
         if (key in this.nodeElement.target)
           this.native(key);
         else if (key in this.context.directives)
           this.directives(key);
         else if (key === "component")
           return this.component?.();
-        else if (key === "selector" || key === "replaced") {
-          this.nodeElement.spoted && errorNode(nodepath, 108);
-        } else
+        else
           errorNode(nodepath, 104, key);
       }
     }
   };
+
+  // packages/lesta/templateToHTML.js
+  function templateToHTML(template, context) {
+    const html = typeof template === "function" ? template.bind(context)() : template;
+    return cleanHTML(html);
+  }
 
   // packages/lesta/lifecycle.js
   async function lifecycle(component2, render, propsData, aborted, completed) {
@@ -552,9 +557,9 @@
     };
     const component2 = new InitNode(src, container, app, controller, factoryNode_default);
     const render = () => {
-      if (src.template)
-        target.innerHTML = cleanHTML(src.template);
       component2.context.container = container;
+      if (src.template)
+        target.append(...templateToHTML(src.template, component2.context));
     };
     return await lifecycle(component2, render, {}, () => aborted?.({ phase: component2.context.phase, reason: controller.signal.reason }), completed);
   }

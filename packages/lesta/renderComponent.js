@@ -1,15 +1,11 @@
 import { errorComponent } from '../utils/errors/component'
-import { cleanHTML } from '../utils'
+import templateToHTML from './templateToHTML'
 
 export default function renderComponent(nodeElement, component) {
   const options = { ...component.context.options }
-  const getContent = (template) => {
-    const html = typeof template === 'function' ? template.bind(component.context)() : template
-    return cleanHTML(html)
-  }
   const checkContent = (template) => { // only iterated and replaced
     if (!template) return errorComponent(nodeElement.nodepath, 210)
-    const content = getContent(template)
+    const content = templateToHTML(template, component.context)
     if (content.length > 1) return errorComponent(nodeElement.nodepath, 210)
     return content
   }
@@ -42,7 +38,7 @@ export default function renderComponent(nodeElement, component) {
       target.remove()
     } else {
       if (!options.template) return
-      const content = getContent(options.template)
+      const content = templateToHTML(options.template, component.context)
       nodeElement.target.innerHTML = ''
       nodeElement.target.append(...content)
     }

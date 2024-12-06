@@ -2,7 +2,7 @@ import { lifecycle } from './lifecycle'
 import { InitNode } from './initNode'
 import withoutComponent from './factoryNode'
 import { errorComponent } from '../utils/errors/component'
-import { cleanHTML } from '../utils'
+import templateToHTML from './templateToHTML'
 
 async function mountWidget({ options, target, name = 'root', completed, aborted }, app = {}) {
   if (!options) return errorComponent(name, 216)
@@ -19,8 +19,8 @@ async function mountWidget({ options, target, name = 'root', completed, aborted 
   }
   const component = new InitNode(src, container, app, controller, withoutComponent)
   const render = () => {
-    if (src.template) target.innerHTML = cleanHTML(src.template)
     component.context.container = container
+    if (src.template) target.append(...templateToHTML(src.template, component.context))
   }
   return await lifecycle(component, render, {}, () => aborted?.({ phase: component.context.phase, reason: controller.signal.reason }), completed)
 }

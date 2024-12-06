@@ -13,7 +13,6 @@ export default {
       return options.iterate ? this.iterative(options) : this.basic(options)
     }
     const mount = () => this.nodeElement.mount(this.nodeOptions.component)
-    this.nodeElement.replaced = this.nodeOptions.replaced
     this.nodeOptions.component.async ? mount() : await mount()
   },
   induced(fn) {

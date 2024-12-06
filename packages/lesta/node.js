@@ -19,14 +19,14 @@ export default class Node {
   }
   controller() {
     const nodepath = this.nodeElement.nodepath
+    const replaced = this.nodeElement.target.tagName === 'TEMPLATE'
+    this.nodeElement.replaced = replaced
     for (const key in this.nodeOptions) {
-      if (this.nodeOptions.replaced && !['selector', 'component', 'replaced'].includes(key)) return errorNode(nodepath, 109, key)
+      if (replaced && !['selector', 'component'].includes(key)) return errorNode(nodepath, 108, key)
       if (key in this.nodeElement.target) this.native(key)
       else if (key in this.context.directives) this.directives(key)
       else if (key === 'component') return this.component?.()
-      else if (key === 'selector' || key === 'replaced') {
-        this.nodeElement.spoted && errorNode(nodepath, 108)
-      } else errorNode(nodepath, 104, key)
+      else errorNode(nodepath, 104, key)
     }
   }
 }
