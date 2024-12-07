@@ -7,7 +7,6 @@ export default {
     }
   },
   general(key) {
-    if (key === 'innerHTML') return errorNode(this.nodeElement.nodepath, 106)
     const set = (v) => {
       if (this.nodeElement.target[key] !== null && typeof this.nodeElement.target[key] === 'object') {
         v !== null && typeof v === 'object' ? Object.assign(this.nodeElement.target[key], v) : errorNode(this.nodeElement.nodepath, 103, key)

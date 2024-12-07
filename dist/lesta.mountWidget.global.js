@@ -76,7 +76,7 @@
     103: 'node property "%s" expects an object as its value.',
     104: 'unknown node property: "%s".',
     105: "node with this name was not found in the template.",
-    106: "innerHTML method is not secure due to XXS attacks, use _html or _evalHTML directives.",
+    106: 'a node "%s" has already been created for this HTML element.',
     107: 'node "%s" error, spot cannot be a node.',
     108: '"%s" property is not supported. Replaced node only supports "selector", "component" properties'
   };
@@ -112,26 +112,9 @@
   __export(directives_exports, {
     _attr: () => _attr,
     _class: () => _class,
-    _evalHTML: () => _evalHTML,
     _event: () => _event,
-    _html: () => _html,
     _text: () => _text
   });
-
-  // packages/lesta/directives/_html.js
-  var _html = {
-    update: (node2, value) => {
-      if (value === void 0)
-        return;
-      node2.innerHTML = "";
-      value && node2.append(...cleanHTML(value));
-    }
-  };
-
-  // packages/lesta/directives/_evalHTML.js
-  var _evalHTML = {
-    update: (node2, value) => value !== void 0 ? node2.innerHTML = value : ""
-  };
 
   // packages/lesta/directives/_class.js
   var _class = {
@@ -378,6 +361,9 @@
           const target = t.querySelector(selector) || t.matches(selector) && t;
           const nodepath = container.nodepath + "." + name;
           if (target) {
+            if (target._engaged)
+              return errorNode(nodepath, 106, name);
+            target._engaged = true;
             if (container.spot && Object.values(container.spot).includes(target)) {
               errorNode(nodepath, 107, name);
               continue;
@@ -436,8 +422,6 @@
       }
     },
     general(key) {
-      if (key === "innerHTML")
-        return errorNode(this.nodeElement.nodepath, 106);
       const set = (v) => {
         if (this.nodeElement.target[key] !== null && typeof this.nodeElement.target[key] === "object") {
           v !== null && typeof v === "object" ? Object.assign(this.nodeElement.target[key], v) : errorNode(this.nodeElement.nodepath, 103, key);

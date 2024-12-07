@@ -48,6 +48,8 @@ class InitNode extends InitBasic {
         const target = t.querySelector(selector) || t.matches(selector) && t
         const nodepath = container.nodepath + '.' + name
         if (target) {
+          if (target._engaged) return errorNode(nodepath, 106, name)
+          target._engaged = true
           if (container.spot && Object.values(container.spot).includes(target)) {
             errorNode(nodepath, 107, name)
             continue

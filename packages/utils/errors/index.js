@@ -3,7 +3,7 @@ const node = {
   103: 'node property "%s" expects an object as its value.',
   104: 'unknown node property: "%s".',
   105: 'node with this name was not found in the template.',
-  106: 'innerHTML method is not secure due to XXS attacks, use _html or _evalHTML directives.',
+  106: 'a node "%s" has already been created for this HTML element.',
   107: 'node "%s" error, spot cannot be a node.',
   108: '"%s" property is not supported. Replaced node only supports "selector", "component" properties',
 }
