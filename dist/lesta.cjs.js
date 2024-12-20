@@ -19,7 +19,6 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // scripts/lesta.js
 var lesta_exports = {};
 __export(lesta_exports, {
-  cleanHTML: () => cleanHTML,
   createApp: () => createApp,
   createRouter: () => createRouter,
   createStores: () => createStores,
@@ -176,49 +175,6 @@ function deleteReactive(reactivity, path) {
   }
 }
 
-// packages/utils/cleanHTML.js
-function cleanHTML(str) {
-  function stringToHTML(str2) {
-    const capsule = document.createElement("capsule");
-    capsule.innerHTML = str2;
-    return capsule;
-  }
-  function removeScripts(html2) {
-    const scripts = html2.querySelectorAll("script");
-    for (let script of scripts) {
-      script.remove();
-    }
-  }
-  function isPossiblyDangerous(name, value) {
-    let val = value.replace(/\s+/g, "").toLowerCase();
-    if (["src", "href", "xlink:href"].includes(name)) {
-      if (val.includes("javascript:") || val.includes("data:text/html"))
-        return true;
-    }
-    if (name.startsWith("on"))
-      return true;
-  }
-  function removeAttributes(elem) {
-    const atts = elem.attributes;
-    for (let { name, value } of atts) {
-      if (!isPossiblyDangerous(name, value))
-        continue;
-      elem.removeAttribute(name);
-    }
-  }
-  function clean(html2) {
-    const nodes = html2.children;
-    for (let node2 of nodes) {
-      removeAttributes(node2);
-      clean(node2);
-    }
-  }
-  const html = stringToHTML(str.trim());
-  removeScripts(html);
-  clean(html);
-  return html.childNodes;
-}
-
 // packages/utils/uid.js
 function uid() {
   const buf = new Uint32Array(4);
@@ -271,9 +227,9 @@ var component = {
   // 209
   210: "an iterable component and a component with a replaced node must have a template with a single root HTML element",
   211: "component should have object as the object type.",
-  212: 'method "%s" is already in props.',
-  213: 'param "%s" is already in props.',
-  214: 'proxy "%s" is already in props.',
+  212: 'method "%s" has already been defined previously.',
+  213: 'param "%s" has already been defined previously.',
+  214: 'proxy "%s" has already been defined previously.',
   // 215:
   216: "component options is not defined.",
   217: "target is not defined."
@@ -411,35 +367,29 @@ var InitBasic = class {
     return await ((_a = this.component.created) == null ? void 0 : _a.bind(this.context)());
   }
   methods() {
-    var _a, _b, _c, _d;
+    var _a;
     if (this.component.methods) {
-      if ((_b = (_a = this.component.outwards) == null ? void 0 : _a.methods) == null ? void 0 : _b.length)
-        this.context.container.method = {};
+      this.context.container.action = {};
       for (const [key, method] of Object.entries(this.component.methods)) {
         if (this.context.method.hasOwnProperty(key))
           return errorComponent(this.context.container.nodepath, 212, key);
         this.context.method[key] = method.bind(this.context);
-        if ((_d = (_c = this.component.outwards) == null ? void 0 : _c.methods) == null ? void 0 : _d.includes(key)) {
-          this.context.container.method[key] = (...args) => {
+        if ((_a = this.component.actions) == null ? void 0 : _a.includes(key)) {
+          this.context.container.action[key] = (...args) => {
             const result = method.bind(this.context)(replicate(...args));
             return result instanceof Promise ? result.then((data) => replicate(data)) : replicate(result);
           };
         }
       }
     }
+    Object.preventExtensions(this.context.container.action);
     Object.preventExtensions(this.context.method);
   }
   params() {
-    var _a, _b, _c, _d;
     if (this.component.params) {
-      if ((_b = (_a = this.component.outwards) == null ? void 0 : _a.params) == null ? void 0 : _b.length)
-        this.context.container.param = {};
       for (const key in this.component.params) {
         if (this.context.param.hasOwnProperty(key))
           return errorComponent(this.context.container.nodepath, 213, key);
-        if ((_d = (_c = this.component.outwards) == null ? void 0 : _c.params) == null ? void 0 : _d.includes(key)) {
-          this.context.container.param[key] = this.component.params[key];
-        }
       }
       Object.assign(this.context.param, this.component.params);
     }
@@ -815,9 +765,8 @@ function mixins(target) {
     return target;
   const properties = ["directives", "params", "proxies", "methods", "handlers", "setters", "sources"];
   const props2 = ["params", "proxies", "methods"];
-  const outwards = ["params", "methods"];
   const hooks = ["loaded", "rendered", "created", "mounted", "unmounted"];
-  const result = { props: {}, outwards: { params: [], methods: [] }, spots: [] };
+  const result = { props: {}, actions: [], spots: [] };
   const nodes = [];
   const resultNodes = {};
   const mergeProperties = (a, b, key) => {
@@ -834,10 +783,7 @@ function mixins(target) {
   };
   const mergeOptions = (options) => {
     result.template = options.template || result.template;
-    outwards.forEach((key) => {
-      var _a2;
-      result.outwards[key] = mergeArrays(result.outwards[key], (_a2 = options.outwards) == null ? void 0 : _a2[key]);
-    });
+    result.actions = mergeArrays(result.actions, options.actions);
     result.spots = mergeArrays(result.spots, options.spots);
     properties.forEach((key) => {
       result[key] = mergeProperties(result, options, key);
@@ -1219,7 +1165,9 @@ function factoryNodeComponent_default(...args) {
 // packages/lesta/templateToHTML.js
 function templateToHTML(template, context) {
   const html = typeof template === "function" ? template.bind(context)() : template;
-  return cleanHTML(html);
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  return doc.childNodes;
 }
 
 // packages/lesta/renderComponent.js
@@ -1873,7 +1821,6 @@ async function mountWidget({ options, target, name = "root", completed, aborted 
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  cleanHTML,
   createApp,
   createRouter,
   createStores,

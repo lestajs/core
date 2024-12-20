@@ -1,2 +1,2 @@
-import { createApp, mountWidget, replicate, deliver, deleteReactive, cleanHTML, loadModule, revocablePromise } from './lesta.js'
-window.lesta = { createApp, mountWidget, replicate, deliver, deleteReactive, cleanHTML, loadModule, revocablePromise }
+import { createApp, mountWidget, replicate, deliver, deleteReactive, loadModule, revocablePromise } from './lesta.js'
+window.lesta = { createApp, mountWidget, replicate, deliver, deleteReactive, loadModule, revocablePromise }

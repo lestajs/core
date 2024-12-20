@@ -10,7 +10,6 @@ import {
   loadModule,
   revocablePromise,
   deleteReactive,
-  cleanHTML,
   uid,
   deepFreeze,
   nextRepaint
@@ -36,7 +35,6 @@ export {
   loadModule,
   revocablePromise,
   deleteReactive,
-  cleanHTML,
   uid,
   deepFreeze,
   nextRepaint

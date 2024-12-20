@@ -27,49 +27,6 @@
     });
   }
 
-  // packages/utils/cleanHTML.js
-  function cleanHTML(str) {
-    function stringToHTML(str2) {
-      const capsule = document.createElement("capsule");
-      capsule.innerHTML = str2;
-      return capsule;
-    }
-    function removeScripts(html2) {
-      const scripts = html2.querySelectorAll("script");
-      for (let script of scripts) {
-        script.remove();
-      }
-    }
-    function isPossiblyDangerous(name, value) {
-      let val = value.replace(/\s+/g, "").toLowerCase();
-      if (["src", "href", "xlink:href"].includes(name)) {
-        if (val.includes("javascript:") || val.includes("data:text/html"))
-          return true;
-      }
-      if (name.startsWith("on"))
-        return true;
-    }
-    function removeAttributes(elem) {
-      const atts = elem.attributes;
-      for (let { name, value } of atts) {
-        if (!isPossiblyDangerous(name, value))
-          continue;
-        elem.removeAttribute(name);
-      }
-    }
-    function clean(html2) {
-      const nodes = html2.children;
-      for (let node2 of nodes) {
-        removeAttributes(node2);
-        clean(node2);
-      }
-    }
-    const html = stringToHTML(str.trim());
-    removeScripts(html);
-    clean(html);
-    return html.childNodes;
-  }
-
   // packages/utils/errors/index.js
   var node = {
     102: 'incorrect directive name "%s", the name must start with the character "_".',
@@ -92,9 +49,9 @@
     // 209
     210: "an iterable component and a component with a replaced node must have a template with a single root HTML element",
     211: "component should have object as the object type.",
-    212: 'method "%s" is already in props.',
-    213: 'param "%s" is already in props.',
-    214: 'proxy "%s" is already in props.',
+    212: 'method "%s" has already been defined previously.',
+    213: 'param "%s" has already been defined previously.',
+    214: 'proxy "%s" has already been defined previously.',
     // 215:
     216: "component options is not defined.",
     217: "target is not defined."
@@ -204,32 +161,27 @@
     }
     methods() {
       if (this.component.methods) {
-        if (this.component.outwards?.methods?.length)
-          this.context.container.method = {};
+        this.context.container.action = {};
         for (const [key, method] of Object.entries(this.component.methods)) {
           if (this.context.method.hasOwnProperty(key))
             return errorComponent(this.context.container.nodepath, 212, key);
           this.context.method[key] = method.bind(this.context);
-          if (this.component.outwards?.methods?.includes(key)) {
-            this.context.container.method[key] = (...args) => {
+          if (this.component.actions?.includes(key)) {
+            this.context.container.action[key] = (...args) => {
               const result = method.bind(this.context)(replicate(...args));
               return result instanceof Promise ? result.then((data) => replicate(data)) : replicate(result);
             };
           }
         }
       }
+      Object.preventExtensions(this.context.container.action);
       Object.preventExtensions(this.context.method);
     }
     params() {
       if (this.component.params) {
-        if (this.component.outwards?.params?.length)
-          this.context.container.param = {};
         for (const key in this.component.params) {
           if (this.context.param.hasOwnProperty(key))
             return errorComponent(this.context.container.nodepath, 213, key);
-          if (this.component.outwards?.params?.includes(key)) {
-            this.context.container.param[key] = this.component.params[key];
-          }
         }
         Object.assign(this.context.param, this.component.params);
       }
@@ -482,7 +434,9 @@
   // packages/lesta/templateToHTML.js
   function templateToHTML(template, context) {
     const html = typeof template === "function" ? template.bind(context)() : template;
-    return cleanHTML(html);
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    return doc.childNodes;
   }
 
   // packages/lesta/lifecycle.js

@@ -19,9 +19,9 @@ const component = {
   // 209
   210: 'an iterable component and a component with a replaced node must have a template with a single root HTML element',
   211: 'component should have object as the object type.',
-  212: 'method "%s" is already in props.',
-  213: 'param "%s" is already in props.',
-  214: 'proxy "%s" is already in props.',
+  212: 'method "%s" has already been defined previously.',
+  213: 'param "%s" has already been defined previously.',
+  214: 'proxy "%s" has already been defined previously.',
   // 215:
   216: 'component options is not defined.',
   217: 'target is not defined.'

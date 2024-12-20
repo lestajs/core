@@ -9,7 +9,6 @@ import { delay } from './delay.js'
 import { loadModule } from './loadModule.js'
 import { revocablePromise } from './revocablePromise.js'
 import { deleteReactive } from './deleteReactive.js'
-import { cleanHTML } from './cleanHTML.js'
 import { uid } from './uid.js'
 import { deepFreeze } from './deepFreeze.js'
 import { nextRepaint } from './nextRepaint.js'
@@ -26,7 +25,6 @@ export {
   loadModule,
   revocablePromise,
   deleteReactive,
-  cleanHTML,
   uid,
   deepFreeze,
   nextRepaint
