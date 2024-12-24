@@ -29,7 +29,6 @@ __export(lesta_exports, {
   deliver: () => deliver,
   isObject: () => isObject,
   loadModule: () => loadModule,
-  mapComponent: () => mapComponent,
   mapProps: () => mapProps,
   mountWidget: () => mountWidget,
   nextRepaint: () => nextRepaint,
@@ -70,13 +69,6 @@ function deliver(target, path = [], value) {
 function mapProps(arr, options) {
   const res = {};
   arr.forEach((key) => Object.assign(res, { [key]: options }));
-  return res;
-}
-
-// packages/utils/mapComponent.js
-function mapComponent(fn) {
-  const res = { params: {}, proxies: {}, methods: {}, spots: {} };
-  fn(res);
   return res;
 }
 
@@ -1150,8 +1142,8 @@ var Node = class {
         this.directives(key);
       else if (key === "component")
         return (_a = this.component) == null ? void 0 : _a.call(this);
-      else
-        errorNode(nodepath, 104, key);
+      else if (key !== "selector")
+        return errorNode(nodepath, 104, key);
     }
   }
 };
@@ -1165,9 +1157,9 @@ function factoryNodeComponent_default(...args) {
 // packages/lesta/templateToHTML.js
 function templateToHTML(template, context) {
   const html = typeof template === "function" ? template.bind(context)() : template;
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, "text/html");
-  return doc.childNodes;
+  const capsule = document.createElement("div");
+  capsule.innerHTML = html.trim();
+  return capsule.childNodes;
 }
 
 // packages/lesta/renderComponent.js
@@ -1796,7 +1788,7 @@ function factoryNode_default(...args) {
 }
 
 // packages/lesta/mountWidget.js
-async function mountWidget({ options, target, name = "root", completed, aborted }, app = {}) {
+async function mountWidget({ options, target, name = "root" }, app = {}) {
   if (!options)
     return errorComponent(name, 216);
   if (!target)
@@ -1807,8 +1799,11 @@ async function mountWidget({ options, target, name = "root", completed, aborted 
     target,
     nodepath: name,
     unmount() {
+      var _a;
       controller.abort();
       target.innerHTML = "";
+      (_a = component2.component.unmounted) == null ? void 0 : _a.bind(component2.context)();
+      delete container.unmount;
     }
   };
   const component2 = new InitNode(src, container, app, controller, factoryNode_default);
@@ -1817,7 +1812,10 @@ async function mountWidget({ options, target, name = "root", completed, aborted 
     if (src.template)
       target.append(...templateToHTML(src.template, component2.context));
   };
-  return await lifecycle(component2, render, {}, () => aborted == null ? void 0 : aborted({ phase: component2.context.phase, reason: controller.signal.reason }), completed);
+  return await lifecycle(component2, render, {}, () => {
+    var _a;
+    return (_a = app.aborted) == null ? void 0 : _a.call(app, { phase: component2.context.phase, reason: controller.signal.reason });
+  }, app.completed);
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
@@ -1831,7 +1829,6 @@ async function mountWidget({ options, target, name = "root", completed, aborted 
   deliver,
   isObject,
   loadModule,
-  mapComponent,
   mapProps,
   mountWidget,
   nextRepaint,

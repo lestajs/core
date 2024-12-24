@@ -26,7 +26,7 @@ export default class Node {
       if (key in this.nodeElement.target) this.native(key)
       else if (key in this.context.directives) this.directives(key)
       else if (key === 'component') return this.component?.()
-      else errorNode(nodepath, 104, key)
+      else if (key !== 'selector') return errorNode(nodepath, 104, key)
     }
   }
 }

@@ -425,8 +425,8 @@
           this.directives(key);
         else if (key === "component")
           return this.component?.();
-        else
-          errorNode(nodepath, 104, key);
+        else if (key !== "selector")
+          return errorNode(nodepath, 104, key);
       }
     }
   };
@@ -434,9 +434,9 @@
   // packages/lesta/templateToHTML.js
   function templateToHTML(template, context) {
     const html = typeof template === "function" ? template.bind(context)() : template;
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-    return doc.childNodes;
+    const capsule = document.createElement("div");
+    capsule.innerHTML = html.trim();
+    return capsule.childNodes;
   }
 
   // packages/lesta/lifecycle.js
@@ -478,7 +478,7 @@
   }
 
   // packages/lesta/mountWidget.js
-  async function mountWidget({ options, target, name = "root", completed, aborted }, app = {}) {
+  async function mountWidget({ options, target, name = "root" }, app = {}) {
     if (!options)
       return errorComponent(name, 216);
     if (!target)
@@ -491,6 +491,8 @@
       unmount() {
         controller.abort();
         target.innerHTML = "";
+        component2.component.unmounted?.bind(component2.context)();
+        delete container.unmount;
       }
     };
     const component2 = new InitNode(src, container, app, controller, factoryNode_default);
@@ -499,7 +501,7 @@
       if (src.template)
         target.append(...templateToHTML(src.template, component2.context));
     };
-    return await lifecycle(component2, render, {}, () => aborted?.({ phase: component2.context.phase, reason: controller.signal.reason }), completed);
+    return await lifecycle(component2, render, {}, () => app.aborted?.({ phase: component2.context.phase, reason: controller.signal.reason }), app.completed);
   }
 
   // scripts/lesta.mountWidget.global.js

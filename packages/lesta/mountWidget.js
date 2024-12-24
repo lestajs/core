@@ -4,7 +4,7 @@ import withoutComponent from './factoryNode'
 import { errorComponent } from '../utils/errors/component'
 import templateToHTML from './templateToHTML'
 
-async function mountWidget({ options, target, name = 'root', completed, aborted }, app = {}) {
+async function mountWidget({ options, target, name = 'root' }, app = {}) {
   if (!options) return errorComponent(name, 216)
   if (!target) return errorComponent(name, 217)
   const src = { ...options }
@@ -15,6 +15,8 @@ async function mountWidget({ options, target, name = 'root', completed, aborted 
     unmount() {
       controller.abort()
       target.innerHTML = ''
+      component.component.unmounted?.bind(component.context)()
+      delete container.unmount;
     }
   }
   const component = new InitNode(src, container, app, controller, withoutComponent)
@@ -22,7 +24,7 @@ async function mountWidget({ options, target, name = 'root', completed, aborted 
     component.context.container = container
     if (src.template) target.append(...templateToHTML(src.template, component.context))
   }
-  return await lifecycle(component, render, {}, () => aborted?.({ phase: component.context.phase, reason: controller.signal.reason }), completed)
+  return await lifecycle(component, render, {}, () => app.aborted?.({ phase: component.context.phase, reason: controller.signal.reason }), app.completed)
 }
 
 export { mountWidget }
