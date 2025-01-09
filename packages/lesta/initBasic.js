@@ -1,7 +1,7 @@
 import * as directives from './directives'
 import impress from './impress'
 import { replicate } from '../utils'
-import { errorComponent } from '../utils/errors/component.js'
+import { errorComponent } from '../utils/errors/component'
 
 export default class InitBasic {
   constructor(component, container, app = {}, controller) {
@@ -36,7 +36,6 @@ export default class InitBasic {
   }
   methods() {
     if (this.component.methods) {
-      this.context.container.action = {}
       for (const [key, method] of Object.entries(this.component.methods)) {
         if (this.context.method.hasOwnProperty(key)) return errorComponent(this.context.container.nodepath, 212, key)
         this.context.method[key] = method.bind(this.context)

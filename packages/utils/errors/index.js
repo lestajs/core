@@ -33,7 +33,8 @@ const props = {
   304: 'value does not match type "%s".',
   305: 'method is not found in store "%s".',
   306: 'parent component passes proxies, you need to specify them in props.',
-  307: 'store "%s" is not found.'
+  307: 'store "%s" is not found.',
+  308: 'error in validation function: "%s".'
 }
 const store = {
   401: 'object with stores in not define.',

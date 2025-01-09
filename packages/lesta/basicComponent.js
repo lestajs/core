@@ -8,8 +8,8 @@ export default {
   proxies(proxies) {
     if (!proxies) return
     const reactive = (pr, fn) => this.reactiveComponent(this.impress.define(pr), (v, p) => {
-      const setValue = (...arg) => this.nodeElement.proxy?.[pr]?.setValue(...arg)
-      p ? setValue(v, p) : setValue(fn(this.nodeElement)) // ! ?.
+      const set = (...arg) => this.nodeElement.prop[pr]?.update(...arg)
+      p ? set(v, p) : set(fn(this.nodeElement)) // ! ?.
     })
     return this.reactivate(proxies, reactive) // ! - this.nodeElement
   }

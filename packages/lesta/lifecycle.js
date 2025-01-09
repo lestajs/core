@@ -1,8 +1,8 @@
 import { revocablePromise } from '../utils'
 
-async function lifecycle(component, render, propsData, aborted, completed) {
+async function lifecycle(component, render, aborted, completed, propsData = {}) {
   const hooks = [
-    async () => await component.loaded(propsData),
+    async () => await component.loaded(),
     async () => {
       await component.props(propsData)
       component.params()
@@ -24,7 +24,7 @@ async function lifecycle(component, render, propsData, aborted, completed) {
       await revocablePromise(hook(), component.context.abortSignal)
       component.context.phase++
     }
-  } catch (error) {
+  } catch {
     aborted()
   }
   completed?.()

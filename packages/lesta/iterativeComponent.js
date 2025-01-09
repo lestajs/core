@@ -11,7 +11,7 @@ export default {
         this.nodeOptions.component = options
         this.nodeElement.clear = () => this.length.bind(this)(0)
         this.createIterate = async (index) => {
-            this.nodeElement.children[index] = this.nodeElement._current = { parent: this.nodeElement, target: true, nodepath: this.nodeElement.nodepath + '.' + index, index, iterated: true }
+            this.nodeElement.children[index] = this.nodeElement._current = { parent: this.nodeElement, target: true, nodepath: this.nodeElement.nodepath + '.' + index, index, action: {}, prop: {}, iterated: true }
             await this.create(this.proxiesIterate.bind(this), this.nodeElement._current, options)
         }
         this.impress.collect = true
@@ -39,8 +39,8 @@ export default {
             
             if (this.impress.refs.some(ref => ref.includes(this.name))) {
                 this.reactiveComponent(this.impress.define(pr), (v, p) => {
-                    const setValue = (...arg) => nodeElement.proxy?.[pr]?.setValue(...arg)
-                    p ? setValue(v, p) : setValue(fn(nodeElement))
+                    const set = (...arg) => nodeElement.prop[pr]?.update(...arg)
+                    p ? set(v, p) : set(fn(nodeElement))
                 })
             } else {
                 if (!this.nodeElement.created) {
@@ -48,8 +48,8 @@ export default {
                         const children = this.nodeElement.children
                         const f = (i) => {
                             const nodeChildren = children[i]
-                            const setValue = (...arg) => nodeChildren.proxy?.[pr]?.setValue(...arg)
-                            p ? setValue(v, p) : setValue(fn(nodeChildren))
+                            const set = (...arg) => nodeChildren.prop[pr]?.update(...arg)
+                            p ? set(v, p) : set(fn(nodeChildren))
                         }
                         this.portions(children.length, 0, f)
                         this.repeat++

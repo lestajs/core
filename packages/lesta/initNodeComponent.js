@@ -27,8 +27,8 @@ class InitNodeComponent extends InitNode {
   }
   destroy(container) {
     container.reactivity?.component?.clear()
-    delete container.proxy
-    delete container.method
+    container.prop = {}
+    container.action = {}
     for (const key in container.unstore) {
       container.unstore[key]()
     }

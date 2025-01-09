@@ -161,7 +161,6 @@
     }
     methods() {
       if (this.component.methods) {
-        this.context.container.action = {};
         for (const [key, method] of Object.entries(this.component.methods)) {
           if (this.context.method.hasOwnProperty(key))
             return errorComponent(this.context.container.nodepath, 212, key);
@@ -320,7 +319,7 @@
               errorNode(nodepath, 107, name);
               continue;
             }
-            Object.assign(this.context.node, { [name]: { target, nodepath, nodename: name, directives: {} } });
+            Object.assign(this.context.node, { [name]: { target, nodepath, nodename: name, action: {}, prop: {}, directives: {} } });
           } else
             errorNode(nodepath, 105);
         }
@@ -440,9 +439,9 @@
   }
 
   // packages/lesta/lifecycle.js
-  async function lifecycle(component2, render, propsData, aborted, completed) {
+  async function lifecycle(component2, render, aborted, completed, propsData = {}) {
     const hooks = [
-      async () => await component2.loaded(propsData),
+      async () => await component2.loaded(),
       async () => {
         await component2.props(propsData);
         component2.params();
@@ -464,7 +463,7 @@
         await revocablePromise(hook(), component2.context.abortSignal);
         component2.context.phase++;
       }
-    } catch (error) {
+    } catch {
       aborted();
     }
     completed?.();
@@ -488,6 +487,7 @@
     const container = {
       target,
       nodepath: name,
+      action: {},
       unmount() {
         controller.abort();
         target.innerHTML = "";
@@ -495,13 +495,14 @@
         delete container.unmount;
       }
     };
+    const aborted = () => app.aborted?.({ phase: component2.context.phase, reason: controller.signal.reason });
     const component2 = new InitNode(src, container, app, controller, factoryNode_default);
     const render = () => {
       component2.context.container = container;
       if (src.template)
         target.append(...templateToHTML(src.template, component2.context));
     };
-    return await lifecycle(component2, render, {}, () => app.aborted?.({ phase: component2.context.phase, reason: controller.signal.reason }), app.completed);
+    return await lifecycle(component2, render, aborted, app.completed);
   }
 
   // scripts/lesta.mountWidget.global.js

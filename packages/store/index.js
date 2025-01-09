@@ -1,7 +1,7 @@
-import active from '../lesta/active.js'
-import diveProxy from '../lesta/diveProxy.js'
-import { replicate, loadModule } from '../utils'
-import { errorStore } from '../utils/errors/store.js'
+import active from '../lesta/active'
+import diveProxy from '../lesta/diveProxy'
+import { loadModule } from '../utils'
+import { errorStore } from '../utils/errors/store'
 
 class Store {
   constructor(module, app, name) {
@@ -57,7 +57,7 @@ class Store {
     return this.context.param[key]
   }
   proxies(key, container) {
-    const active = (v, p) => container.proxy[key].setValue(v, p)
+    const active = (v, p) => container.prop[key].update(v, p)
     this.context.reactivity.set(active, key)
     if (!container.unstore) container.unstore = {}
     container.unstore[key] = () => {

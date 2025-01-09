@@ -54,7 +54,7 @@ class InitNode extends InitBasic {
             errorNode(nodepath, 107, name)
             continue
           }
-          Object.assign(this.context.node, { [name]: { target, nodepath: nodepath, nodename: name, directives: {} }});
+          Object.assign(this.context.node, { [name]: { target, nodepath: nodepath, nodename: name, action: {}, prop: {}, directives: {} }});
         } else errorNode(nodepath, 105);
       }
       Object.preventExtensions(this.context.node)

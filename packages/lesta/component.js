@@ -40,8 +40,7 @@ export default {
           this.impress.collect = true
           const fn = (nodeElement) => v(nodeElement)
           const value = v(this.nodeElement._current || this.nodeElement)
-          const ref = reactive(pr, fn)
-          Object.assign(result, { [pr]: { _value: value, _independent: !ref } })
+          Object.assign(result, { [pr]: { _value: value, _independent: !reactive(pr, fn) } })
           // this.impress.clear()
         } else Object.assign(result, { [pr]: { _value: v, _independent: true } })
       }
@@ -65,7 +64,7 @@ export default {
         continue
       }
       const spotElement = nodeElement.spot[name]
-      Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + '.' + name, nodename: name, spoted: true })
+      Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + '.' + name, nodename: name, action: {}, prop: {}, spoted: true })
       const n = withComponent(options, this.context, spotElement, this.impress, this.app)
       await n.controller()
     }

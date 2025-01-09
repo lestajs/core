@@ -12,6 +12,7 @@ async function mountWidget({ options, target, name = 'root' }, app = {}) {
   const container = {
     target,
     nodepath: name,
+    action: {},
     unmount() {
       controller.abort()
       target.innerHTML = ''
@@ -19,12 +20,13 @@ async function mountWidget({ options, target, name = 'root' }, app = {}) {
       delete container.unmount;
     }
   }
+  const aborted = () => app.aborted?.({ phase: component.context.phase, reason: controller.signal.reason })
   const component = new InitNode(src, container, app, controller, withoutComponent)
   const render = () => {
     component.context.container = container
     if (src.template) target.append(...templateToHTML(src.template, component.context))
   }
-  return await lifecycle(component, render, {}, () => app.aborted?.({ phase: component.context.phase, reason: controller.signal.reason }), app.completed)
+  return await lifecycle(component, render, aborted, app.completed)
 }
 
 export { mountWidget }

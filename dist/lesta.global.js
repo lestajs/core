@@ -5,6 +5,11 @@
       __defProp(target, name, { get: all[name], enumerable: true });
   };
 
+  // packages/utils/isObject.js
+  function isObject(value) {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+  }
+
   // packages/utils/replicate.js
   function replicate(data) {
     if (!data)
@@ -107,7 +112,8 @@
     304: 'value does not match type "%s".',
     305: 'method is not found in store "%s".',
     306: "parent component passes proxies, you need to specify them in props.",
-    307: 'store "%s" is not found.'
+    307: 'store "%s" is not found.',
+    308: 'error in validation function: "%s".'
   };
 
   // packages/utils/errors/component.js
@@ -214,7 +220,6 @@
     }
     methods() {
       if (this.component.methods) {
-        this.context.container.action = {};
         for (const [key, method] of Object.entries(this.component.methods)) {
           if (this.context.method.hasOwnProperty(key))
             return errorComponent(this.context.container.nodepath, 212, key);
@@ -373,7 +378,7 @@
               errorNode(nodepath, 107, name);
               continue;
             }
-            Object.assign(this.context.node, { [name]: { target, nodepath, nodename: name, directives: {} } });
+            Object.assign(this.context.node, { [name]: { target, nodepath, nodename: name, action: {}, prop: {}, directives: {} } });
           } else
             errorNode(nodepath, 105);
         }
@@ -404,13 +409,15 @@
     async setup(cp) {
       if (this.props.proxies && Object.keys(this.props.proxies).length && !cp?.proxies)
         return errorProps(this.container.nodepath, 306);
-      if (!this.container.proxy)
-        this.container.proxy = {};
+      this.context.unrelatedProxy = (key) => this.props.proxies[key]?.hasOwnProperty("_independent") ? this.props.proxies[key]._independent : true;
       if (cp) {
         await this.params(cp.params);
         await this.methods(cp.methods);
         return await this.proxies(cp.proxies);
       }
+    }
+    store(s) {
+      return typeof s === "function" ? s.bind(this)() : s;
     }
     validation(target, prop, key, value, name) {
       const nodepath = this.container.nodepath;
@@ -418,23 +425,22 @@
       const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(nodepath, name, key, 302, v));
       const checkValue = (v, p) => v ?? ((p.required && errorProps(nodepath, name, key, 303)) ?? p.default ?? v);
       const check = (v, p) => {
-        if (typeof p === "string")
-          return checkType(v, p);
+        v = checkValue(v, p);
         checkType(v, p.type);
         checkEnum(v, p.enum);
-        return checkValue(v, p);
+        return v;
       };
-      const variant = {
-        string: () => checkType(value, prop),
-        object: () => {
-          value = check(value, prop);
-          prop.validate?.(value, check);
-        },
-        function: () => prop(value, check)
-      };
-      variant[typeof prop]?.();
-      target[key] = value;
-      return check;
+      if (typeof prop === "string")
+        checkType(value, prop);
+      if (Array.isArray(prop))
+        checkEnum(value, prop);
+      if (isObject(prop)) {
+        target[key] = check(value, prop);
+        const err = prop.validation?.bind(this.context)(target[key]);
+        if (err)
+          errorProps(nodepath, name, key, 308, err);
+      }
+      return target[key];
     }
     async proxies(proxies) {
       if (proxies) {
@@ -442,30 +448,24 @@
         const context = this.context;
         for (const key in proxies) {
           const prop = proxies[key];
-          let check = null;
-          this.container.proxy[key] = {
-            getValue: () => replicate(context.proxy[key]),
-            setValue: (value2, path) => {
-              if (path) {
-                deliver(context.proxy[key], path, replicate(value2));
-                prop.validate?.(context.proxy[key], check);
-              } else {
-                this.validation(context.proxy, prop, key, replicate(value2), "proxies");
-              }
-            },
-            isIndependent: () => this.props.proxies[key]?.hasOwnProperty("_independent") ? this.props.proxies[key]._independent : true
+          this.container.prop[key] = {
+            update: (value2, path) => {
+              if (path)
+                return deliver(context.proxy[key], path, replicate(value2));
+              return this.validation(context.proxy, prop, key, replicate(value2), "proxies");
+            }
           };
           let value = null;
-          const { store: store2 } = prop;
           if (this.props.proxies?.hasOwnProperty(key)) {
             value = this.props.proxies[key]?._value;
-          } else if (store2) {
-            const storeModule = await this.app.store?.init(store2);
+          } else if (prop.store) {
+            const s = this.store(prop.store);
+            const storeModule = await this.app.store?.init(s);
             if (!storeModule)
-              return errorProps(this.container.nodepath, "proxies", key, 307, store2);
+              return errorProps(this.container.nodepath, "proxies", key, 307, s);
             value = storeModule.proxies(key, this.container);
           }
-          check = this.validation(proxiesData, prop, key, replicate(value), "proxies");
+          this.validation(proxiesData, prop, key, replicate(value), "proxies");
         }
         return proxiesData;
       }
@@ -474,17 +474,17 @@
       for (const key in params) {
         const prop = params[key];
         const paramValue = async () => {
-          const { store: store2 } = prop;
           let data = null;
-          if (store2) {
-            const storeModule = await this.app.store?.init(store2);
+          if (prop.store) {
+            const s = this.store(prop.store);
+            const storeModule = await this.app.store?.init(s);
             if (!storeModule)
-              return errorProps(this.container.nodepath, "params", key, 307, store2);
+              return errorProps(this.container.nodepath, "params", key, 307, s);
             data = storeModule.params(key);
           } else {
             data = this.props?.params[key];
           }
-          return prop?.hole ? data : replicate(data);
+          return prop?.mutable ? data : replicate(data);
         };
         this.validation(this.context.param, prop, key, await paramValue(), "params");
         if (prop.readonly)
@@ -502,14 +502,14 @@
       };
       for (const key in methods) {
         const prop = methods[key];
-        const { store: store2 } = prop;
-        if (store2) {
-          const storeModule = await this.app.store?.init(store2);
+        if (prop.store) {
+          const s = this.store(prop.store);
+          const storeModule = await this.app.store?.init(s);
           if (!storeModule)
-            return errorProps(this.container.nodepath, "methods", key, 307, store2);
+            return errorProps(this.container.nodepath, "methods", key, 307, s);
           const method = storeModule.methods(key);
           if (!method)
-            return errorProps(this.container.nodepath, "methods", key, 305, store2);
+            return errorProps(this.container.nodepath, "methods", key, 305, s);
           setMethod(method, key);
         } else {
           const isMethodValid = this.props.methods?.hasOwnProperty(key);
@@ -555,8 +555,8 @@
     }
     destroy(container) {
       container.reactivity?.component?.clear();
-      delete container.proxy;
-      delete container.method;
+      container.prop = {};
+      container.action = {};
       for (const key in container.unstore) {
         container.unstore[key]();
       }
@@ -707,7 +707,7 @@
       this.nodeOptions.component = options;
       this.nodeElement.clear = () => this.length.bind(this)(0);
       this.createIterate = async (index) => {
-        this.nodeElement.children[index] = this.nodeElement._current = { parent: this.nodeElement, target: true, nodepath: this.nodeElement.nodepath + "." + index, index, iterated: true };
+        this.nodeElement.children[index] = this.nodeElement._current = { parent: this.nodeElement, target: true, nodepath: this.nodeElement.nodepath + "." + index, index, action: {}, prop: {}, iterated: true };
         await this.create(this.proxiesIterate.bind(this), this.nodeElement._current, options);
       };
       this.impress.collect = true;
@@ -735,8 +735,8 @@
       const reactive = (pr, fn) => {
         if (this.impress.refs.some((ref) => ref.includes(this.name))) {
           this.reactiveComponent(this.impress.define(pr), (v, p) => {
-            const setValue = (...arg) => nodeElement.proxy?.[pr]?.setValue(...arg);
-            p ? setValue(v, p) : setValue(fn(nodeElement));
+            const set = (...arg) => nodeElement.prop[pr]?.update(...arg);
+            p ? set(v, p) : set(fn(nodeElement));
           });
         } else {
           if (!this.nodeElement.created) {
@@ -744,8 +744,8 @@
               const children = this.nodeElement.children;
               const f = (i) => {
                 const nodeChildren = children[i];
-                const setValue = (...arg) => nodeChildren.proxy?.[pr]?.setValue(...arg);
-                p ? setValue(v, p) : setValue(fn(nodeChildren));
+                const set = (...arg) => nodeChildren.prop[pr]?.update(...arg);
+                p ? set(v, p) : set(fn(nodeChildren));
               };
               this.portions(children.length, 0, f);
               this.repeat++;
@@ -814,8 +814,8 @@
       if (!proxies)
         return;
       const reactive = (pr, fn) => this.reactiveComponent(this.impress.define(pr), (v, p) => {
-        const setValue = (...arg) => this.nodeElement.proxy?.[pr]?.setValue(...arg);
-        p ? setValue(v, p) : setValue(fn(this.nodeElement));
+        const set = (...arg) => this.nodeElement.prop[pr]?.update(...arg);
+        p ? set(v, p) : set(fn(this.nodeElement));
       });
       return this.reactivate(proxies, reactive);
     }
@@ -892,8 +892,7 @@
             this.impress.collect = true;
             const fn = (nodeElement) => v(nodeElement);
             const value = v(this.nodeElement._current || this.nodeElement);
-            const ref = reactive(pr, fn);
-            Object.assign(result, { [pr]: { _value: value, _independent: !ref } });
+            Object.assign(result, { [pr]: { _value: value, _independent: !reactive(pr, fn) } });
           } else
             Object.assign(result, { [pr]: { _value: v, _independent: true } });
         }
@@ -919,7 +918,7 @@
           continue;
         }
         const spotElement = nodeElement.spot[name];
-        Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + "." + name, nodename: name, spoted: true });
+        Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + "." + name, nodename: name, action: {}, prop: {}, spoted: true });
         const n = factoryNodeComponent_default(options, this.context, spotElement, this.impress, this.app);
         await n.controller();
       }
@@ -1037,9 +1036,9 @@
   }
 
   // packages/lesta/lifecycle.js
-  async function lifecycle(component2, render, propsData, aborted, completed) {
+  async function lifecycle(component2, render, aborted, completed, propsData = {}) {
     const hooks = [
-      async () => await component2.loaded(propsData),
+      async () => await component2.loaded(),
       async () => {
         await component2.props(propsData);
         component2.params();
@@ -1061,7 +1060,7 @@
         await revocablePromise(hook(), component2.context.abortSignal);
         component2.context.phase++;
       }
-    } catch (error) {
+    } catch {
       aborted();
     }
     completed?.();
@@ -1078,15 +1077,15 @@
       return errorComponent(container.nodepath, 216);
     const component2 = new InitNodeComponent(mixins(options), container, app, controller, factoryNodeComponent_default);
     const render = () => renderComponent(container, component2);
-    return await lifecycle(component2, render, propsData, aborted, propsData.completed);
+    return await lifecycle(component2, render, aborted, propsData.completed, propsData);
   }
 
   // packages/lesta/createApp.js
   function createApp(app = {}) {
     const container = {};
     app.mount = async ({ options, target, name = "root" }, propsData) => {
-      Object.assign(container, { target, nodepath: name });
-      return await mount(options, { target, nodepath: name }, propsData, app);
+      Object.assign(container, { target, nodepath: name, action: {}, prop: {} });
+      return await mount(options, container, propsData, app);
     };
     app.unmount = () => container.unmount?.();
     Object.preventExtensions(app);
@@ -1110,6 +1109,7 @@
     const container = {
       target,
       nodepath: name,
+      action: {},
       unmount() {
         controller.abort();
         target.innerHTML = "";
@@ -1117,13 +1117,14 @@
         delete container.unmount;
       }
     };
+    const aborted = () => app.aborted?.({ phase: component2.context.phase, reason: controller.signal.reason });
     const component2 = new InitNode(src, container, app, controller, factoryNode_default);
     const render = () => {
       component2.context.container = container;
       if (src.template)
         target.append(...templateToHTML(src.template, component2.context));
     };
-    return await lifecycle(component2, render, {}, () => app.aborted?.({ phase: component2.context.phase, reason: controller.signal.reason }), app.completed);
+    return await lifecycle(component2, render, aborted, app.completed);
   }
 
   // scripts/lesta.global.js

@@ -10,7 +10,7 @@ import { revocablePromise } from './revocablePromise.js'
 import { deleteReactive } from './deleteReactive.js'
 import { uid } from './uid.js'
 import { deepFreeze } from './deepFreeze.js'
-import { nextRepaint } from './nextRepaint.js'
+import { nextFrame } from './nextFrame.js'
 
 export {
   isObject,
@@ -25,5 +25,5 @@ export {
   deleteReactive,
   uid,
   deepFreeze,
-  nextRepaint
+  nextFrame
 }

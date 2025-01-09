@@ -14,7 +14,7 @@ async function mount(module, container, propsData = {}, app = {}) {
   if (!options) return errorComponent(container.nodepath, 216)
   const component = new InitNodeComponent(mixins(options), container, app, controller, withComponent)
   const render = () => renderComponent(container, component)
-  return await lifecycle(component, render, propsData, aborted, propsData.completed)
+  return await lifecycle(component, render, aborted, propsData.completed, propsData)
 }
 
 export { mount }
