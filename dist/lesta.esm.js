@@ -162,6 +162,11 @@ async function nextFrame() {
   return new Promise(requestAnimationFrame);
 }
 
+// packages/utils/escHtml.js
+function escHtml(unsafe) {
+  return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;").replace(/`/g, "&#x60;").replace(/=/g, "&#x3D;");
+}
+
 // packages/utils/errors/index.js
 var node = {
   102: 'incorrect directive name "%s", the name must start with the character "_".',
@@ -1733,6 +1738,7 @@ export {
   delay,
   deleteReactive,
   deliver,
+  escHtml,
   isObject,
   loadModule,
   mapProps,

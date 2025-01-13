@@ -11,6 +11,7 @@ import { deleteReactive } from './deleteReactive.js'
 import { uid } from './uid.js'
 import { deepFreeze } from './deepFreeze.js'
 import { nextFrame } from './nextFrame.js'
+import { escHtml } from './escHtml.js'
 
 export {
   isObject,
@@ -25,5 +26,6 @@ export {
   deleteReactive,
   uid,
   deepFreeze,
-  nextFrame
+  nextFrame,
+  escHtml
 }

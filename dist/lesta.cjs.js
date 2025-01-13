@@ -27,6 +27,7 @@ __export(lesta_exports, {
   delay: () => delay,
   deleteReactive: () => deleteReactive,
   deliver: () => deliver,
+  escHtml: () => escHtml,
   isObject: () => isObject,
   loadModule: () => loadModule,
   mapProps: () => mapProps,
@@ -195,6 +196,11 @@ function deepFreeze(obj) {
 // packages/utils/nextFrame.js
 async function nextFrame() {
   return new Promise(requestAnimationFrame);
+}
+
+// packages/utils/escHtml.js
+function escHtml(unsafe) {
+  return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;").replace(/`/g, "&#x60;").replace(/=/g, "&#x3D;");
 }
 
 // packages/utils/errors/index.js
@@ -1821,6 +1827,7 @@ async function mountWidget({ options, target, name = "root" }, app = {}) {
   delay,
   deleteReactive,
   deliver,
+  escHtml,
   isObject,
   loadModule,
   mapProps,

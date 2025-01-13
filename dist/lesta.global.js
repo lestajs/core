@@ -5,6 +5,29 @@
       __defProp(target, name, { get: all[name], enumerable: true });
   };
 
+  // scripts/lesta.js
+  var lesta_exports = {};
+  __export(lesta_exports, {
+    createApp: () => createApp,
+    createRouter: () => createRouter,
+    createStores: () => createStores,
+    debounce: () => debounce,
+    deepFreeze: () => deepFreeze,
+    delay: () => delay,
+    deleteReactive: () => deleteReactive,
+    deliver: () => deliver,
+    escHtml: () => escHtml,
+    isObject: () => isObject,
+    loadModule: () => loadModule,
+    mapProps: () => mapProps,
+    mountWidget: () => mountWidget,
+    nextFrame: () => nextFrame,
+    replicate: () => replicate,
+    revocablePromise: () => revocablePromise,
+    throttling: () => throttling,
+    uid: () => uid
+  });
+
   // packages/utils/isObject.js
   function isObject(value) {
     return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -29,6 +52,63 @@
       return target[p[i]];
     } catch (err) {
     }
+  }
+
+  // packages/utils/mapProps.js
+  function mapProps(arr, options) {
+    const res = {};
+    arr.forEach((key) => Object.assign(res, { [key]: options }));
+    return res;
+  }
+
+  // packages/utils/debounce.js
+  function debounce(fn, timeout = 120) {
+    return function perform(...args) {
+      let previousCall = this.lastCall;
+      this.lastCall = Date.now();
+      if (previousCall && this.lastCall - previousCall <= timeout) {
+        clearTimeout(this.lastCallTimer);
+      }
+      this.lastCallTimer = setTimeout(() => fn(...args), timeout);
+    };
+  }
+
+  // packages/utils/throttling.js
+  function throttling(fn, timeout = 50) {
+    let timer;
+    return function perform(...args) {
+      if (timer)
+        return;
+      timer = setTimeout(() => {
+        fn(...args);
+        clearTimeout(timer);
+        timer = null;
+      }, timeout);
+    };
+  }
+
+  // packages/utils/delay.js
+  function delay(ms = 0) {
+    let timer, _reject;
+    const promise = new Promise((resolve, reject) => {
+      _reject = () => {
+        clearTimeout(timer);
+        reject();
+        promise._pending = false;
+        promise.rejected = true;
+      };
+      timer = setTimeout(() => {
+        clearTimeout(timer);
+        resolve();
+        promise._pending = false;
+        promise._fulfilled = true;
+      }, ms);
+    });
+    promise._reject = _reject;
+    promise._pending = true;
+    promise._rejected = false;
+    promise._fulfilled = false;
+    return promise;
   }
 
   // packages/utils/revocablePromise.js
@@ -76,6 +156,41 @@
     }
   }
 
+  // packages/utils/uid.js
+  function uid() {
+    const buf = new Uint32Array(4);
+    window.crypto.getRandomValues(buf);
+    let idx = -1;
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+      idx++;
+      const r = buf[idx >> 3] >> idx % 8 * 4 & 15;
+      const v = c === "x" ? r : r & 3 | 8;
+      return v.toString(16);
+    });
+  }
+
+  // packages/utils/deepFreeze.js
+  function deepFreeze(obj) {
+    Object.freeze(obj);
+    Object.getOwnPropertyNames(obj).forEach((prop) => {
+      const propVal = obj[prop];
+      if (propVal !== null && (typeof propVal === "object" || typeof propVal === "function") && !Object.isFrozen(propVal)) {
+        deepFreeze(propVal);
+      }
+    });
+    return obj;
+  }
+
+  // packages/utils/nextFrame.js
+  async function nextFrame() {
+    return new Promise(requestAnimationFrame);
+  }
+
+  // packages/utils/escHtml.js
+  function escHtml(unsafe) {
+    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;").replace(/`/g, "&#x60;").replace(/=/g, "&#x3D;");
+  }
+
   // packages/utils/errors/index.js
   var node = {
     102: 'incorrect directive name "%s", the name must start with the character "_".',
@@ -114,6 +229,23 @@
     306: "parent component passes proxies, you need to specify them in props.",
     307: 'store "%s" is not found.',
     308: 'error in validation function: "%s".'
+  };
+  var store = {
+    401: "object with stores in not define.",
+    402: 'store module "%s" in not define.',
+    // 403:
+    404: 'middleware "%s" returns a value not of the object type'
+  };
+  var router = {
+    501: "path not found in route.",
+    502: "path not found in child route.",
+    503: 'attribute "router" not found in root component',
+    551: 'name "%s" not found in routes.',
+    552: "current route has no parameters.",
+    553: 'param "%s" not found in current route.',
+    554: 'param "%s" not found in object route.',
+    555: 'param "%s" does not match regular expression.',
+    557: 'property "path" is required.'
   };
 
   // packages/utils/errors/component.js
@@ -1092,6 +1224,501 @@
     return app;
   }
 
+  // packages/utils/errors/store.js
+  var errorStore = (name, code, param = "") => {
+    if (true) {
+      console.error(`Lesta |${code}| Error in store "${name}": ${store[code]}`, param);
+    }
+  };
+
+  // packages/store/index.js
+  var Store = class {
+    constructor(module, app, name) {
+      this.store = module;
+      this.context = {
+        name,
+        app,
+        options: module,
+        reactivity: /* @__PURE__ */ new Map(),
+        param: {},
+        method: {},
+        source: this.store.sources
+      };
+    }
+    async loaded() {
+      this.store.loaded && await this.store.loaded.bind(this.context)();
+    }
+    create() {
+      this.context.param = this.store.params;
+      Object.preventExtensions(this.context.param);
+      for (const key in this.store.methods) {
+        this.context.method[key] = (obj) => {
+          if (this.store.middlewares && key in this.store.middlewares) {
+            return (async () => {
+              const res = await this.store.middlewares[key].bind(this.context)(obj);
+              if (res && typeof res !== "object")
+                return errorStore(this.context.name, 404, key);
+              if (obj && res)
+                Object.assign(obj, res);
+              return this.store.methods[key].bind(this.context)(obj);
+            })();
+          } else {
+            return this.store.methods[key].bind(this.context)(obj);
+          }
+        };
+      }
+      this.context.proxy = diveProxy(this.store.proxies, {
+        beforeSet: (value, ref, callback) => {
+          if (this.store.setters?.[ref]) {
+            const v = this.store.setters[ref].bind(this.context)(value);
+            if (v === void 0)
+              return true;
+            callback(v);
+          }
+        },
+        set: async (target, value, ref) => {
+          active(this.context.reactivity, ref, value);
+        }
+      });
+      Object.preventExtensions(this.context.proxy);
+    }
+    async created() {
+      this.store.created && await this.store.created.bind(this.context)();
+    }
+    params(key) {
+      return this.context.param[key];
+    }
+    proxies(key, container) {
+      const active2 = (v, p) => container.prop[key].update(v, p);
+      this.context.reactivity.set(active2, key);
+      if (!container.unstore)
+        container.unstore = {};
+      container.unstore[key] = () => {
+        this.context.reactivity.delete(active2);
+      };
+      return this.context.proxy[key];
+    }
+    methods(key) {
+      return this.context.method[key];
+    }
+  };
+  function createStores(app, storesOptions) {
+    if (!storesOptions)
+      return errorStore(null, 401);
+    const stores = {};
+    app.store = {
+      init: async (key) => {
+        if (!stores.hasOwnProperty(key)) {
+          const options = await loadModule(storesOptions[key]);
+          if (!options)
+            return errorStore(key, 402);
+          const store2 = new Store(options, app, key);
+          stores[key] = store2;
+          await store2.loaded();
+          store2.create();
+          await store2.created();
+        }
+        return stores[key];
+      },
+      destroy: (key) => delete stores[key]
+    };
+    return app.store;
+  }
+
+  // packages/utils/errors/router.js
+  var errorRouter = (name = "", code, param = "") => {
+    if (true) {
+      console.error(`Lesta |${code}| Error in route "${name}": ${router[code]}`, param);
+    }
+  };
+  var warnRouter = (code, param = "") => {
+    if (true) {
+      console.warn(`Lesta |${code}| ${router[code]}`, param);
+    }
+  };
+
+  // packages/router/route/index.js
+  var route_default = {
+    init(collection, url) {
+      this.url = url;
+      this.result = {
+        path: null,
+        map: null,
+        to: null
+      };
+      return this.routeEach(collection);
+    },
+    picker(target) {
+      if (target) {
+        const params = {};
+        const slugs = this.result.path.match(/:\w+/g);
+        slugs && slugs.forEach((slug, index) => {
+          params[slug.substring(1)] = this.result.map[index + 1];
+        });
+        const to = {
+          path: this.result.map.at(0) || "/",
+          params,
+          fullPath: this.url.href,
+          hash: this.url.hash,
+          query: Object.fromEntries(new URLSearchParams(this.url.search)),
+          name: target.name,
+          extra: target.extra,
+          route: {}
+        };
+        if (target.path.slice(-1) === "*")
+          to.pathMatch = this.result.map.at(-1);
+        for (const key in target) {
+          if (target[key]) {
+            to.route[key] = target[key];
+          }
+        }
+        to.route.path = this.result.path;
+        return to;
+      }
+    },
+    mapping(path) {
+      const value = path.replace(/:\w+/g, "(\\w+)").replace(/\*$/, "(.*)");
+      const regex = new RegExp(`^${value}$`);
+      const url = decodeURI(this.url.pathname).toString().replace(/\/$/, "") || "/";
+      return url.match(regex);
+    },
+    find(target, path) {
+      this.result.path = path;
+      this.result.map = this.mapping(this.result.path);
+      let index = 1;
+      for (const key in target.route.params) {
+        let fl = false;
+        let param = target.route.params[key];
+        if (!this.result.map && param.optional) {
+          const p = this.result.path.replace("/:" + key, "").replace(/\/$/, "");
+          this.result.map = this.mapping(p);
+          fl = true;
+        }
+        if (this.result.map && param.regex) {
+          const value = this.result.map[index];
+          if (!param.regex.test(value)) {
+            if (!fl)
+              this.result.map = null;
+          }
+        }
+        if (this.result.map && param.enum) {
+          const value = this.result.map[index];
+          if (!param.enum.includes(value)) {
+            if (!fl)
+              this.result.map = null;
+          }
+        }
+        if (!fl)
+          index++;
+      }
+    },
+    routeEach(collection) {
+      let buf = {};
+      for (const target of collection) {
+        if (!target.path)
+          errorRouter(target.name, 501);
+        this.find(target, target.path);
+        if (this.result.map) {
+          this.result.to = this.picker(target.route);
+          buf = { ...this.result };
+        }
+      }
+      if (!this.result.map && buf)
+        this.result = buf;
+      return this.result.to;
+    }
+  };
+
+  // packages/router/link.js
+  function replacement(params, param, key) {
+    if (params && params[key]) {
+      if (param.regex && !param.regex.test(params[key])) {
+        warnRouter(555, key);
+        return params[key];
+      } else
+        return params[key];
+    } else if (param.optional) {
+      return "";
+    } else {
+      warnRouter(554, key);
+      return "";
+    }
+  }
+  function encode(v) {
+    return /[<>\/&"'=]/.test(v) ? encodeURIComponent(v) : v;
+  }
+  function link(v, t, l) {
+    let res = "";
+    if (!v)
+      return "/";
+    if (typeof v === "object") {
+      if (v.path && v.path.startsWith("/")) {
+        res = v.path;
+      } else if (v.name) {
+        const index = l.findIndex((e) => e.name === v.name);
+        if (index !== -1) {
+          res = l[index].path;
+          const params = l[index].route.params;
+          for (const key in v.params) {
+            if (!params[key])
+              warnRouter(553, key);
+          }
+          for (const [key, param] of Object.entries(params)) {
+            const r = replacement(v.params, param, key);
+            res = res.replace("/:" + key, encode(r));
+          }
+          if (res.slice(-1) === "*") {
+            res = res.replace(/\*$/, v.pathMatch || "");
+          }
+          if (v.query)
+            res += "?" + new URLSearchParams(v.query).toString();
+        } else
+          warnRouter(551, v.name);
+      } else {
+        const url = new URL(t.fullPath);
+        if (v.params) {
+          if (!Object.keys(t.params).length)
+            warnRouter(552);
+          res = t.route.path;
+          for (const key in t.params) {
+            const param = v.params[key] || t.params[key];
+            if (param) {
+              const r = replacement(v.params, param, key);
+              res = res.replace("/:" + key, encode(r));
+            } else
+              warnRouter(553, key);
+          }
+          if (res.slice(-1) === "*") {
+            res = res.replace(/\*$/, v.pathMatch || t.pathMatch);
+          }
+        } else
+          res = url.pathname;
+        if (v.query) {
+          for (const key in v.query) {
+            v.query[key] === "" ? url.searchParams.delete(key) : url.searchParams.set(encode(key), encode(v.query[key]));
+          }
+          res += url.search;
+        }
+        if (v.hash) {
+          if (typeof v.hash === "string")
+            url.hash = v.hash;
+          res += url.hash;
+        }
+      }
+    } else if (typeof v === "string" && v.startsWith("/")) {
+      res = v;
+    } else {
+      const url = new URL(v, t.fullPath);
+      return url.pathname;
+    }
+    res = res.replace(/\/$/, "").replace(/^([^/])/, "/$1");
+    return res || "/";
+  }
+
+  // packages/router/collectorRoutes.js
+  function collectorRoutes(routes, collection, parent = { path: "" }) {
+    routes.forEach((route) => {
+      if (!route.hasOwnProperty("path"))
+        return errorRouter(route.name, 557);
+      route.params = { ...parent.params, ...route.params };
+      route.extra = { ...parent.extra, ...route.extra };
+      route.beforeEnter = route.beforeEnter || parent.beforeEnter;
+      route.afterEnter = route.afterEnter || parent.afterEnter;
+      const collectorRoute = (path = "") => {
+        if (!route.children) {
+          collection.push({ name: route.name, path: path.replace(/\/$/, "") || "/", route });
+        } else {
+          collectorRoutes(route.children, collection, { path, params: route.params, extra: route.extra, beforeEnter: route.beforeEnter, afterEnter: route.afterEnter });
+        }
+      };
+      collectorRoute(parent.path + "/" + route.path.replace(/^\/|\/$/g, ""));
+      if (route.alias) {
+        const aliasPath = (path) => path.charAt(0) === "/" ? path : parent.path + "/" + path;
+        if (Array.isArray(route.alias)) {
+          for (const path of route.alias) {
+            collectorRoute(aliasPath(path));
+          }
+        } else {
+          collectorRoute(aliasPath(route.alias));
+        }
+      }
+    });
+  }
+  var collectorRoutes_default = collectorRoutes;
+
+  // packages/router/init/basic.js
+  var BasicRouter = class {
+    constructor(app, options, propsData) {
+      this.app = app;
+      this.propsData = propsData;
+      this.app.router = {
+        layouts: options.layouts || {},
+        collection: [],
+        push: this.push.bind(this),
+        link: this.link.bind(this),
+        from: null,
+        to: null,
+        render: () => {
+        },
+        update: () => {
+        }
+      };
+      this.routes = options.routes;
+      this.afterEach = options.afterEach;
+      this.beforeEach = options.beforeEach;
+      this.beforeEnter = options.beforeEnter;
+      this.afterEnter = options.afterEnter;
+      this.form = null;
+      collectorRoutes_default(this.routes, this.app.router.collection);
+    }
+    link(v) {
+      return link(v, this.app.router.to, this.app.router.collection);
+    }
+    async push(v) {
+      const vs = v.path || v;
+      if (typeof vs === "string" && vs !== "") {
+        if (vs.startsWith("#"))
+          return history[v.replace ? "replaceState" : "pushState"](null, null, v.path);
+        try {
+          if (new URL(vs).hostname !== location.hostname)
+            return window.open(vs, v.target || "_self", v.windowFeatures);
+        } catch {
+        }
+      }
+      const path = this.link(v);
+      if (typeof path !== "string")
+        return path;
+      const url = new URL((this.app.origin || location.origin) + path);
+      return await this.update(url, true, typeof v === "object" ? v.replace : false, v.reload);
+    }
+    async beforeHooks(hook) {
+      if (hook) {
+        const res = await hook(this.app.router.to, this.app.router.from, this.app);
+        if (res) {
+          if (res !== true)
+            this.push(res);
+          return true;
+        }
+      }
+    }
+    async afterHooks(hook) {
+      if (hook)
+        await hook(this.app.router.to, this.app.router.from, this.app);
+    }
+    async update(url, pushed = false, replace = false, reload = false) {
+      let res = null;
+      if (await this.beforeHooks(this.beforeEach))
+        return;
+      const to = route_default.init(this.app.router.collection, url);
+      const target = to?.route;
+      if (target) {
+        to.pushed = pushed;
+        to.replace = replace;
+        to.reload = reload;
+        this.app.router.from = this.form;
+        this.app.router.to = to;
+        if (await this.beforeHooks(this.beforeEnter))
+          return;
+        if (await this.beforeHooks(target.beforeEnter))
+          return;
+        if (target.redirect) {
+          let v = target.redirect;
+          typeof v === "function" ? await this.push(await v(to, this.app.router.from)) : await this.push(v);
+          return;
+        }
+        res = await this.app.router.render(this.app.router.to);
+        if (!res)
+          return;
+        this.form = this.app.router.to;
+        await this.afterHooks(this.afterEnter);
+        await this.afterHooks(target.afterEnter);
+      }
+      await this.afterHooks(this.afterEach);
+      return res;
+    }
+  };
+
+  // packages/router/init/index.js
+  var Router = class extends BasicRouter {
+    constructor(...args) {
+      super(...args);
+      this.currentLayout = null;
+      this.current = null;
+      this.app.router.render = this.render.bind(this);
+      this.app.router.update = this.on.bind(this);
+      this.contaner = null;
+      this.rootContainer = null;
+      this.events = /* @__PURE__ */ new Set();
+    }
+    async init(container) {
+      this.rootContainer = container;
+      window.addEventListener("popstate", () => this.update.bind(this)(window.location));
+      this.rootContainer.addEventListener("click", (event) => {
+        const a = event.target.closest("[link]");
+        if (a) {
+          event.preventDefault();
+          this.push(a.getAttribute("href"));
+        }
+      });
+      await this.update(window.location);
+    }
+    async emit(...args) {
+      const callbacks = this.events;
+      for await (const callback of callbacks) {
+        await callback(...args);
+      }
+    }
+    on(callback) {
+      const callbacks = this.events;
+      if (!callbacks.has(callback))
+        callbacks.add(callback);
+      return () => callbacks.delete(callback);
+    }
+    async render(to) {
+      if (to.pushed)
+        history[to.replace ? "replaceState" : "pushState"](null, null, to.fullPath);
+      const target = to.route;
+      const from = this.app.router.from;
+      if (this.current && from?.route.component !== target.component) {
+        this.current?.unmount?.();
+        this.current = null;
+      }
+      if (this.currentLayout && from?.route.layout !== target.layout) {
+        this.currentLayout.unmount();
+        this.currentLayout = null;
+      }
+      if (target.layout) {
+        if (to.reload || from?.route.layout !== target.layout) {
+          this.currentLayout = await this.app.mount({ options: this.app.router.layouts[target.layout], target: this.rootContainer }, this.propsData);
+          if (!this.currentLayout)
+            return;
+          this.contaner = this.rootContainer.querySelector("[router]");
+          if (!this.contaner) {
+            errorRouter(null, 503);
+            return;
+          }
+        }
+      } else
+        this.contaner = this.rootContainer;
+      this.rootContainer.setAttribute("layout", target.layout || "");
+      document.title = target.title || "Lesta";
+      this.rootContainer.setAttribute("page", target.name || "");
+      if (to.reload || from?.route.component !== target.component) {
+        window.scrollTo(0, 0);
+        this.current = await this.app.mount({ options: target.component, target: this.contaner }, this.propsData);
+        if (!this.current)
+          return;
+      } else
+        await this.emit(to, from, this.app);
+      return to;
+    }
+  };
+
+  // packages/router/index.js
+  function createRouter(app, options, propsData = {}) {
+    return new Router(app, options, propsData);
+  }
+
   // packages/lesta/factoryNode.js
   function factoryNode_default(...args) {
     Object.assign(Node.prototype, DOMProperties_default, directiveProperties_default);
@@ -1128,5 +1755,5 @@
   }
 
   // scripts/lesta.global.js
-  window.lesta = { createApp, mountWidget, replicate, deliver, deleteReactive, loadModule, revocablePromise };
+  window.lesta = lesta_exports;
 })();

@@ -11,7 +11,8 @@ import {
   deleteReactive,
   uid,
   deepFreeze,
-  nextFrame
+  nextFrame,
+  escHtml
 } from '../packages/utils'
 import { createApp } from '../packages/lesta/createApp'
 import { createStores } from '../packages/store'
@@ -35,5 +36,6 @@ export {
   deleteReactive,
   uid,
   deepFreeze,
-  nextFrame
+  nextFrame,
+  escHtml
 }
