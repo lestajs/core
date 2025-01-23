@@ -576,29 +576,21 @@ var Props = class {
     return typeof s === "function" ? s.bind(this)() : s;
   }
   validation(target, prop, key, value, name) {
-    var _a;
-    const nodepath = this.container.nodepath;
-    const checkType = (v, t) => v && t && !(typeof v === t || t === "array" && Array.isArray(v)) && errorProps(nodepath, name, key, 304, t);
-    const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(nodepath, name, key, 302, v));
-    const checkValue = (v, p) => {
-      var _a2, _b;
-      return v != null ? v : (_b = (_a2 = p.required && errorProps(nodepath, name, key, 303)) != null ? _a2 : p.default) != null ? _b : v;
-    };
-    const check = (v, p) => {
-      v = checkValue(v, p);
-      checkType(v, p.type);
-      checkEnum(v, p.enum);
-      return v;
-    };
+    var _a, _b, _c;
+    const np = this.container.nodepath;
+    const checkType = (v, t) => v && t && !(typeof v === t || t === "array" && Array.isArray(v)) && errorProps(np, name, key, 304, t);
+    const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(np, name, key, 302, v));
+    target[key] = value != null ? value : (_b = (_a = prop.required && errorProps(np, name, key, 303)) != null ? _a : prop.default) != null ? _b : value;
     if (typeof prop === "string")
-      checkType(value, prop);
+      checkType(target[key], prop);
     if (Array.isArray(prop))
-      checkEnum(value, prop);
+      checkEnum(target[key], prop);
     if (isObject(prop)) {
-      target[key] = check(value, prop);
-      const err = (_a = prop.validation) == null ? void 0 : _a.bind(this.context)(target[key]);
+      checkType(target[key], prop.type);
+      checkEnum(target[key], prop.enum);
+      const err = (_c = prop.validation) == null ? void 0 : _c.bind(this.context)(target[key]);
       if (err)
-        errorProps(nodepath, name, key, 308, err);
+        errorProps(np, name, key, 308, err);
     }
     return target[key];
   }
@@ -676,7 +668,7 @@ var Props = class {
         setMethod(method, key);
       } else {
         const isMethodValid = (_b = this.props.methods) == null ? void 0 : _b.hasOwnProperty(key);
-        if ((prop == null ? void 0 : prop.required) && !isMethodValid)
+        if (((prop == null ? void 0 : prop.required) || prop === true) && !isMethodValid)
           return errorProps(this.container.nodepath, "methods", key, 303);
         if (isMethodValid)
           setMethod(this.props.methods[key], key);
@@ -1047,15 +1039,15 @@ var component_default = {
     this.nodeOptions.component.async ? mount2() : await mount2();
   },
   induced(fn) {
-    if (this.nodeOptions.component.hasOwnProperty("induce")) {
-      this.nodeElement.induce = fn;
-      const induce = this.nodeOptions.component.induce;
-      if (!induce)
+    if (this.nodeOptions.component.hasOwnProperty("induced")) {
+      this.nodeElement.induced = fn;
+      const induced = this.nodeOptions.component.induced;
+      if (!induced)
         return;
-      if (typeof induce === "function") {
+      if (typeof induced === "function") {
         this.impress.collect = true;
-        const permit = induce();
-        this.reactiveNode(this.impress.define(), async () => await this.nodeElement.induce(induce()));
+        const permit = induced();
+        this.reactiveNode(this.impress.define(), async () => await this.nodeElement.induced(induced()));
         if (!permit)
           return;
       }
@@ -1163,10 +1155,9 @@ function templateToHTML(template, context) {
 // packages/lesta/renderComponent.js
 function renderComponent(nodeElement, component2) {
   const options = { ...component2.context.options };
-  const checkContent = (template) => {
-    if (!template)
-      return errorComponent(nodeElement.nodepath, 210);
-    const content = templateToHTML(template, component2.context);
+  const template = options.template;
+  const checkContent = (t) => {
+    const content = templateToHTML(t, component2.context);
     if (content.length > 1)
       return errorComponent(nodeElement.nodepath, 210);
     return content;
@@ -1179,11 +1170,11 @@ function renderComponent(nodeElement, component2) {
   };
   if (nodeElement.iterated) {
     const parent = nodeElement.parent;
-    if (parent.children.length === 1 && parent.target.childNodes.length)
-      parent.target.innerHTML = "";
-    const content = checkContent(options.template);
-    parent.target.append(...content);
-    nodeElement.target = parent.target.lastChild;
+    if (template) {
+      const content = checkContent(template);
+      parent.target.append(...content);
+    }
+    nodeElement.target = parent.target.children[nodeElement.index];
     spots(nodeElement);
     if (!parent.unmount)
       parent.unmount = () => {
@@ -1197,16 +1188,15 @@ function renderComponent(nodeElement, component2) {
     };
   } else {
     if (nodeElement.replaced) {
-      const content = checkContent(options.template);
+      const content = checkContent(template);
       const target = nodeElement.target;
       nodeElement.target.before(...content);
       nodeElement.target = target.previousSibling;
       target.remove();
     } else {
-      if (!options.template)
+      if (!template)
         return;
       const content = templateToHTML(options.template, component2.context);
-      nodeElement.target.innerHTML = "";
       nodeElement.target.append(...content);
     }
     spots(nodeElement);
@@ -1269,15 +1259,11 @@ async function mount(module2, container, propsData = {}, app = {}) {
 
 // packages/lesta/createApp.js
 function createApp(app = {}) {
-  const container = {};
-  app.mount = async ({ options, target, name = "root" }, propsData) => {
-    Object.assign(container, { target, nodepath: name, action: {}, prop: {} });
-    return await mount(options, container, propsData, app);
+  app.mount = async (container, propsData) => {
+    const { options, target, name = "root" } = container;
+    return await mount(options, { target, nodepath: name, action: {}, prop: {} }, propsData, app);
   };
-  app.unmount = () => {
-    var _a;
-    return (_a = container.unmount) == null ? void 0 : _a.call(container);
-  };
+  Object.assign(app, { router: {}, store: {} });
   Object.preventExtensions(app);
   return app;
 }

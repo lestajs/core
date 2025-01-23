@@ -21,22 +21,17 @@ class Props {
     return typeof s === 'function' ? s.bind(this)() : s
   }
   validation(target, prop, key, value, name) {
-    const nodepath = this.container.nodepath
-    const checkType = (v, t) => v && t && !(typeof v === t || (t === 'array' && Array.isArray(v))) && errorProps(nodepath, name, key, 304, t)
-    const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(nodepath, name, key, 302, v))
-    const checkValue = (v, p) => v ?? ((p.required && errorProps(nodepath, name, key, 303)) ?? p.default ?? v)
-    const check = (v, p) => {
-      v = checkValue(v, p)
-      checkType(v, p.type)
-      checkEnum(v, p.enum)
-      return v
-    }
-    if (typeof prop === 'string') checkType(value, prop)
-    if (Array.isArray(prop)) checkEnum(value, prop)
+    const np = this.container.nodepath
+    const checkType = (v, t) => v && t && !(typeof v === t || (t === 'array' && Array.isArray(v))) && errorProps(np, name, key, 304, t)
+    const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(np, name, key, 302, v))
+    target[key] = value ?? ((prop.required && errorProps(np, name, key, 303)) ?? prop.default ?? value)
+    if (typeof prop === 'string') checkType(target[key], prop)
+    if (Array.isArray(prop)) checkEnum(target[key], prop)
     if (isObject(prop)) {
-      target[key] = check(value, prop)
+      checkType(target[key], prop.type)
+      checkEnum(target[key], prop.enum)
       const err = prop.validation?.bind(this.context)(target[key])
-      if (err) errorProps(nodepath, name, key, 308, err)
+      if (err) errorProps(np, name, key, 308, err)
     }
     return target[key]
   }
@@ -104,7 +99,7 @@ class Props {
         setMethod(method, key)
       } else {
         const isMethodValid = this.props.methods?.hasOwnProperty(key)
-        if (prop?.required && !(isMethodValid)) return errorProps(this.container.nodepath, 'methods', key, 303)
+        if ((prop?.required || prop === true) && !isMethodValid) return errorProps(this.container.nodepath, 'methods', key, 303)
         if (isMethodValid) setMethod(this.props.methods[key], key)
       }
     }

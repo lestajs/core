@@ -16,14 +16,14 @@ export default {
     this.nodeOptions.component.async ? mount() : await mount()
   },
   induced(fn) {
-    if (this.nodeOptions.component.hasOwnProperty('induce')) {
-      this.nodeElement.induce = fn
-      const induce = this.nodeOptions.component.induce
-      if (!induce) return
-      if (typeof induce === 'function') {
+    if (this.nodeOptions.component.hasOwnProperty('induced')) {
+      this.nodeElement.induced = fn
+      const induced = this.nodeOptions.component.induced
+      if (!induced) return
+      if (typeof induced === 'function') {
         this.impress.collect = true
-        const permit = induce()
-        this.reactiveNode(this.impress.define(), async () => await this.nodeElement.induce(induce()))
+        const permit = induced()
+        this.reactiveNode(this.impress.define(), async () => await this.nodeElement.induced(induced()))
         if (!permit) return
       }
     }
