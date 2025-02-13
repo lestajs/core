@@ -3,7 +3,9 @@ import { errorNode } from '../utils/errors/node'
 export default {
   listeners(key) {
     if (typeof this.nodeOptions[key] === 'function') {
-      this.nodeElement.target[key] = (event) => this.nodeOptions[key].bind(this.context)(event)
+      this.nodeElement.target[key] = (event) => {
+        this.nodeOptions[key].bind(this.context)(event)
+      }
     }
   },
   general(key) {

@@ -3,8 +3,8 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
+  for (var name2 in all)
+    __defProp(target, name2, { get: all[name2], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -75,13 +75,20 @@ function mapProps(arr, options) {
 
 // packages/utils/debounce.js
 function debounce(fn, timeout = 120) {
-  return function perform(...args) {
-    let previousCall = this.lastCall;
-    this.lastCall = Date.now();
-    if (previousCall && this.lastCall - previousCall <= timeout) {
-      clearTimeout(this.lastCallTimer);
+  let timer;
+  let lastCall = 0;
+  return (...args) => {
+    const now = Date.now();
+    if (now - lastCall > timeout) {
+      lastCall = now;
+      fn(...args);
+    } else {
+      clearTimeout(timer);
     }
-    this.lastCallTimer = setTimeout(() => fn(...args), timeout);
+    timer = setTimeout(() => {
+      lastCall = now;
+      fn(...args);
+    }, timeout);
   };
 }
 
@@ -211,7 +218,7 @@ var node = {
   105: "node with this name was not found in the template.",
   106: 'a node "%s" has already been created for this HTML element.',
   107: 'node "%s" error, spot cannot be a node.',
-  108: '"%s" property is not supported. Replaced node only supports "selector", "component" properties'
+  108: '"%s" property is not supported. Replaced node only supports "selector", "component" properties.'
 };
 var component = {
   // 201:
@@ -223,7 +230,7 @@ var component = {
   // 207:
   208: 'node is iterable, the "component" property is not supported.',
   // 209
-  210: "an iterable component and a component with a replaced node must have a template with a single root HTML element",
+  210: "an iterable component and a component with a replaced node must have a template with a single root HTML element.",
   211: "component should have object as the object type.",
   212: 'method "%s" has already been defined previously.',
   213: 'param "%s" has already been defined previously.',
@@ -233,25 +240,25 @@ var component = {
   217: "target is not defined."
 };
 var props = {
-  301: "props methods can take only one argument of type object.",
-  302: "value %s does not match enum",
+  301: "props methods can take only one parameter and only of type object.",
+  302: "value %s does not match enum.",
   303: "props is required.",
   304: 'value does not match type "%s".',
   305: 'method is not found in store "%s".',
   306: "parent component passes proxies, you need to specify them in props.",
   307: 'store "%s" is not found.',
-  308: 'error in validation function: "%s".'
+  308: "validation function returned false."
 };
 var store = {
   401: "object with stores in not define.",
   402: 'store module "%s" in not define.',
-  // 403:
-  404: 'middleware "%s" returns a value not of the object type'
+  403: 'method "%s" can take only one parameter and only of type object.',
+  404: 'middleware "%s" should return an object.'
 };
 var router = {
   501: "path not found in route.",
   502: "path not found in child route.",
-  503: 'attribute "router" not found in root component',
+  503: 'attribute "router" not found in root component.',
   551: 'name "%s" not found in routes.',
   552: "current route has no parameters.",
   553: 'param "%s" not found in current route.',
@@ -261,9 +268,9 @@ var router = {
 };
 
 // packages/utils/errors/component.js
-var errorComponent = (name, code, param = "") => {
+var errorComponent = (name2, code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
-    console.error(`Lesta |${code}| Error creating component "${name}": ${component[code]}`, param);
+    console.error(`Lesta |${code}| Error creating component "${name2}": ${component[code]}`, param);
   }
 };
 
@@ -342,6 +349,10 @@ var InitBasic = class {
       options: component2,
       phase: 0,
       abort: () => controller.abort(),
+      id: () => {
+        app.id++;
+        return app.name + app.id;
+      },
       abortSignal: controller.signal,
       node: {},
       param: {},
@@ -466,9 +477,9 @@ function active(reactivity, ref, value) {
 }
 
 // packages/utils/errors/node.js
-var errorNode = (name, code, param = "") => {
+var errorNode = (name2, code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
-    console.error(`Lesta |${code}| Error in node "${name}": ${node[code]}`, param);
+    console.error(`Lesta |${code}| Error in node "${name2}": ${node[code]}`, param);
   }
 };
 
@@ -501,8 +512,8 @@ var InitNode = class extends InitBasic {
       },
       set: (target, value, ref) => {
         var _a, _b;
-        for (const name in this.context.node) {
-          this.actives(this.context.node[name], ref, value);
+        for (const name2 in this.context.node) {
+          this.actives(this.context.node[name2], ref, value);
         }
         (_b = (_a = this.component.handlers) == null ? void 0 : _a[ref]) == null ? void 0 : _b.bind(this.context)(value);
       },
@@ -518,26 +529,26 @@ var InitNode = class extends InitBasic {
       const nodes = this.component.nodes.bind(this.context)();
       const container = this.context.container;
       const t = container.target;
-      for (const name in nodes) {
-        const s = nodes[name].selector || this.context.app.selector || `.${name}`;
-        const selector = typeof s === "function" ? s(name) : s;
+      for (const name2 in nodes) {
+        const s = nodes[name2].selector || this.context.app.selector || `.${name2}`;
+        const selector = typeof s === "function" ? s(name2) : s;
         const target = t.querySelector(selector) || t.matches(selector) && t;
-        const nodepath = container.nodepath + "." + name;
+        const nodepath = container.nodepath + "." + name2;
         if (target) {
           if (target._engaged)
-            return errorNode(nodepath, 106, name);
+            return errorNode(nodepath, 106, name2);
           target._engaged = true;
           if (container.spot && Object.values(container.spot).includes(target)) {
-            errorNode(nodepath, 107, name);
+            errorNode(nodepath, 107, name2);
             continue;
           }
-          Object.assign(this.context.node, { [name]: { target, nodepath, nodename: name, action: {}, prop: {}, directives: {} } });
+          Object.assign(this.context.node, { [name2]: { target, nodepath, nodename: name2, action: {}, prop: {}, directives: {} } });
         } else
           errorNode(nodepath, 105);
       }
       Object.preventExtensions(this.context.node);
-      for await (const [name, nodeElement] of Object.entries(this.context.node)) {
-        const n = this.factory(nodes[name], this.context, nodeElement, this.impress, this.app);
+      for await (const [name2, nodeElement] of Object.entries(this.context.node)) {
+        const n = this.factory(nodes[name2], this.context, nodeElement, this.impress, this.app);
         await n.controller();
       }
     }
@@ -545,9 +556,9 @@ var InitNode = class extends InitBasic {
 };
 
 // packages/utils/errors/props.js
-var errorProps = (name, type, prop, code, param = "") => {
+var errorProps = (name2, type, prop, code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
-    console.error(`Lesta |${code}| Error in props ${type} "${prop}" in component "${name}": ${props[code]}`, param);
+    console.error(`Lesta |${code}| Error in props ${type} "${prop}" in component "${name2}": ${props[code]}`, param);
   }
 };
 
@@ -559,28 +570,28 @@ var Props = class {
     this.container = context.container;
     this.app = app;
   }
-  async setup(cp) {
-    if (this.props.proxies && Object.keys(this.props.proxies).length && !(cp == null ? void 0 : cp.proxies))
+  async setup(p) {
+    if (this.props.proxies && Object.keys(this.props.proxies).length && !(p == null ? void 0 : p.proxies))
       return errorProps(this.container.nodepath, 306);
     this.context.unrelatedProxy = (key) => {
       var _a;
       return ((_a = this.props.proxies[key]) == null ? void 0 : _a.hasOwnProperty("_independent")) ? this.props.proxies[key]._independent : true;
     };
-    if (cp) {
-      await this.params(cp.params);
-      await this.methods(cp.methods);
-      return await this.proxies(cp.proxies);
+    if (p) {
+      await this.params(p.params);
+      await this.methods(p.methods);
+      return await this.proxies(p.proxies);
     }
   }
-  store(s) {
-    return typeof s === "function" ? s.bind(this)() : s;
+  prop(p) {
+    return typeof p === "function" ? p.bind(this.context)() : p;
   }
-  validation(target, prop, key, value, name) {
-    var _a, _b, _c;
+  validation(target, prop, key, value, name2) {
+    var _a, _b;
     const np = this.container.nodepath;
-    const checkType = (v, t) => v && t && !(typeof v === t || t === "array" && Array.isArray(v)) && errorProps(np, name, key, 304, t);
-    const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(np, name, key, 302, v));
-    target[key] = value != null ? value : (_b = (_a = prop.required && errorProps(np, name, key, 303)) != null ? _a : prop.default) != null ? _b : value;
+    const checkType = (v, t) => v && t && !(typeof v === t || t === "array" && Array.isArray(v)) && errorProps(np, name2, key, 304, t);
+    const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(np, name2, key, 302, v));
+    target[key] = value != null ? value : (_b = (_a = prop.required && errorProps(np, name2, key, 303)) != null ? _a : prop.default) != null ? _b : value;
     if (typeof prop === "string")
       checkType(target[key], prop);
     if (Array.isArray(prop))
@@ -588,9 +599,8 @@ var Props = class {
     if (isObject(prop)) {
       checkType(target[key], prop.type);
       checkEnum(target[key], prop.enum);
-      const err = (_c = prop.validation) == null ? void 0 : _c.bind(this.context)(target[key]);
-      if (err)
-        errorProps(np, name, key, 308, err);
+      if (prop.validation && !prop.validation.bind(this.context)(target[key]))
+        errorProps(np, name2, key, 308);
     }
     return target[key];
   }
@@ -600,7 +610,8 @@ var Props = class {
       const proxiesData = {};
       const context = this.context;
       for (const key in proxies) {
-        const prop = proxies[key];
+        const prop = this.prop(proxies[key]);
+        const s = prop.store;
         this.container.prop[key] = {
           update: (value2, path) => {
             if (path)
@@ -611,8 +622,7 @@ var Props = class {
         let value = null;
         if ((_a = this.props.proxies) == null ? void 0 : _a.hasOwnProperty(key)) {
           value = (_b = this.props.proxies[key]) == null ? void 0 : _b._value;
-        } else if (prop.store) {
-          const s = this.store(prop.store);
+        } else if (s) {
           const storeModule = await ((_c = this.app.store) == null ? void 0 : _c.init(s));
           if (!storeModule)
             return errorProps(this.container.nodepath, "proxies", key, 307, s);
@@ -625,12 +635,12 @@ var Props = class {
   }
   async params(params) {
     for (const key in params) {
-      const prop = params[key];
+      const prop = this.prop(params[key]);
+      const s = prop.store;
       const paramValue = async () => {
         var _a, _b;
         let data = null;
-        if (prop.store) {
-          const s = this.store(prop.store);
+        if (s) {
           const storeModule = await ((_a = this.app.store) == null ? void 0 : _a.init(s));
           if (!storeModule)
             return errorProps(this.container.nodepath, "params", key, 307, s);
@@ -651,20 +661,21 @@ var Props = class {
       this.context.method[key] = (...args) => {
         if (args.length && (args.length > 1 || typeof args.at(0) !== "object"))
           return errorProps(this.container.nodepath, "methods", key, 301);
-        const result = method({ ...replicate(args.at(0)), _params: this.context.container.param, _methods: this.context.container.method });
+        const result = method(replicate(args.at(0)));
         return result instanceof Promise ? result.then((data) => replicate(data)) : replicate(result);
       };
     };
     for (const key in methods) {
-      const prop = methods[key];
-      if (prop.store) {
-        const s = this.store(prop.store);
-        const storeModule = await ((_a = this.app.store) == null ? void 0 : _a.init(s));
+      const prop = this.prop(methods[key]);
+      const s = prop.store;
+      if (s) {
+        const s2 = this.store(prop.store);
+        const storeModule = await ((_a = this.app.store) == null ? void 0 : _a.init(s2));
         if (!storeModule)
-          return errorProps(this.container.nodepath, "methods", key, 307, s);
+          return errorProps(this.container.nodepath, "methods", key, 307, s2);
         const method = storeModule.methods(key);
         if (!method)
-          return errorProps(this.container.nodepath, "methods", key, 305, s);
+          return errorProps(this.container.nodepath, "methods", key, 305, s2);
         setMethod(method, key);
       } else {
         const isMethodValid = (_b = this.props.methods) == null ? void 0 : _b.hasOwnProperty(key);
@@ -698,9 +709,9 @@ var InitNodeComponent = class extends InitNode {
       active((_b = c.reactivity) == null ? void 0 : _b.component, ref, value);
     };
     const spotsReactivity = (c) => {
-      for (const name in c.spot) {
-        reactivity(c.spot[name]);
-        spotsReactivity(c.spot[name]);
+      for (const name2 in c.spot) {
+        reactivity(c.spot[name2]);
+        spotsReactivity(c.spot[name2]);
       }
     };
     reactivity(nodeElement);
@@ -830,7 +841,9 @@ var directiveProperties_default = {
 var DOMProperties_default = {
   listeners(key) {
     if (typeof this.nodeOptions[key] === "function") {
-      this.nodeElement.target[key] = (event) => this.nodeOptions[key].bind(this.context)(event);
+      this.nodeElement.target[key] = (event) => {
+        this.nodeOptions[key].bind(this.context)(event);
+      };
     }
   },
   general(key) {
@@ -1086,13 +1099,13 @@ var component_default = {
     this.nodeElement.created = true;
     if (!spots)
       return;
-    for await (const [name, options] of Object.entries(spots)) {
-      if (!((_a = nodeElement.spot) == null ? void 0 : _a.hasOwnProperty(name))) {
-        errorComponent(nodeElement.nodepath, 202, name);
+    for await (const [name2, options] of Object.entries(spots)) {
+      if (!((_a = nodeElement.spot) == null ? void 0 : _a.hasOwnProperty(name2))) {
+        errorComponent(nodeElement.nodepath, 202, name2);
         continue;
       }
-      const spotElement = nodeElement.spot[name];
-      Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + "." + name, nodename: name, action: {}, prop: {}, spoted: true });
+      const spotElement = nodeElement.spot[name2];
+      Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + "." + name2, nodename: name2, action: {}, prop: {}, spoted: true });
       const n = factoryNodeComponent_default(options, this.context, spotElement, this.impress, this.app);
       await n.controller();
     }
@@ -1166,7 +1179,7 @@ function renderComponent(nodeElement, component2) {
     var _a, _b;
     if ((_a = options.spots) == null ? void 0 : _a.length)
       node2.spot = {};
-    (_b = options.spots) == null ? void 0 : _b.forEach((name) => Object.assign(node2.spot, { [name]: { target: node2.target.querySelector(`[spot="${name}"]`) } }));
+    (_b = options.spots) == null ? void 0 : _b.forEach((name2) => Object.assign(node2.spot, { [name2]: { target: node2.target.querySelector(`[spot="${name2}"]`) } }));
   };
   if (nodeElement.iterated) {
     const parent = nodeElement.parent;
@@ -1234,8 +1247,9 @@ async function lifecycle(component2, render, aborted, completed, propsData = {})
       await revocablePromise(hook(), component2.context.abortSignal);
       component2.context.phase++;
     }
-  } catch {
+  } catch (e) {
     aborted();
+    throw e;
   }
   completed == null ? void 0 : completed();
   return component2.context.container;
@@ -1243,25 +1257,29 @@ async function lifecycle(component2, render, aborted, completed, propsData = {})
 
 // packages/lesta/mount.js
 async function mount(module2, container, propsData = {}, app = {}) {
+  var _a;
   const controller = new AbortController();
   container.unmount = () => controller.abort();
   const aborted = () => {
-    var _a;
-    return (_a = propsData.aborted) == null ? void 0 : _a.call(propsData, { phase: component2 ? component2.context.phase : 0, reason: controller.signal.reason });
+    var _a2;
+    return (_a2 = propsData.aborted) == null ? void 0 : _a2.call(propsData, { phase: component2 ? component2.context.phase : 0, reason: controller.signal.reason });
   };
   const options = await loadModule(module2, controller.signal, aborted);
   if (!options)
     return errorComponent(container.nodepath, 216);
   const component2 = new InitNodeComponent(mixins(options), container, app, controller, factoryNodeComponent_default);
+  component2.context.container.change = (_a = options.changed) == null ? void 0 : _a.bind(component2.context);
   const render = () => renderComponent(container, component2);
   return await lifecycle(component2, render, aborted, propsData.completed, propsData);
 }
 
 // packages/lesta/createApp.js
 function createApp(app = {}) {
+  app.id = 0;
+  app.name || (app.name = "r");
   app.mount = async (container, propsData) => {
-    const { options, target, name = "root" } = container;
-    return await mount(options, { target, nodepath: name, action: {}, prop: {} }, propsData, app);
+    const { options, target } = container;
+    return await mount(options, { target, nodepath: app.name, action: {}, prop: {} }, propsData, app);
   };
   Object.assign(app, { router: {}, store: {} });
   Object.preventExtensions(app);
@@ -1269,18 +1287,18 @@ function createApp(app = {}) {
 }
 
 // packages/utils/errors/store.js
-var errorStore = (name, code, param = "") => {
+var errorStore = (name2, code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
-    console.error(`Lesta |${code}| Error in store "${name}": ${store[code]}`, param);
+    console.error(`Lesta |${code}| Error in store "${name2}": ${store[code]}`, param);
   }
 };
 
 // packages/store/index.js
 var Store = class {
-  constructor(module2, app, name) {
+  constructor(module2, app, name2) {
     this.store = module2;
     this.context = {
-      name,
+      name: name2,
       app,
       options: module2,
       reactivity: /* @__PURE__ */ new Map(),
@@ -1296,8 +1314,12 @@ var Store = class {
     this.context.param = this.store.params;
     Object.preventExtensions(this.context.param);
     for (const key in this.store.methods) {
-      this.context.method[key] = (obj) => {
-        if (this.store.middlewares && key in this.store.middlewares) {
+      this.context.method[key] = (...args) => {
+        var _a;
+        if (args.length && (args.length > 1 || typeof args.at(0) !== "object"))
+          return errorStore(this.context.name, 403, key);
+        const obj = args.at(0);
+        if ((_a = this.store.middlewares) == null ? void 0 : _a.hasOwnProperty(key)) {
           return (async () => {
             const res = await this.store.middlewares[key].bind(this.context)(obj);
             if (res && typeof res !== "object")
@@ -1371,9 +1393,9 @@ function createStores(app, storesOptions) {
 }
 
 // packages/utils/errors/router.js
-var errorRouter = (name = "", code, param = "") => {
+var errorRouter = (name2 = "", code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
-    console.error(`Lesta |${code}| Error in route "${name}": ${router[code]}`, param);
+    console.error(`Lesta |${code}| Error in route "${name2}": ${router[code]}`, param);
   }
 };
 var warnRouter = (code, param = "") => {
@@ -1602,11 +1624,7 @@ var BasicRouter = class {
       push: this.push.bind(this),
       link: this.link.bind(this),
       from: null,
-      to: null,
-      render: () => {
-      },
-      update: () => {
-      }
+      to: null
     };
     this.routes = options.routes;
     this.afterEach = options.afterEach;
@@ -1623,7 +1641,7 @@ var BasicRouter = class {
     const vs = v.path || v;
     if (typeof vs === "string" && vs !== "") {
       if (vs.startsWith("#"))
-        return history[v.replace ? "replaceState" : "pushState"](null, null, v.path);
+        return history[v.replaced ? "replaceState" : "pushState"](null, null, v.path);
       try {
         if (new URL(vs).hostname !== location.hostname)
           return window.open(vs, v.target || "_self", v.windowFeatures);
@@ -1633,8 +1651,8 @@ var BasicRouter = class {
     const path = this.link(v);
     if (typeof path !== "string")
       return path;
-    const url = new URL((this.app.origin || location.origin) + path);
-    return await this.update(url, true, typeof v === "object" ? v.replace : false, v.reload);
+    const url = new URL(location.origin + path);
+    return await this.update(url, true, v.replaced, v.reloaded);
   }
   async beforeHooks(hook) {
     if (hook) {
@@ -1650,7 +1668,7 @@ var BasicRouter = class {
     if (hook)
       await hook(this.app.router.to, this.app.router.from, this.app);
   }
-  async update(url, pushed = false, replace = false, reload = false) {
+  async update(url, pushed = false, replaced = false, reloaded = false) {
     let res = null;
     if (await this.beforeHooks(this.beforeEach))
       return;
@@ -1658,8 +1676,8 @@ var BasicRouter = class {
     const target = to == null ? void 0 : to.route;
     if (target) {
       to.pushed = pushed;
-      to.replace = replace;
-      to.reload = reload;
+      to.replaced = replaced;
+      to.reloaded = reloaded;
       this.app.router.from = this.form;
       this.app.router.to = to;
       if (await this.beforeHooks(this.beforeEnter))
@@ -1671,7 +1689,7 @@ var BasicRouter = class {
         typeof v === "function" ? await this.push(await v(to, this.app.router.from)) : await this.push(v);
         return;
       }
-      res = await this.app.router.render(this.app.router.to);
+      res = await this.render(this.app.router.to);
       if (!res)
         return;
       this.form = this.app.router.to;
@@ -1689,11 +1707,8 @@ var Router = class extends BasicRouter {
     super(...args);
     this.currentLayout = null;
     this.current = null;
-    this.app.router.render = this.render.bind(this);
-    this.app.router.update = this.on.bind(this);
     this.contaner = null;
     this.rootContainer = null;
-    this.events = /* @__PURE__ */ new Set();
   }
   async init(container) {
     this.rootContainer = container;
@@ -1707,20 +1722,8 @@ var Router = class extends BasicRouter {
     });
     await this.update(window.location);
   }
-  async emit(...args) {
-    const callbacks = this.events;
-    for await (const callback of callbacks) {
-      await callback(...args);
-    }
-  }
-  on(callback) {
-    const callbacks = this.events;
-    if (!callbacks.has(callback))
-      callbacks.add(callback);
-    return () => callbacks.delete(callback);
-  }
   async render(to) {
-    var _a, _b;
+    var _a, _b, _c, _d, _e, _f;
     if (to.pushed)
       history[to.replace ? "replaceState" : "pushState"](null, null, to.fullPath);
     const target = to.route;
@@ -1734,7 +1737,7 @@ var Router = class extends BasicRouter {
       this.currentLayout = null;
     }
     if (target.layout) {
-      if (to.reload || (from == null ? void 0 : from.route.layout) !== target.layout) {
+      if (to.reloaded || (from == null ? void 0 : from.route.layout) !== target.layout) {
         this.currentLayout = await this.app.mount({ options: this.app.router.layouts[target.layout], target: this.rootContainer }, this.propsData);
         if (!this.currentLayout)
           return;
@@ -1743,19 +1746,20 @@ var Router = class extends BasicRouter {
           errorRouter(null, 503);
           return;
         }
-      }
+      } else
+        (_d = (_c = this.currentLayout) == null ? void 0 : _c.change) == null ? void 0 : _d.call(_c);
     } else
       this.contaner = this.rootContainer;
     this.rootContainer.setAttribute("layout", target.layout || "");
     document.title = target.title || "Lesta";
     this.rootContainer.setAttribute("page", target.name || "");
-    if (to.reload || (from == null ? void 0 : from.route.component) !== target.component) {
+    if (to.reloaded || (from == null ? void 0 : from.route.component) !== target.component) {
       window.scrollTo(0, 0);
       this.current = await this.app.mount({ options: target.component, target: this.contaner }, this.propsData);
       if (!this.current)
         return;
     } else
-      await this.emit(to, from, this.app);
+      (_f = (_e = this.current) == null ? void 0 : _e.change) == null ? void 0 : _f.call(_e);
     return to;
   }
 };
@@ -1772,16 +1776,18 @@ function factoryNode_default(...args) {
 }
 
 // packages/lesta/mountWidget.js
-async function mountWidget({ options, target, name = "root" }, app = {}) {
+async function mountWidget({ options, target }, app = {}) {
   if (!options)
     return errorComponent(name, 216);
   if (!target)
     return errorComponent(name, 217);
+  app.id = 0;
+  app.name || (app.name = "r");
   const src = { ...options };
   const controller = new AbortController();
   const container = {
     target,
-    nodepath: name,
+    nodepath: app.name,
     action: {},
     unmount() {
       var _a;

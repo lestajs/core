@@ -15,6 +15,10 @@ export default class InitBasic {
       options: component,
       phase: 0,
       abort: () => controller.abort(),
+      id: () => {
+        app.id++
+        return app.name + app.id
+      },
       abortSignal: controller.signal,
       node: {},
       param: {},

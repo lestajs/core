@@ -1,11 +1,18 @@
 function debounce(fn, timeout = 120) {
-  return function perform(...args) {
-    let previousCall = this.lastCall
-    this.lastCall = Date.now()
-    if (previousCall && this.lastCall - previousCall <= timeout) {
-      clearTimeout(this.lastCallTimer)
+  let timer;
+  let lastCall = 0
+  return (...args) => {
+    const now = Date.now()
+    if (now - lastCall > timeout) {
+      lastCall = now
+      fn(...args)
+    } else {
+      clearTimeout(timer)
     }
-    this.lastCallTimer = setTimeout(() => fn(...args), timeout)
+    timer = setTimeout(() => {
+      lastCall = now
+      fn(...args)
+    }, timeout)
   }
 }
 

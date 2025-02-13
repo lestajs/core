@@ -6,11 +6,8 @@ export default class Router extends BasicRouter {
     super(...args)
     this.currentLayout = null
     this.current = null
-    this.app.router.render = this.render.bind(this)
-    this.app.router.update = this.on.bind(this)
     this.contaner = null
     this.rootContainer = null
-    this.events = new Set()
   }
   async init(container) {
     this.rootContainer = container
@@ -23,17 +20,6 @@ export default class Router extends BasicRouter {
       }
     })
     await this.update(window.location)
-  }
-  async emit(...args) {
-    const callbacks = this.events
-    for await (const callback of callbacks) {
-      await callback(...args)
-    }
-  }
-  on(callback) {
-    const callbacks = this.events
-    if (!callbacks.has(callback)) callbacks.add(callback)
-    return () => callbacks.delete(callback)
   }
   async render(to) {
     if (to.pushed) history[to.replace ? 'replaceState' : 'pushState'](null, null, to.fullPath)
@@ -48,7 +34,7 @@ export default class Router extends BasicRouter {
       this.currentLayout = null
     }
     if (target.layout) {
-      if (to.reload || from?.route.layout !== target.layout) {
+      if (to.reloaded || from?.route.layout !== target.layout) {
         this.currentLayout = await this.app.mount({ options: this.app.router.layouts[target.layout], target: this.rootContainer }, this.propsData)
         if (!this.currentLayout) return
         this.contaner = this.rootContainer.querySelector('[router]')
@@ -56,18 +42,17 @@ export default class Router extends BasicRouter {
           errorRouter(null, 503)
           return
         }
-      }
+      } else this.currentLayout?.change?.()
     } else this.contaner = this.rootContainer
-      //
     this.rootContainer.setAttribute('layout', target.layout || '')
     document.title = target.title || 'Lesta'
     this.rootContainer.setAttribute('page', target.name || '')
     
-    if (to.reload || from?.route.component !== target.component) {
+    if (to.reloaded || from?.route.component !== target.component) {
       window.scrollTo(0, 0)
       this.current = await this.app.mount({ options: target.component, target: this.contaner }, this.propsData)
       if (!this.current) return
-    } else await this.emit(to, from, this.app)
+    } else this.current?.change?.()
     return to
   }
 }

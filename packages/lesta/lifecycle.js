@@ -24,8 +24,9 @@ async function lifecycle(component, render, aborted, completed, propsData = {}) 
       await revocablePromise(hook(), component.context.abortSignal)
       component.context.phase++
     }
-  } catch {
+  } catch(e) {
     aborted()
+    throw e
   }
   completed?.()
   return component.context.container

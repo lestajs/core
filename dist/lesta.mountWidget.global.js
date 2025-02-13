@@ -1,8 +1,8 @@
 (() => {
   var __defProp = Object.defineProperty;
   var __export = (target, all) => {
-    for (var name in all)
-      __defProp(target, name, { get: all[name], enumerable: true });
+    for (var name2 in all)
+      __defProp(target, name2, { get: all[name2], enumerable: true });
   };
 
   // packages/utils/replicate.js
@@ -35,7 +35,7 @@
     105: "node with this name was not found in the template.",
     106: 'a node "%s" has already been created for this HTML element.',
     107: 'node "%s" error, spot cannot be a node.',
-    108: '"%s" property is not supported. Replaced node only supports "selector", "component" properties'
+    108: '"%s" property is not supported. Replaced node only supports "selector", "component" properties.'
   };
   var component = {
     // 201:
@@ -47,7 +47,7 @@
     // 207:
     208: 'node is iterable, the "component" property is not supported.',
     // 209
-    210: "an iterable component and a component with a replaced node must have a template with a single root HTML element",
+    210: "an iterable component and a component with a replaced node must have a template with a single root HTML element.",
     211: "component should have object as the object type.",
     212: 'method "%s" has already been defined previously.',
     213: 'param "%s" has already been defined previously.',
@@ -58,9 +58,9 @@
   };
 
   // packages/utils/errors/component.js
-  var errorComponent = (name, code, param = "") => {
+  var errorComponent = (name2, code, param = "") => {
     if (true) {
-      console.error(`Lesta |${code}| Error creating component "${name}": ${component[code]}`, param);
+      console.error(`Lesta |${code}| Error creating component "${name2}": ${component[code]}`, param);
     }
   };
 
@@ -139,6 +139,10 @@
         options: component2,
         phase: 0,
         abort: () => controller.abort(),
+        id: () => {
+          app.id++;
+          return app.name + app.id;
+        },
         abortSignal: controller.signal,
         node: {},
         param: {},
@@ -258,9 +262,9 @@
   }
 
   // packages/utils/errors/node.js
-  var errorNode = (name, code, param = "") => {
+  var errorNode = (name2, code, param = "") => {
     if (true) {
-      console.error(`Lesta |${code}| Error in node "${name}": ${node[code]}`, param);
+      console.error(`Lesta |${code}| Error in node "${name2}": ${node[code]}`, param);
     }
   };
 
@@ -289,8 +293,8 @@
           }
         },
         set: (target, value, ref) => {
-          for (const name in this.context.node) {
-            this.actives(this.context.node[name], ref, value);
+          for (const name2 in this.context.node) {
+            this.actives(this.context.node[name2], ref, value);
           }
           this.component.handlers?.[ref]?.bind(this.context)(value);
         },
@@ -306,26 +310,26 @@
         const nodes = this.component.nodes.bind(this.context)();
         const container = this.context.container;
         const t = container.target;
-        for (const name in nodes) {
-          const s = nodes[name].selector || this.context.app.selector || `.${name}`;
-          const selector = typeof s === "function" ? s(name) : s;
+        for (const name2 in nodes) {
+          const s = nodes[name2].selector || this.context.app.selector || `.${name2}`;
+          const selector = typeof s === "function" ? s(name2) : s;
           const target = t.querySelector(selector) || t.matches(selector) && t;
-          const nodepath = container.nodepath + "." + name;
+          const nodepath = container.nodepath + "." + name2;
           if (target) {
             if (target._engaged)
-              return errorNode(nodepath, 106, name);
+              return errorNode(nodepath, 106, name2);
             target._engaged = true;
             if (container.spot && Object.values(container.spot).includes(target)) {
-              errorNode(nodepath, 107, name);
+              errorNode(nodepath, 107, name2);
               continue;
             }
-            Object.assign(this.context.node, { [name]: { target, nodepath, nodename: name, action: {}, prop: {}, directives: {} } });
+            Object.assign(this.context.node, { [name2]: { target, nodepath, nodename: name2, action: {}, prop: {}, directives: {} } });
           } else
             errorNode(nodepath, 105);
         }
         Object.preventExtensions(this.context.node);
-        for await (const [name, nodeElement] of Object.entries(this.context.node)) {
-          const n = this.factory(nodes[name], this.context, nodeElement, this.impress, this.app);
+        for await (const [name2, nodeElement] of Object.entries(this.context.node)) {
+          const n = this.factory(nodes[name2], this.context, nodeElement, this.impress, this.app);
           await n.controller();
         }
       }
@@ -369,7 +373,9 @@
   var DOMProperties_default = {
     listeners(key) {
       if (typeof this.nodeOptions[key] === "function") {
-        this.nodeElement.target[key] = (event) => this.nodeOptions[key].bind(this.context)(event);
+        this.nodeElement.target[key] = (event) => {
+          this.nodeOptions[key].bind(this.context)(event);
+        };
       }
     },
     general(key) {
@@ -463,8 +469,9 @@
         await revocablePromise(hook(), component2.context.abortSignal);
         component2.context.phase++;
       }
-    } catch {
+    } catch (e) {
       aborted();
+      throw e;
     }
     completed?.();
     return component2.context.container;
@@ -477,16 +484,18 @@
   }
 
   // packages/lesta/mountWidget.js
-  async function mountWidget({ options, target, name = "root" }, app = {}) {
+  async function mountWidget({ options, target }, app = {}) {
     if (!options)
       return errorComponent(name, 216);
     if (!target)
       return errorComponent(name, 217);
+    app.id = 0;
+    app.name ||= "r";
     const src = { ...options };
     const controller = new AbortController();
     const container = {
       target,
-      nodepath: name,
+      nodepath: app.name,
       action: {},
       unmount() {
         controller.abort();

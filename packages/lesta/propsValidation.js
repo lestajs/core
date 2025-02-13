@@ -8,17 +8,17 @@ class Props {
     this.container = context.container
     this.app = app
   }
-  async setup(cp) {
-    if (this.props.proxies && Object.keys(this.props.proxies).length && !cp?.proxies) return errorProps(this.container.nodepath, 306)
+  async setup(p) {
+    if (this.props.proxies && Object.keys(this.props.proxies).length && !p?.proxies) return errorProps(this.container.nodepath, 306)
     this.context.unrelatedProxy = (key) => this.props.proxies[key]?.hasOwnProperty('_independent') ? this.props.proxies[key]._independent : true
-    if (cp) {
-      await this.params(cp.params)
-      await this.methods(cp.methods)
-      return await this.proxies(cp.proxies)
+    if (p) {
+      await this.params(p.params)
+      await this.methods(p.methods)
+      return await this.proxies(p.proxies)
     }
   }
-  store(s) {
-    return typeof s === 'function' ? s.bind(this)() : s
+  prop(p) {
+    return typeof p === 'function' ? p.bind(this.context)() : p
   }
   validation(target, prop, key, value, name) {
     const np = this.container.nodepath
@@ -30,8 +30,7 @@ class Props {
     if (isObject(prop)) {
       checkType(target[key], prop.type)
       checkEnum(target[key], prop.enum)
-      const err = prop.validation?.bind(this.context)(target[key])
-      if (err) errorProps(np, name, key, 308, err)
+      if (prop.validation && !prop.validation.bind(this.context)(target[key])) errorProps(np, name, key, 308)
     }
     return target[key]
   }
@@ -40,7 +39,8 @@ class Props {
       const proxiesData = {}
       const context = this.context
       for (const key in proxies) {
-        const prop = proxies[key]
+        const prop = this.prop(proxies[key])
+        const s = prop.store
         this.container.prop[key] = {
           update: (value, path) => {
             if (path) return deliver(context.proxy[key], path, replicate(value))
@@ -50,8 +50,7 @@ class Props {
         let value = null
         if (this.props.proxies?.hasOwnProperty(key)) {
           value = this.props.proxies[key]?._value
-        } else if (prop.store) {
-          const s = this.store(prop.store)
+        } else if (s) {
           const storeModule = await this.app.store?.init(s)
           if (!storeModule) return errorProps(this.container.nodepath, 'proxies', key, 307, s)
           value = storeModule.proxies(key, this.container)
@@ -63,11 +62,11 @@ class Props {
   }
   async params(params) {
     for (const key in params) {
-      const prop = params[key]
+      const prop = this.prop(params[key])
+      const s = prop.store
       const paramValue = async () => {
         let data = null
-        if (prop.store) {
-          const s = this.store(prop.store)
+        if (s) {
           const storeModule = await this.app.store?.init(s)
           if (!storeModule) return errorProps(this.container.nodepath, 'params', key, 307, s)
           data = storeModule.params(key)
@@ -84,13 +83,14 @@ class Props {
     const setMethod = (method, key) => {
       this.context.method[key] = (...args) => {
         if (args.length && (args.length > 1 || typeof args.at(0) !== 'object')) return errorProps(this.container.nodepath, 'methods', key, 301)
-        const result = method({ ...replicate(args.at(0)), _params: this.context.container.param, _methods: this.context.container.method })
+        const result = method(replicate(args.at(0)))
         return result instanceof Promise ? result.then(data => replicate(data)) : replicate(result)
       }
     }
     for (const key in methods) {
-      const prop = methods[key]
-      if (prop.store) {
+      const prop = this.prop(methods[key])
+      const s = prop.store
+      if (s) {
         const s = this.store(prop.store)
         const storeModule = await this.app.store?.init(s)
         if (!storeModule) return errorProps(this.container.nodepath, 'methods', key, 307, s)

@@ -2,6 +2,7 @@ import active from '../lesta/active'
 import diveProxy from '../lesta/diveProxy'
 import { loadModule } from '../utils'
 import { errorStore } from '../utils/errors/store'
+import {errorProps} from "../utils/errors/props";
 
 class Store {
   constructor(module, app, name) {
@@ -23,8 +24,10 @@ class Store {
     this.context.param = this.store.params
     Object.preventExtensions(this.context.param)
     for (const key in this.store.methods) {
-      this.context.method[key] = (obj) => {
-        if (this.store.middlewares && key in this.store.middlewares) {
+      this.context.method[key] = (...args) => {
+        if (args.length && (args.length > 1 || typeof args.at(0) !== 'object')) return errorStore(this.context.name, 403, key)
+        const obj = args.at(0)
+        if (this.store.middlewares?.hasOwnProperty(key)) {
           return (async () => {
             const res = await this.store.middlewares[key].bind(this.context)(obj)
             if (res && typeof res !== 'object') return errorStore(this.context.name, 404, key)
