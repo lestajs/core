@@ -15,14 +15,14 @@
   // packages/utils/revocablePromise.js
   async function revocablePromise(promise, signal, aborted) {
     return new Promise((resolve, reject) => {
-      const abortListener = () => {
+      const abortHandler = () => {
         reject();
         aborted?.();
-        signal.removeEventListener("abort", abortListener);
+        signal?.removeEventListener("abort", abortHandler);
       };
-      signal.addEventListener("abort", abortListener);
-      if (signal.aborted)
-        abortListener();
+      signal?.addEventListener("abort", abortHandler);
+      if (signal?.aborted)
+        abortHandler();
       promise.then(resolve).catch(reject);
     });
   }
@@ -490,7 +490,7 @@
     if (!target)
       return errorComponent(name, 217);
     app.id = 0;
-    app.name ||= "r";
+    app.name ||= "_";
     const src = { ...options };
     const controller = new AbortController();
     const container = {
@@ -514,6 +514,6 @@
     return await lifecycle(component2, render, aborted, app.completed);
   }
 
-  // scripts/lesta.mountWidget.global.js
-  window.lesta = { mountWidget };
+  // scripts/lesta.widget.global.js
+  window.lesta = { mountWidget, replicate, revocablePromise };
 })();
