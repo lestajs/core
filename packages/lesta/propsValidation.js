@@ -91,7 +91,6 @@ class Props {
       const prop = this.prop(methods[key])
       const s = prop.store
       if (s) {
-        const s = this.store(prop.store)
         const storeModule = await this.app.store?.init(s)
         if (!storeModule) return errorProps(this.container.nodepath, 'methods', key, 307, s)
         const method = storeModule.methods(key)

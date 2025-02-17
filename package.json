@@ -12,8 +12,8 @@
     "dist/lesta.cjs.js",
     "dist/lesta.global.js",
     "dist/lesta.global.prod.js",
-    "dist/lesta.createWidget.js",
-    "dist/lesta.createWidget.prod.js"
+    "dist/lesta.widget.js",
+    "dist/lesta.widget.prod.js"
   ],
   "repository": {
     "type": "git",
@@ -52,8 +52,5 @@
     "path": "^0.12.7",
     "zlib": "^1.0.5"
   },
-  "type": "module",
-  "dependencies": {
-    "parcel": "^2.11.0"
-  }
+  "type": "module"
 }

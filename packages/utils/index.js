@@ -3,14 +3,11 @@ import { replicate } from './replicate.js'
 import { deliver } from './deliver.js'
 import { mapProps } from './mapProps.js'
 import { debounce } from './debounce.js'
-import { throttling } from './throttling.js'
-import { delay } from './delay.js'
+import { throttle } from './throttle.js'
+import { delayRace } from './delayRace.js'
 import { loadModule } from './loadModule.js'
 import { revocablePromise } from './revocablePromise.js'
 import { deleteReactive } from './deleteReactive.js'
-import { uid } from './uid.js'
-import { deepFreeze } from './deepFreeze.js'
-import { nextFrame } from './nextFrame.js'
 import { escHtml } from './escHtml.js'
 
 export {
@@ -19,13 +16,10 @@ export {
   deliver,
   mapProps,
   debounce,
-  throttling,
-  delay,
+  throttle,
+  delayRace,
   loadModule,
   revocablePromise,
   deleteReactive,
-  uid,
-  deepFreeze,
-  nextFrame,
   escHtml
 }

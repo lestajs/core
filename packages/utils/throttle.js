@@ -1,4 +1,4 @@
-function throttling(fn, timeout = 50) {
+function throttle(fn, timeout = 50) {
   let timer
   return function perform(...args) {
     if (timer) return
@@ -10,4 +10,4 @@ function throttling(fn, timeout = 50) {
   }
 }
 
-export { throttling }
+export { throttle }

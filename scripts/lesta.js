@@ -4,14 +4,11 @@ import {
   deliver,
   mapProps,
   debounce,
-  throttling,
-  delay,
+  throttle,
+  delayRace,
   loadModule,
   revocablePromise,
   deleteReactive,
-  uid,
-  deepFreeze,
-  nextFrame,
   escHtml
 } from '../packages/utils'
 import { createApp } from '../packages/lesta/createApp'
@@ -29,13 +26,10 @@ export {
   deliver,
   mapProps,
   debounce,
-  throttling,
-  delay,
+  throttle,
+  delayRace,
   loadModule,
   revocablePromise,
   deleteReactive,
-  uid,
-  deepFreeze,
-  nextFrame,
   escHtml
 }

@@ -8,7 +8,7 @@ async function mountWidget({ options, target }, app = {}) {
   if (!options) return errorComponent(name, 216)
   if (!target) return errorComponent(name, 217)
   app.id = 0
-  app.name ||= 'r'
+  app.name ||= '_'
   const src = { ...options }
   const controller = new AbortController()
   const container = {

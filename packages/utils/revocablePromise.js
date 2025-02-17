@@ -1,12 +1,12 @@
 async function revocablePromise(promise, signal, aborted) {
 	return new Promise((resolve, reject) => {
-		const abortListener = () => {
+		const abortHandler = () => {
 			reject()
 			aborted?.()
-			signal.removeEventListener('abort', abortListener)
+			signal?.removeEventListener('abort', abortHandler)
 		}
-		signal.addEventListener('abort', abortListener)
-		if (signal.aborted) abortListener()
+		signal?.addEventListener('abort', abortHandler)
+		if (signal?.aborted) abortHandler()
 		promise.then(resolve).catch(reject)
 	})
 }

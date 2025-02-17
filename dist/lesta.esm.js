@@ -56,8 +56,8 @@ function debounce(fn, timeout = 120) {
   };
 }
 
-// packages/utils/throttling.js
-function throttling(fn, timeout = 50) {
+// packages/utils/throttle.js
+function throttle(fn, timeout = 50) {
   let timer;
   return function perform(...args) {
     if (timer)
@@ -70,41 +70,35 @@ function throttling(fn, timeout = 50) {
   };
 }
 
-// packages/utils/delay.js
-function delay(ms = 0) {
-  let timer, _reject;
-  const promise = new Promise((resolve, reject) => {
-    _reject = () => {
-      clearTimeout(timer);
-      reject();
-      promise._pending = false;
-      promise.rejected = true;
-    };
-    timer = setTimeout(() => {
-      clearTimeout(timer);
+// packages/utils/delayRace.js
+function delayRace(ms = 0, signal) {
+  return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
       resolve();
-      promise._pending = false;
-      promise._fulfilled = true;
+      signal?.removeEventListener("abort", abortHandler);
     }, ms);
+    const abortHandler = () => {
+      clearTimeout(timeoutId);
+      reject();
+      signal?.removeEventListener("abort", abortHandler);
+    };
+    signal?.addEventListener("abort", abortHandler);
+    if (signal?.aborted)
+      abortHandler();
   });
-  promise._reject = _reject;
-  promise._pending = true;
-  promise._rejected = false;
-  promise._fulfilled = false;
-  return promise;
 }
 
 // packages/utils/revocablePromise.js
 async function revocablePromise(promise, signal, aborted) {
   return new Promise((resolve, reject) => {
-    const abortListener = () => {
+    const abortHandler = () => {
       reject();
       aborted?.();
-      signal.removeEventListener("abort", abortListener);
+      signal?.removeEventListener("abort", abortHandler);
     };
-    signal.addEventListener("abort", abortListener);
-    if (signal.aborted)
-      abortListener();
+    signal?.addEventListener("abort", abortHandler);
+    if (signal?.aborted)
+      abortHandler();
     promise.then(resolve).catch(reject);
   });
 }
@@ -137,36 +131,6 @@ function deleteReactive(reactivity, path) {
       reactivity.delete(fn);
     }
   }
-}
-
-// packages/utils/uid.js
-function uid() {
-  const buf = new Uint32Array(4);
-  window.crypto.getRandomValues(buf);
-  let idx = -1;
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    idx++;
-    const r = buf[idx >> 3] >> idx % 8 * 4 & 15;
-    const v = c === "x" ? r : r & 3 | 8;
-    return v.toString(16);
-  });
-}
-
-// packages/utils/deepFreeze.js
-function deepFreeze(obj) {
-  Object.freeze(obj);
-  Object.getOwnPropertyNames(obj).forEach((prop) => {
-    const propVal = obj[prop];
-    if (propVal !== null && (typeof propVal === "object" || typeof propVal === "function") && !Object.isFrozen(propVal)) {
-      deepFreeze(propVal);
-    }
-  });
-  return obj;
-}
-
-// packages/utils/nextFrame.js
-async function nextFrame() {
-  return new Promise(requestAnimationFrame);
 }
 
 // packages/utils/escHtml.js
@@ -617,13 +581,12 @@ var Props = class {
       const prop = this.prop(methods[key]);
       const s = prop.store;
       if (s) {
-        const s2 = this.store(prop.store);
-        const storeModule = await this.app.store?.init(s2);
+        const storeModule = await this.app.store?.init(s);
         if (!storeModule)
-          return errorProps(this.container.nodepath, "methods", key, 307, s2);
+          return errorProps(this.container.nodepath, "methods", key, 307, s);
         const method = storeModule.methods(key);
         if (!method)
-          return errorProps(this.container.nodepath, "methods", key, 305, s2);
+          return errorProps(this.container.nodepath, "methods", key, 305, s);
         setMethod(method, key);
       } else {
         const isMethodValid = this.props.methods?.hasOwnProperty(key);
@@ -1199,7 +1162,7 @@ async function mount(module, container, propsData = {}, app = {}) {
 // packages/lesta/createApp.js
 function createApp(app = {}) {
   app.id = 0;
-  app.name ||= "r";
+  app.name ||= "_";
   app.mount = async (container, propsData) => {
     const { options, target } = container;
     return await mount(options, { target, nodepath: app.name, action: {}, prop: {} }, propsData, app);
@@ -1702,7 +1665,7 @@ async function mountWidget({ options, target }, app = {}) {
   if (!target)
     return errorComponent(name, 217);
   app.id = 0;
-  app.name ||= "r";
+  app.name ||= "_";
   const src = { ...options };
   const controller = new AbortController();
   const container = {
@@ -1730,8 +1693,7 @@ export {
   createRouter,
   createStores,
   debounce,
-  deepFreeze,
-  delay,
+  delayRace,
   deleteReactive,
   deliver,
   escHtml,
@@ -1739,9 +1701,7 @@ export {
   loadModule,
   mapProps,
   mountWidget,
-  nextFrame,
   replicate,
   revocablePromise,
-  throttling,
-  uid
+  throttle
 };
