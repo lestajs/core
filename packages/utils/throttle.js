@@ -1,10 +1,9 @@
 function throttle(fn, timeout = 50) {
-  let timer
+  let timer = null
   return function perform(...args) {
-    if (timer) return
+    if (timer !== null) return
     timer = setTimeout(() => {
-      fn(...args)
-      clearTimeout(timer)
+      fn.apply(this, args)
       timer = null
     }, timeout)
   }

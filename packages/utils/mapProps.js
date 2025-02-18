@@ -1,7 +1,8 @@
-function mapProps(arr, options) {
-  const res = {}
-  arr.forEach(key => Object.assign(res, {[key]: options}))
-  return res
+function mapProps(keys, value) {
+  return keys.reduce((acc, key) => {
+    acc[key] = value
+    return acc
+  }, {})
 }
 
 export { mapProps }

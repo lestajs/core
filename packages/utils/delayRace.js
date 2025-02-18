@@ -1,16 +1,20 @@
 function delayRace(ms = 0, signal) {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new Error('Aborted'))
+      return
+    }
     const timeoutId = setTimeout(() => {
       resolve()
-      signal?.removeEventListener('abort', abortHandler)
+      cleanup()
     }, ms)
     const abortHandler = () => {
       clearTimeout(timeoutId)
-      reject()
-      signal?.removeEventListener('abort', abortHandler)
+      reject(new Error('Aborted'))
+      cleanup()
     }
+    const cleanup = () => signal?.removeEventListener('abort', abortHandler)
     signal?.addEventListener('abort', abortHandler)
-    if (signal?.aborted) abortHandler()
   })
 }
 export { delayRace }

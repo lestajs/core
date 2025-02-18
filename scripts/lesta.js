@@ -8,7 +8,6 @@ import {
   delayRace,
   loadModule,
   revocablePromise,
-  deleteReactive,
   escHtml
 } from '../packages/utils'
 import { createApp } from '../packages/lesta/createApp'
@@ -30,6 +29,5 @@ export {
   delayRace,
   loadModule,
   revocablePromise,
-  deleteReactive,
   escHtml
 }

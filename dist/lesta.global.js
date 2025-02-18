@@ -13,7 +13,6 @@
     createStores: () => createStores,
     debounce: () => debounce,
     delayRace: () => delayRace,
-    deleteReactive: () => deleteReactive,
     deliver: () => deliver,
     escHtml: () => escHtml,
     isObject: () => isObject,
@@ -52,26 +51,19 @@
   }
 
   // packages/utils/mapProps.js
-  function mapProps(arr, options) {
-    const res = {};
-    arr.forEach((key) => Object.assign(res, { [key]: options }));
-    return res;
+  function mapProps(keys, value) {
+    return keys.reduce((acc, key) => {
+      acc[key] = value;
+      return acc;
+    }, {});
   }
 
   // packages/utils/debounce.js
   function debounce(fn, timeout = 120) {
     let timer;
-    let lastCall = 0;
     return (...args) => {
-      const now = Date.now();
-      if (now - lastCall > timeout) {
-        lastCall = now;
-        fn(...args);
-      } else {
-        clearTimeout(timer);
-      }
+      clearTimeout(timer);
       timer = setTimeout(() => {
-        lastCall = now;
         fn(...args);
       }, timeout);
     };
@@ -79,13 +71,12 @@
 
   // packages/utils/throttle.js
   function throttle(fn, timeout = 50) {
-    let timer;
+    let timer = null;
     return function perform(...args) {
-      if (timer)
+      if (timer !== null)
         return;
       timer = setTimeout(() => {
-        fn(...args);
-        clearTimeout(timer);
+        fn.apply(this, args);
         timer = null;
       }, timeout);
     };
@@ -94,18 +85,21 @@
   // packages/utils/delayRace.js
   function delayRace(ms = 0, signal) {
     return new Promise((resolve, reject) => {
+      if (signal?.aborted) {
+        reject(new Error("Aborted"));
+        return;
+      }
       const timeoutId = setTimeout(() => {
         resolve();
-        signal?.removeEventListener("abort", abortHandler);
+        cleanup();
       }, ms);
       const abortHandler = () => {
         clearTimeout(timeoutId);
-        reject();
-        signal?.removeEventListener("abort", abortHandler);
+        reject(new Error("Aborted"));
+        cleanup();
       };
+      const cleanup = () => signal?.removeEventListener("abort", abortHandler);
       signal?.addEventListener("abort", abortHandler);
-      if (signal?.aborted)
-        abortHandler();
     });
   }
 
