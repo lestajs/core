@@ -1,12 +1,12 @@
-import BasicRouter from './basic.js'
-import { errorRouter } from '../../utils/errors/router.js'
+import BasicRouter from './basic'
+import { errorRouter } from '../../utils/errors/router'
 
 export default class Router extends BasicRouter {
   constructor(...args) {
     super(...args)
     this.currentLayout = null
     this.current = null
-    this.contaner = null
+    this.container = null
     this.rootContainer = null
   }
   async init(container) {
@@ -22,7 +22,6 @@ export default class Router extends BasicRouter {
     await this.update(window.location)
   }
   async render(to) {
-    if (to.pushed) history[to.replace ? 'replaceState' : 'pushState'](null, null, to.fullPath)
     const target = to.route
     const from = this.app.router.from
     if (this.current && from?.route.component !== target.component) {
@@ -34,25 +33,31 @@ export default class Router extends BasicRouter {
       this.currentLayout = null
     }
     if (target.layout) {
-      if (to.reloaded || from?.route.layout !== target.layout) {
-        this.currentLayout = await this.app.mount({ options: this.app.router.layouts[target.layout], target: this.rootContainer }, this.propsData)
+      if (to.state.reloaded || from?.route.layout !== target.layout) {
+        this.currentLayout = await this.app.mount(this.app.router.layouts[target.layout], this.rootContainer)
         if (!this.currentLayout) return
-        this.contaner = this.rootContainer.querySelector('[router]')
-        if (!this.contaner) {
+        this.container = this.rootContainer.querySelector('[router]')
+        if (!this.container) {
           errorRouter(null, 503)
           return
         }
-      } else this.currentLayout?.change?.()
-    } else this.contaner = this.rootContainer
+      } else this.currentLayout?.refresh?.({ cause: 'routerPushed' })
+    } else this.container = this.rootContainer
     this.rootContainer.setAttribute('layout', target.layout || '')
     document.title = target.title || 'Lesta'
     this.rootContainer.setAttribute('page', target.name || '')
-    
-    if (to.reloaded || from?.route.component !== target.component) {
+    if (to.state.reloaded || from?.route.component !== target.component) {
       window.scrollTo(0, 0)
-      this.current = await this.app.mount({ options: target.component, target: this.contaner }, this.propsData)
+      this.current = await this.app.mount(target.component, this.container)
+      this.currentLayout?.refresh?.({ cause: 'pageChanged' })
       if (!this.current) return
-    } else this.current?.change?.()
+    } else this.current?.refresh?.({ cause: 'routerPushed' })
+    const el = window[to.hash?.slice(1)]
+    window.scrollTo({
+      top: (el?.offsetTop || 0) + (to.state?.top || 0),
+      left: (el?.offsetLeft || 0)  + (to.state?.left || 0),
+      behavior: to.state?.behavior || 'auto'
+    })
     return to
   }
 }

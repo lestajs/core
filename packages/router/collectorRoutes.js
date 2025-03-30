@@ -1,10 +1,11 @@
-import { errorRouter } from '../utils/errors/router.js'
+import { errorRouter } from '../utils/errors/router'
+import { deepFreeze } from '../utils'
 
 function collectorRoutes(routes, collection, parent = { path: '' }) {
   routes.forEach(route => {
     if (!route.hasOwnProperty('path')) return errorRouter(route.name, 557)
     route.params = { ...parent.params, ...route.params }
-    route.extra = { ...parent.extra, ...route.extra }
+    route.extra = { ...parent.extra, ...deepFreeze(route.extra) }
     route.beforeEnter = route.beforeEnter || parent.beforeEnter
     route.afterEnter = route.afterEnter || parent.afterEnter
     const collectorRoute = (path = '') => {

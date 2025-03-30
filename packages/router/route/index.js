@@ -1,4 +1,4 @@
-import { errorRouter } from '../../utils/errors/router.js'
+import { errorRouter } from '../../utils/errors/router'
 
 export default {
   init(collection, url) {
@@ -19,10 +19,10 @@ export default {
       })
       const to = {
         path: this.result.map.at(0) || '/',
-        params,
+        params: Object.keys(params).length ? params : undefined,
         fullPath: this.url.href,
         hash: this.url.hash,
-        query: Object.fromEntries(new URLSearchParams(this.url.search)),
+        query: this.url.search ? Object.fromEntries(new URLSearchParams(this.url.search)) : undefined,
         name: target.name,
         extra: target.extra,
         route: {}

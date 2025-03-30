@@ -42,7 +42,7 @@ function buildGlobal(name) {
     bundle: true,
     platform: 'browser',
     define: { CDN: 'true' },
-    minify: true
+    minify: true,
   }).then(() => {
     outputSize(name)
   })
@@ -57,18 +57,8 @@ function buildEsm(name) {
     mainFields: ['module', 'main'],
   })
 }
-function buildCjs(name) {
-  build({
-    entryPoints: [resolve(`scripts/${name}.js`)],
-    outfile: `dist/${name}.cjs.js`,
-    bundle: true,
-    target: ['node10.4'],
-    platform: 'node'
-  })
-}
 
 buildGlobal('lesta.widget.global')
 buildGlobal('lesta.global')
 
 buildEsm('lesta')
-buildCjs('lesta')

@@ -49,6 +49,8 @@
   "devDependencies": {
     "cypress": "^7.0.0",
     "esbuild": "~0.16.17",
+    "eslint": "^9.22.0",
+    "eslint-plugin-jsdoc": "^50.6.3",
     "path": "^0.12.7",
     "zlib": "^1.0.5"
   },

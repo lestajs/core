@@ -9,6 +9,28 @@ function isObject(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+// packages/utils/deepFreeze.js
+function deepFreeze(obj) {
+  if (obj === null || typeof obj !== "object")
+    return obj;
+  const frozenObjects = /* @__PURE__ */ new WeakSet();
+  function internalDeepFreeze(obj2) {
+    if (Object.isFrozen(obj2) || !(obj2 instanceof Object))
+      return obj2;
+    if (frozenObjects.has(obj2))
+      return obj2;
+    frozenObjects.add(obj2);
+    Object.freeze(obj2);
+    for (const key of Reflect.ownKeys(obj2)) {
+      const value = obj2[key];
+      if (value instanceof Object)
+        internalDeepFreeze(value);
+    }
+    return obj2;
+  }
+  return internalDeepFreeze(obj);
+}
+
 // packages/utils/replicate.js
 function replicate(data) {
   if (!data)
@@ -39,7 +61,7 @@ function mapProps(keys, value) {
 }
 
 // packages/utils/debounce.js
-function debounce(fn, timeout = 120) {
+function debounce(fn, timeout = 150) {
   let timer;
   return (...args) => {
     clearTimeout(timer);
@@ -50,7 +72,7 @@ function debounce(fn, timeout = 120) {
 }
 
 // packages/utils/throttle.js
-function throttle(fn, timeout = 50) {
+function throttle(fn, timeout = 150) {
   let timer = null;
   return function perform(...args) {
     if (timer !== null)
@@ -197,145 +219,6 @@ var errorComponent = (name2, code, param = "") => {
   }
 };
 
-// packages/lesta/directives/index.js
-var directives_exports = {};
-__export(directives_exports, {
-  _attr: () => _attr,
-  _class: () => _class,
-  _event: () => _event,
-  _text: () => _text
-});
-
-// packages/lesta/directives/_class.js
-var _class = {
-  update: (node2, value, key) => value ? node2.classList.add(key) : node2.classList.remove(key)
-};
-
-// packages/lesta/directives/_text.js
-var _text = {
-  update: (node2, value) => {
-    if (value === void 0)
-      return;
-    node2.textContent = value !== Object(value) ? value : JSON.stringify(value);
-  }
-};
-
-// packages/lesta/directives/_attr.js
-var _attr = {
-  update: (node2, value, key) => {
-    if (typeof value === "boolean") {
-      value ? node2.setAttribute(key, "") : node2.removeAttribute(key);
-    } else
-      node2.setAttribute(key, value);
-  }
-};
-
-// packages/lesta/directives/_event.js
-var _event = {
-  create: (node2, options) => {
-    for (const key in options) {
-      node2.addEventListener(key, options[key]);
-    }
-  },
-  destroy: (node2, options) => {
-    for (const key in options) {
-      node2.removeEventListener(key, options[key]);
-    }
-  }
-};
-
-// packages/lesta/impress.js
-var impress_default = {
-  refs: [],
-  collect: false,
-  define(pr) {
-    if (pr && this.refs.every((e) => e.startsWith(this.refs.at(0))))
-      return this.refs.at(-1);
-    return [...this.refs];
-  },
-  clear() {
-    this.collect = false;
-    this.refs.length = 0;
-  }
-};
-
-// packages/lesta/initBasic.js
-var InitBasic = class {
-  constructor(component2, container, app = {}, controller) {
-    this.component = component2;
-    this.app = app;
-    this.impress = impress_default;
-    this.proxiesData = {};
-    this.context = {
-      app,
-      container,
-      options: component2,
-      phase: 0,
-      abort: () => controller.abort(),
-      id: () => {
-        app.id++;
-        return app.name + app.id;
-      },
-      abortSignal: controller.signal,
-      node: {},
-      param: {},
-      method: {},
-      proxy: {},
-      source: component2.sources || {},
-      directives: { ...directives_exports, ...app.directives, ...component2.directives }
-    };
-  }
-  async loaded(props2) {
-    return await this.component.loaded?.bind(this.context)(props2);
-  }
-  async rendered() {
-    if (typeof this.component !== "object")
-      return errorComponent(this.context.container.nodepath, 211);
-    return await this.component.rendered?.bind(this.context)();
-  }
-  async created() {
-    return await this.component.created?.bind(this.context)();
-  }
-  methods() {
-    if (this.component.methods) {
-      for (const [key, method] of Object.entries(this.component.methods)) {
-        if (this.context.method.hasOwnProperty(key))
-          return errorComponent(this.context.container.nodepath, 212, key);
-        this.context.method[key] = method.bind(this.context);
-        if (this.component.actions?.includes(key)) {
-          this.context.container.action[key] = (...args) => {
-            const result = method.bind(this.context)(replicate(...args));
-            return result instanceof Promise ? result.then((data) => replicate(data)) : replicate(result);
-          };
-        }
-      }
-    }
-    Object.preventExtensions(this.context.container.action);
-    Object.preventExtensions(this.context.method);
-  }
-  params() {
-    if (this.component.params) {
-      for (const key in this.component.params) {
-        if (this.context.param.hasOwnProperty(key))
-          return errorComponent(this.context.container.nodepath, 213, key);
-      }
-      Object.assign(this.context.param, this.component.params);
-    }
-    Object.preventExtensions(this.context.param);
-  }
-  proxies() {
-    if (this.component.proxies) {
-      for (const key in this.component.proxies) {
-        if (key in this.proxiesData)
-          return errorComponent(this.context.container.nodepath, 214, key);
-        this.proxiesData[key] = this.component.proxies[key];
-      }
-    }
-    this.context.proxy = this.getProxy();
-    Object.preventExtensions(this.context.proxy);
-  }
-};
-
 // packages/lesta/diveProxy.js
 function diveProxy(_value, handler, path = "") {
   if (!(_value && (_value.constructor.name === "Object" || _value.constructor.name === "Array"))) {
@@ -401,16 +284,155 @@ var errorNode = (name2, code, param = "") => {
   }
 };
 
+// packages/lesta/impress.js
+var impress_default = {
+  refs: [],
+  collect: false,
+  define(pr) {
+    if (pr && this.refs.every((e) => e.startsWith(this.refs.at(0))))
+      return this.refs.at(-1);
+    return [...this.refs];
+  },
+  clear() {
+    this.collect = false;
+    this.refs.length = 0;
+  }
+};
+
+// packages/lesta/directives/index.js
+var directives_exports = {};
+__export(directives_exports, {
+  _attr: () => _attr,
+  _class: () => _class,
+  _event: () => _event,
+  _text: () => _text
+});
+
+// packages/lesta/directives/_class.js
+var _class = {
+  update: (node2, value, key) => value ? node2.target.classList.add(key) : node2.target.classList.remove(key)
+};
+
+// packages/lesta/directives/_text.js
+var _text = {
+  update: (node2, value) => {
+    if (value === void 0)
+      return;
+    node2.target.textContent = value !== Object(value) ? value : JSON.stringify(value);
+  }
+};
+
+// packages/lesta/directives/_attr.js
+var _attr = {
+  update: (node2, value, key) => {
+    if (typeof value === "boolean") {
+      value ? node2.target.setAttribute(key, "") : node2.target.removeAttribute(key);
+    } else
+      node2.target.setAttribute(key, value);
+  }
+};
+
+// packages/lesta/directives/_event.js
+var _event = {
+  create: (node2, options) => {
+    for (const key in options) {
+      node2.target.addEventListener(key, options[key]);
+    }
+  },
+  destroy: (node2, options) => {
+    for (const key in options) {
+      node2.target.removeEventListener(key, options[key]);
+    }
+  }
+};
+
 // packages/lesta/initNode.js
-var InitNode = class extends InitBasic {
-  constructor(component2, container, app, signal, factory) {
-    super(component2, container, app, signal);
+var InitNode = class {
+  constructor(component2, container, app, controller, factory) {
     this.factory = factory;
+    this.component = component2;
+    this.app = app;
+    this.impress = impress_default;
+    this.proxiesData = {};
+    this.context = {
+      app,
+      container,
+      options: component2,
+      phase: 0,
+      abort: () => controller.abort(),
+      id: () => {
+        app.id++;
+        return app.name + app.id;
+      },
+      abortSignal: controller.signal,
+      node: {},
+      param: {},
+      method: {},
+      proxy: {},
+      source: component2.sources || {},
+      directives: { ...directives_exports, ...app.directives, ...component2.directives }
+    };
+  }
+  async loaded(props2) {
+    await this.component.loaded?.bind(this.context)(props2);
   }
   async props() {
   }
+  async rendered() {
+    if (typeof this.component !== "object")
+      return errorComponent(this.context.container.nodepath, 211);
+    await this.component.rendered?.bind(this.context)();
+  }
   async mounted() {
     await this.component.mounted?.bind(this.context)();
+  }
+  async created() {
+    await this.component.created?.bind(this.context)();
+  }
+  unmounted(container) {
+    this.component.unmounted?.bind(this.context)();
+    delete container.unmount;
+  }
+  refreshed(v) {
+    this.component.refreshed?.bind(this.context)(v);
+  }
+  methods() {
+    if (this.component.methods) {
+      for (const [key, method] of Object.entries(this.component.methods)) {
+        if (this.context.method.hasOwnProperty(key))
+          return errorComponent(this.context.container.nodepath, 212, key);
+        this.context.method[key] = method.bind(this.context);
+        if (this.component.actions?.includes(key)) {
+          this.context.container.action[key] = (...args) => {
+            const result = method.bind(this.context)(replicate(...args));
+            return result instanceof Promise ? result.then((data) => replicate(data)) : replicate(result);
+          };
+        }
+      }
+    }
+    Object.preventExtensions(this.context.container.action);
+    Object.preventExtensions(this.context.method);
+  }
+  params() {
+    if (this.component.params) {
+      for (const key in this.component.params) {
+        if (this.context.param.hasOwnProperty(key))
+          return errorComponent(this.context.container.nodepath, 213, key);
+      }
+      Object.assign(this.context.param, this.component.params);
+    }
+    Object.preventExtensions(this.context.param);
+  }
+  proxies() {
+    if (this.component.proxies) {
+      for (const key in this.component.proxies) {
+        if (key in this.proxiesData)
+          return errorComponent(this.context.container.nodepath, 214, key);
+        this.proxiesData[key] = this.component.proxies[key];
+      }
+    }
+    this.context.proxy = this.getProxy();
+    Object.preventExtensions(this.context.proxy);
   }
   actives(nodeElement, ref) {
     active(nodeElement.reactivity?.node, ref);
@@ -444,7 +466,7 @@ var InitNode = class extends InitBasic {
       const container = this.context.container;
       const t = container.target;
       for (const name2 in nodes) {
-        const s = nodes[name2].selector || this.context.app.selector || `.${name2}`;
+        const s = nodes[name2].selector || this.context.app.selectors || `.${name2}`;
         const selector = typeof s === "function" ? s(name2) : s;
         const target = t.querySelector(selector) || t.matches(selector) && t;
         const nodepath = container.nodepath + "." + name2;
@@ -452,6 +474,11 @@ var InitNode = class extends InitBasic {
           if (target._engaged)
             return errorNode(nodepath, 106, name2);
           target._engaged = true;
+          const c = this.component.styles?.[name2];
+          if (typeof c === "string" && c.trim()) {
+            target.classList.remove(name2);
+            target.classList.add(c);
+          }
           if (container.spot && Object.values(container.spot).includes(target)) {
             errorNode(nodepath, 107, name2);
             continue;
@@ -633,6 +660,19 @@ var InitNodeComponent = class extends InitNode {
       container.unstore[key]();
     }
   }
+  refresh(v) {
+    if (this.context.node) {
+      for (const node2 of Object.values(this.context.node)) {
+        if (!node2.unmount)
+          continue;
+        for (const key in node2.spot) {
+          node2.spot[key].refresh?.(v);
+        }
+        node2.refresh(v);
+      }
+    }
+    super.refreshed(v);
+  }
   unmount(container) {
     if (this.context.node) {
       for (const node2 of Object.values(this.context.node)) {
@@ -643,15 +683,17 @@ var InitNodeComponent = class extends InitNode {
         }
         node2.reactivity?.node?.clear();
         if (!node2.unmount)
-          return;
+          continue;
         for (const key in node2.spot) {
           node2.spot[key].unmount?.();
         }
         node2.unmount();
       }
     }
-    this.component.unmounted?.bind(this.context)();
-    delete container.unmount;
+    const { spotname, parent } = container;
+    if (spotname)
+      parent.refresh({ cause: "spotUnmounted", data: { spotname } });
+    super.unmounted(container);
   }
 };
 
@@ -659,9 +701,9 @@ var InitNodeComponent = class extends InitNode {
 function mixins(target) {
   if (!target.mixins?.length)
     return target;
-  const properties = ["directives", "params", "proxies", "methods", "handlers", "setters", "sources"];
+  const properties = ["styles", "directives", "params", "proxies", "methods", "handlers", "setters", "sources"];
   const props2 = ["params", "proxies", "methods"];
-  const hooks = ["loaded", "rendered", "created", "mounted", "unmounted"];
+  const hooks = ["loaded", "rendered", "created", "mounted", "unmounted", "refreshed"];
   const result = { props: {}, actions: [], spots: [] };
   const nodes = [];
   const resultNodes = {};
@@ -716,16 +758,16 @@ var directiveProperties_default = {
     const options = this.nodeOptions[key];
     const { create, update, destroy } = directive;
     Object.assign(n.directives, { [key]: {
-      create: () => create ? create.bind(directive)(n.target, options) : {},
-      destroy: () => destroy ? destroy.bind(directive)(n.target, options) : {}
+      create: () => create ? create.bind(directive)(n, options) : {},
+      destroy: () => destroy ? destroy.bind(directive)(n, options) : {}
     } });
     create && n.directives[key].create();
     const handle = (v, k, o) => {
-      const active2 = (value) => update.bind(directive)(n.target, value, k, o);
+      const active2 = (value) => update.bind(directive)(n, value, k, o);
       if (typeof v === "function") {
         this.impress.collect = true;
-        active2(v(n.target));
-        this.reactiveNode(this.impress.define(), () => active2(v(n.target)));
+        active2(v(n, o));
+        this.reactiveNode(this.impress.define(), () => active2(v(n, o)));
       } else
         active2(v);
     };
@@ -932,8 +974,13 @@ var component_default = {
     if (this.nodeElement.iterated)
       return errorComponent(this.nodeElement.nodepath, 208);
     this.nodeElement.mount = (options) => {
+      if (!Object.keys(options).length)
+        return;
       this.nodeElement.unmount?.();
       this.nodeElement.created = false;
+      const { spotname, parent } = this.nodeElement;
+      if (spotname)
+        parent.refresh({ cause: "spotMounted", data: { spotname } });
       return options.iterate ? this.iterative(options) : this.basic(options);
     };
     const mount2 = () => this.nodeElement.mount(this.nodeOptions.component);
@@ -992,7 +1039,7 @@ var component_default = {
         continue;
       }
       const spotElement = nodeElement.spot[name2];
-      Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + "." + name2, nodename: name2, action: {}, prop: {}, spoted: true });
+      Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + "." + name2, nodename: name2, spotname: name2, action: {}, prop: {} });
       const n = factoryNodeComponent_default(options, this.context, spotElement, this.impress, this.app);
       await n.controller();
     }
@@ -1047,7 +1094,7 @@ function factoryNodeComponent_default(...args) {
 function templateToHTML(template, context) {
   const html = typeof template === "function" ? template.bind(context)() : template;
   const capsule = document.createElement("div");
-  capsule.innerHTML = html.trim();
+  capsule.innerHTML = html.trim().replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, "");
   return capsule.childNodes;
 }
 
@@ -1109,6 +1156,8 @@ function renderComponent(nodeElement, component2) {
 
 // packages/lesta/lifecycle.js
 async function lifecycle(component2, render, aborted, completed, propsData = {}) {
+  const ctx = component2.context;
+  ctx.container.refresh = ({ cause, data = {} }) => component2.refresh(replicate({ cause, data }));
   const hooks = [
     async () => await component2.loaded(),
     async () => {
@@ -1129,15 +1178,15 @@ async function lifecycle(component2, render, aborted, completed, propsData = {})
   ];
   try {
     for await (const hook of hooks) {
-      await revocablePromise(hook(), component2.context.abortSignal);
-      component2.context.phase++;
+      await revocablePromise(hook(), ctx.abortSignal);
+      ctx.phase++;
     }
   } catch (e) {
     aborted();
     throw e;
   }
   completed?.();
-  return component2.context.container;
+  return ctx.container;
 }
 
 // packages/lesta/mount.js
@@ -1149,7 +1198,6 @@ async function mount(module, container, propsData = {}, app = {}) {
   if (!options)
     return errorComponent(container.nodepath, 216);
   const component2 = new InitNodeComponent(mixins(options), container, app, controller, factoryNodeComponent_default);
-  component2.context.container.change = options.changed?.bind(component2.context);
   const render = () => renderComponent(container, component2);
   return await lifecycle(component2, render, aborted, propsData.completed, propsData);
 }
@@ -1158,10 +1206,7 @@ async function mount(module, container, propsData = {}, app = {}) {
 function createApp(app = {}) {
   app.id = 0;
   app.name ||= "_";
-  app.mount = async (container, propsData) => {
-    const { options, target } = container;
-    return await mount(options, { target, nodepath: app.name, action: {}, prop: {} }, propsData, app);
-  };
+  app.mount = async (options, target, propsData) => await mount(options, { target, nodepath: app.name, action: {}, prop: {} }, propsData, app);
   Object.assign(app, { router: {}, store: {} });
   Object.preventExtensions(app);
   return app;
@@ -1303,10 +1348,10 @@ var route_default = {
       });
       const to = {
         path: this.result.map.at(0) || "/",
-        params,
+        params: Object.keys(params).length ? params : void 0,
         fullPath: this.url.href,
         hash: this.url.hash,
-        query: Object.fromEntries(new URLSearchParams(this.url.search)),
+        query: this.url.search ? Object.fromEntries(new URLSearchParams(this.url.search)) : void 0,
         name: target.name,
         extra: target.extra,
         route: {}
@@ -1398,6 +1443,9 @@ function link(v, t, l) {
   if (!v)
     return "/";
   if (typeof v === "object") {
+    v = replicate(v);
+    if (v.query)
+      v.query = replicate(v.query);
     if (v.path && v.path.startsWith("/")) {
       res = v.path;
     } else if (v.name) {
@@ -1455,7 +1503,7 @@ function link(v, t, l) {
     res = v;
   } else {
     const url = new URL(v, t.fullPath);
-    return url.pathname;
+    return url.pathname + url.search + url.hash;
   }
   res = res.replace(/\/$/, "").replace(/^([^/])/, "/$1");
   return res || "/";
@@ -1467,7 +1515,7 @@ function collectorRoutes(routes, collection, parent = { path: "" }) {
     if (!route.hasOwnProperty("path"))
       return errorRouter(route.name, 557);
     route.params = { ...parent.params, ...route.params };
-    route.extra = { ...parent.extra, ...route.extra };
+    route.extra = { ...parent.extra, ...deepFreeze(route.extra) };
     route.beforeEnter = route.beforeEnter || parent.beforeEnter;
     route.afterEnter = route.afterEnter || parent.afterEnter;
     const collectorRoute = (path = "") => {
@@ -1494,9 +1542,8 @@ var collectorRoutes_default = collectorRoutes;
 
 // packages/router/init/basic.js
 var BasicRouter = class {
-  constructor(app, options, propsData) {
+  constructor(app, options) {
     this.app = app;
-    this.propsData = propsData;
     this.app.router = {
       layouts: options.layouts || {},
       collection: [],
@@ -1519,8 +1566,6 @@ var BasicRouter = class {
   async push(v) {
     const vs = v.path || v;
     if (typeof vs === "string" && vs !== "") {
-      if (vs.startsWith("#"))
-        return history[v.replaced ? "replaceState" : "pushState"](null, null, v.path);
       try {
         if (new URL(vs).hostname !== location.hostname)
           return window.open(vs, v.target || "_self", v.windowFeatures);
@@ -1531,7 +1576,8 @@ var BasicRouter = class {
     if (typeof path !== "string")
       return path;
     const url = new URL(location.origin + path);
-    return await this.update(url, true, v.replaced, v.reloaded);
+    history[v.state?.replaced ? "replaceState" : "pushState"](null, null, url.href);
+    return await this.update(url, true, v.state);
   }
   async beforeHooks(hook) {
     if (hook) {
@@ -1547,7 +1593,7 @@ var BasicRouter = class {
     if (hook)
       await hook(this.app.router.to, this.app.router.from, this.app);
   }
-  async update(url, pushed = false, replaced = false, reloaded = false) {
+  async update(url, pushed = false, state = {}) {
     let res = null;
     if (await this.beforeHooks(this.beforeEach))
       return;
@@ -1555,8 +1601,7 @@ var BasicRouter = class {
     const target = to?.route;
     if (target) {
       to.pushed = pushed;
-      to.replaced = replaced;
-      to.reloaded = reloaded;
+      to.state = replicate(state);
       this.app.router.from = this.form;
       this.app.router.to = to;
       if (await this.beforeHooks(this.beforeEnter))
@@ -1586,7 +1631,7 @@ var Router = class extends BasicRouter {
     super(...args);
     this.currentLayout = null;
     this.current = null;
-    this.contaner = null;
+    this.container = null;
     this.rootContainer = null;
   }
   async init(container) {
@@ -1602,8 +1647,6 @@ var Router = class extends BasicRouter {
     await this.update(window.location);
   }
   async render(to) {
-    if (to.pushed)
-      history[to.replace ? "replaceState" : "pushState"](null, null, to.fullPath);
     const target = to.route;
     const from = this.app.router.from;
     if (this.current && from?.route.component !== target.component) {
@@ -1615,36 +1658,43 @@ var Router = class extends BasicRouter {
       this.currentLayout = null;
     }
     if (target.layout) {
-      if (to.reloaded || from?.route.layout !== target.layout) {
-        this.currentLayout = await this.app.mount({ options: this.app.router.layouts[target.layout], target: this.rootContainer }, this.propsData);
+      if (to.state.reloaded || from?.route.layout !== target.layout) {
+        this.currentLayout = await this.app.mount(this.app.router.layouts[target.layout], this.rootContainer);
         if (!this.currentLayout)
           return;
-        this.contaner = this.rootContainer.querySelector("[router]");
-        if (!this.contaner) {
+        this.container = this.rootContainer.querySelector("[router]");
+        if (!this.container) {
           errorRouter(null, 503);
           return;
         }
       } else
-        this.currentLayout?.change?.();
+        this.currentLayout?.refresh?.({ cause: "routerPushed" });
     } else
-      this.contaner = this.rootContainer;
+      this.container = this.rootContainer;
     this.rootContainer.setAttribute("layout", target.layout || "");
     document.title = target.title || "Lesta";
     this.rootContainer.setAttribute("page", target.name || "");
-    if (to.reloaded || from?.route.component !== target.component) {
+    if (to.state.reloaded || from?.route.component !== target.component) {
       window.scrollTo(0, 0);
-      this.current = await this.app.mount({ options: target.component, target: this.contaner }, this.propsData);
+      this.current = await this.app.mount(target.component, this.container);
+      this.currentLayout?.refresh?.({ cause: "pageChanged" });
       if (!this.current)
         return;
     } else
-      this.current?.change?.();
+      this.current?.refresh?.({ cause: "routerPushed" });
+    const el = window[to.hash?.slice(1)];
+    window.scrollTo({
+      top: (el?.offsetTop || 0) + (to.state?.top || 0),
+      left: (el?.offsetLeft || 0) + (to.state?.left || 0),
+      behavior: to.state?.behavior || "auto"
+    });
     return to;
   }
 };
 
 // packages/router/index.js
-function createRouter(app, options, propsData = {}) {
-  return new Router(app, options, propsData);
+function createRouter(app, options) {
+  return new Router(app, options);
 }
 
 // packages/lesta/factoryNode.js
@@ -1654,7 +1704,7 @@ function factoryNode_default(...args) {
 }
 
 // packages/lesta/mountWidget.js
-async function mountWidget({ options, target }, app = {}) {
+async function mountWidget(options, target, app = {}) {
   if (!options)
     return errorComponent(name, 216);
   if (!target)
@@ -1670,8 +1720,7 @@ async function mountWidget({ options, target }, app = {}) {
     unmount() {
       controller.abort();
       target.innerHTML = "";
-      component2.component.unmounted?.bind(component2.context)();
-      delete container.unmount;
+      component2.unmounted(container);
     }
   };
   const aborted = () => app.aborted?.({ phase: component2.context.phase, reason: controller.signal.reason });
@@ -1688,6 +1737,7 @@ export {
   createRouter,
   createStores,
   debounce,
+  deepFreeze,
   delayRace,
   deliver,
   escHtml,

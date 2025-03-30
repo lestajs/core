@@ -1,5 +1,6 @@
 import {
   isObject,
+  deepFreeze,
   replicate,
   deliver,
   mapProps,
@@ -21,6 +22,7 @@ export {
   createRouter,
   mountWidget,
   isObject,
+  deepFreeze,
   replicate,
   deliver,
   mapProps,

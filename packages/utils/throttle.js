@@ -1,4 +1,4 @@
-function throttle(fn, timeout = 50) {
+function throttle(fn, timeout = 150) {
   let timer = null
   return function perform(...args) {
     if (timer !== null) return

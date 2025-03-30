@@ -1,7 +1,7 @@
 const _text = {
   update: (node, value) => {
     if (value === undefined) return
-    node.textContent = value !== Object(value) ? value : JSON.stringify(value)
+    node.target.textContent = value !== Object(value) ? value : JSON.stringify(value)
   }
 }
 

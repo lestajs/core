@@ -33,6 +33,18 @@ class InitNodeComponent extends InitNode {
       container.unstore[key]()
     }
   }
+  refresh(v) {
+    if (this.context.node) {
+      for (const node of Object.values(this.context.node)) {
+        if (!node.unmount) continue
+        for (const key in node.spot) {
+          node.spot[key].refresh?.(v)
+        }
+        node.refresh(v)
+      }
+    }
+    super.refreshed(v)
+  }
   unmount(container) {
     if (this.context.node) {
       for (const node of Object.values(this.context.node)) {
@@ -42,16 +54,16 @@ class InitNodeComponent extends InitNode {
           }
         }
         node.reactivity?.node?.clear()
-        if (!node.unmount) return
-        // if (node.unmount) { // - !node.hasAttribute('iterable')
+        if (!node.unmount) continue
         for (const key in node.spot) {
           node.spot[key].unmount?.()
         }
         node.unmount()
       }
     }
-    this.component.unmounted?.bind(this.context)()
-    delete container.unmount
+    const { spotname, parent } = container
+    if (spotname) parent.refresh({ cause: 'spotUnmounted', data: { spotname }})
+    super.unmounted(container)
   }
 }
 export { InitNodeComponent }

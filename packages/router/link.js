@@ -1,4 +1,5 @@
-import { warnRouter } from '../utils/errors/router.js'
+import { warnRouter } from '../utils/errors/router'
+import { replicate } from '../utils'
 
 function replacement(params, param, key) {
   if (params && params[key]) {
@@ -22,6 +23,8 @@ export default function link(v, t, l) {
   let res = ''
   if (!v) return '/'
   if (typeof v === 'object') {
+    v = replicate(v)
+    if (v.query) v.query = replicate(v.query)
     if (v.path && v.path.startsWith('/')) {
       res = v.path
     } else if (v.name) {
@@ -72,7 +75,7 @@ export default function link(v, t, l) {
     res = v
   } else {
     const url = new URL(v, t.fullPath)
-    return url.pathname
+    return url.pathname + url.search + url.hash
   }
   res = res.replace(/\/$/, '').replace(/^([^/])/, '/$1')
   return res || '/'

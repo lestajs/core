@@ -1,6 +1,8 @@
-import { revocablePromise } from '../utils'
+import { revocablePromise, replicate } from '../utils'
 
 async function lifecycle(component, render, aborted, completed, propsData = {}) {
+  const ctx = component.context
+  ctx.container.refresh = ({ cause, data= {} }) => component.refresh(replicate({ cause, data }))
   const hooks = [
     async () => await component.loaded(),
     async () => {
@@ -21,15 +23,15 @@ async function lifecycle(component, render, aborted, completed, propsData = {}) 
   ]
   try {
     for await (const hook of hooks) {
-      await revocablePromise(hook(), component.context.abortSignal)
-      component.context.phase++
+      await revocablePromise(hook(), ctx.abortSignal)
+      ctx.phase++
     }
   } catch(e) {
     aborted()
     throw e
   }
   completed?.()
-  return component.context.container
+  return ctx.container
 }
 
 export { lifecycle }

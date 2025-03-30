@@ -1,11 +1,11 @@
-import route from '../route/index.js'
-import link from '../link.js'
-import collectorRoutes from '../collectorRoutes.js'
+import route from '../route/index'
+import link from '../link'
+import collectorRoutes from '../collectorRoutes'
+import { replicate } from '../../utils'
 
 export default class BasicRouter {
-  constructor(app, options, propsData) {
+  constructor(app, options) {
     this.app = app
-    this.propsData = propsData
     this.app.router = {
       layouts: options.layouts || {},
       collection: [],
@@ -28,7 +28,6 @@ export default class BasicRouter {
   async push(v) {
     const vs = v.path || v
     if (typeof vs === 'string' && vs !== '') {
-      if (vs.startsWith("#")) return history[v.replaced ? 'replaceState' : 'pushState'](null, null, v.path)
       try {
         if (new URL(vs).hostname !== location.hostname) return window.open(vs, v.target || '_self', v.windowFeatures)
       } catch {}
@@ -36,7 +35,8 @@ export default class BasicRouter {
     const path = this.link(v)
     if (typeof path !== 'string') return path
     const url = new URL(location.origin + path)
-    return await this.update(url, true, v.replaced, v.reloaded)
+    history[v.state?.replaced ? 'replaceState' : 'pushState'](null, null, url.href)
+    return await this.update(url, true, v.state)
   }
   async beforeHooks(hook) {
     if (hook) {
@@ -50,15 +50,14 @@ export default class BasicRouter {
   async afterHooks(hook) {
     if (hook) await hook(this.app.router.to, this.app.router.from, this.app)
   }
-  async update(url, pushed = false, replaced = false, reloaded = false ) {
+  async update(url, pushed = false, state = {} ) {
     let res = null
     if (await this.beforeHooks(this.beforeEach)) return
     const to = route.init(this.app.router.collection, url)
     const target = to?.route
     if (target) {
       to.pushed = pushed
-      to.replaced = replaced
-      to.reloaded = reloaded
+      to.state = replicate(state)
       this.app.router.from = this.form
       this.app.router.to = to
       if (await this.beforeHooks(this.beforeEnter)) return

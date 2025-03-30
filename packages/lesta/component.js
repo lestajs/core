@@ -8,8 +8,11 @@ export default {
     this.nodeElement.reactivity.component = new Map()
     if (this.nodeElement.iterated) return errorComponent(this.nodeElement.nodepath, 208)
     this.nodeElement.mount = (options) => {
+      if (!Object.keys(options).length) return
       this.nodeElement.unmount?.()
       this.nodeElement.created = false
+      const { spotname, parent } = this.nodeElement
+      if (spotname) parent.refresh({ cause: 'spotMounted', data: { spotname }})
       return options.iterate ? this.iterative(options) : this.basic(options)
     }
     const mount = () => this.nodeElement.mount(this.nodeOptions.component)
@@ -64,7 +67,7 @@ export default {
         continue
       }
       const spotElement = nodeElement.spot[name]
-      Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + '.' + name, nodename: name, action: {}, prop: {}, spoted: true })
+      Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + '.' + name, nodename: name, spotname: name, action: {}, prop: {},})
       const n = withComponent(options, this.context, spotElement, this.impress, this.app)
       await n.controller()
     }

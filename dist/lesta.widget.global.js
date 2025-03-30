@@ -64,145 +64,6 @@
     }
   };
 
-  // packages/lesta/directives/index.js
-  var directives_exports = {};
-  __export(directives_exports, {
-    _attr: () => _attr,
-    _class: () => _class,
-    _event: () => _event,
-    _text: () => _text
-  });
-
-  // packages/lesta/directives/_class.js
-  var _class = {
-    update: (node2, value, key) => value ? node2.classList.add(key) : node2.classList.remove(key)
-  };
-
-  // packages/lesta/directives/_text.js
-  var _text = {
-    update: (node2, value) => {
-      if (value === void 0)
-        return;
-      node2.textContent = value !== Object(value) ? value : JSON.stringify(value);
-    }
-  };
-
-  // packages/lesta/directives/_attr.js
-  var _attr = {
-    update: (node2, value, key) => {
-      if (typeof value === "boolean") {
-        value ? node2.setAttribute(key, "") : node2.removeAttribute(key);
-      } else
-        node2.setAttribute(key, value);
-    }
-  };
-
-  // packages/lesta/directives/_event.js
-  var _event = {
-    create: (node2, options) => {
-      for (const key in options) {
-        node2.addEventListener(key, options[key]);
-      }
-    },
-    destroy: (node2, options) => {
-      for (const key in options) {
-        node2.removeEventListener(key, options[key]);
-      }
-    }
-  };
-
-  // packages/lesta/impress.js
-  var impress_default = {
-    refs: [],
-    collect: false,
-    define(pr) {
-      if (pr && this.refs.every((e) => e.startsWith(this.refs.at(0))))
-        return this.refs.at(-1);
-      return [...this.refs];
-    },
-    clear() {
-      this.collect = false;
-      this.refs.length = 0;
-    }
-  };
-
-  // packages/lesta/initBasic.js
-  var InitBasic = class {
-    constructor(component2, container, app = {}, controller) {
-      this.component = component2;
-      this.app = app;
-      this.impress = impress_default;
-      this.proxiesData = {};
-      this.context = {
-        app,
-        container,
-        options: component2,
-        phase: 0,
-        abort: () => controller.abort(),
-        id: () => {
-          app.id++;
-          return app.name + app.id;
-        },
-        abortSignal: controller.signal,
-        node: {},
-        param: {},
-        method: {},
-        proxy: {},
-        source: component2.sources || {},
-        directives: { ...directives_exports, ...app.directives, ...component2.directives }
-      };
-    }
-    async loaded(props2) {
-      return await this.component.loaded?.bind(this.context)(props2);
-    }
-    async rendered() {
-      if (typeof this.component !== "object")
-        return errorComponent(this.context.container.nodepath, 211);
-      return await this.component.rendered?.bind(this.context)();
-    }
-    async created() {
-      return await this.component.created?.bind(this.context)();
-    }
-    methods() {
-      if (this.component.methods) {
-        for (const [key, method] of Object.entries(this.component.methods)) {
-          if (this.context.method.hasOwnProperty(key))
-            return errorComponent(this.context.container.nodepath, 212, key);
-          this.context.method[key] = method.bind(this.context);
-          if (this.component.actions?.includes(key)) {
-            this.context.container.action[key] = (...args) => {
-              const result = method.bind(this.context)(replicate(...args));
-              return result instanceof Promise ? result.then((data) => replicate(data)) : replicate(result);
-            };
-          }
-        }
-      }
-      Object.preventExtensions(this.context.container.action);
-      Object.preventExtensions(this.context.method);
-    }
-    params() {
-      if (this.component.params) {
-        for (const key in this.component.params) {
-          if (this.context.param.hasOwnProperty(key))
-            return errorComponent(this.context.container.nodepath, 213, key);
-        }
-        Object.assign(this.context.param, this.component.params);
-      }
-      Object.preventExtensions(this.context.param);
-    }
-    proxies() {
-      if (this.component.proxies) {
-        for (const key in this.component.proxies) {
-          if (key in this.proxiesData)
-            return errorComponent(this.context.container.nodepath, 214, key);
-          this.proxiesData[key] = this.component.proxies[key];
-        }
-      }
-      this.context.proxy = this.getProxy();
-      Object.preventExtensions(this.context.proxy);
-    }
-  };
-
   // packages/lesta/diveProxy.js
   function diveProxy(_value, handler, path = "") {
     if (!(_value && (_value.constructor.name === "Object" || _value.constructor.name === "Array"))) {
@@ -268,16 +129,155 @@
     }
   };
 
+  // packages/lesta/impress.js
+  var impress_default = {
+    refs: [],
+    collect: false,
+    define(pr) {
+      if (pr && this.refs.every((e) => e.startsWith(this.refs.at(0))))
+        return this.refs.at(-1);
+      return [...this.refs];
+    },
+    clear() {
+      this.collect = false;
+      this.refs.length = 0;
+    }
+  };
+
+  // packages/lesta/directives/index.js
+  var directives_exports = {};
+  __export(directives_exports, {
+    _attr: () => _attr,
+    _class: () => _class,
+    _event: () => _event,
+    _text: () => _text
+  });
+
+  // packages/lesta/directives/_class.js
+  var _class = {
+    update: (node2, value, key) => value ? node2.target.classList.add(key) : node2.target.classList.remove(key)
+  };
+
+  // packages/lesta/directives/_text.js
+  var _text = {
+    update: (node2, value) => {
+      if (value === void 0)
+        return;
+      node2.target.textContent = value !== Object(value) ? value : JSON.stringify(value);
+    }
+  };
+
+  // packages/lesta/directives/_attr.js
+  var _attr = {
+    update: (node2, value, key) => {
+      if (typeof value === "boolean") {
+        value ? node2.target.setAttribute(key, "") : node2.target.removeAttribute(key);
+      } else
+        node2.target.setAttribute(key, value);
+    }
+  };
+
+  // packages/lesta/directives/_event.js
+  var _event = {
+    create: (node2, options) => {
+      for (const key in options) {
+        node2.target.addEventListener(key, options[key]);
+      }
+    },
+    destroy: (node2, options) => {
+      for (const key in options) {
+        node2.target.removeEventListener(key, options[key]);
+      }
+    }
+  };
+
   // packages/lesta/initNode.js
-  var InitNode = class extends InitBasic {
-    constructor(component2, container, app, signal, factory) {
-      super(component2, container, app, signal);
+  var InitNode = class {
+    constructor(component2, container, app, controller, factory) {
       this.factory = factory;
+      this.component = component2;
+      this.app = app;
+      this.impress = impress_default;
+      this.proxiesData = {};
+      this.context = {
+        app,
+        container,
+        options: component2,
+        phase: 0,
+        abort: () => controller.abort(),
+        id: () => {
+          app.id++;
+          return app.name + app.id;
+        },
+        abortSignal: controller.signal,
+        node: {},
+        param: {},
+        method: {},
+        proxy: {},
+        source: component2.sources || {},
+        directives: { ...directives_exports, ...app.directives, ...component2.directives }
+      };
+    }
+    async loaded(props2) {
+      await this.component.loaded?.bind(this.context)(props2);
     }
     async props() {
     }
+    async rendered() {
+      if (typeof this.component !== "object")
+        return errorComponent(this.context.container.nodepath, 211);
+      await this.component.rendered?.bind(this.context)();
+    }
     async mounted() {
       await this.component.mounted?.bind(this.context)();
+    }
+    async created() {
+      await this.component.created?.bind(this.context)();
+    }
+    unmounted(container) {
+      this.component.unmounted?.bind(this.context)();
+      delete container.unmount;
+    }
+    refreshed(v) {
+      this.component.refreshed?.bind(this.context)(v);
+    }
+    methods() {
+      if (this.component.methods) {
+        for (const [key, method] of Object.entries(this.component.methods)) {
+          if (this.context.method.hasOwnProperty(key))
+            return errorComponent(this.context.container.nodepath, 212, key);
+          this.context.method[key] = method.bind(this.context);
+          if (this.component.actions?.includes(key)) {
+            this.context.container.action[key] = (...args) => {
+              const result = method.bind(this.context)(replicate(...args));
+              return result instanceof Promise ? result.then((data) => replicate(data)) : replicate(result);
+            };
+          }
+        }
+      }
+      Object.preventExtensions(this.context.container.action);
+      Object.preventExtensions(this.context.method);
+    }
+    params() {
+      if (this.component.params) {
+        for (const key in this.component.params) {
+          if (this.context.param.hasOwnProperty(key))
+            return errorComponent(this.context.container.nodepath, 213, key);
+        }
+        Object.assign(this.context.param, this.component.params);
+      }
+      Object.preventExtensions(this.context.param);
+    }
+    proxies() {
+      if (this.component.proxies) {
+        for (const key in this.component.proxies) {
+          if (key in this.proxiesData)
+            return errorComponent(this.context.container.nodepath, 214, key);
+          this.proxiesData[key] = this.component.proxies[key];
+        }
+      }
+      this.context.proxy = this.getProxy();
+      Object.preventExtensions(this.context.proxy);
     }
     actives(nodeElement, ref) {
       active(nodeElement.reactivity?.node, ref);
@@ -311,7 +311,7 @@
         const container = this.context.container;
         const t = container.target;
         for (const name2 in nodes) {
-          const s = nodes[name2].selector || this.context.app.selector || `.${name2}`;
+          const s = nodes[name2].selector || this.context.app.selectors || `.${name2}`;
           const selector = typeof s === "function" ? s(name2) : s;
           const target = t.querySelector(selector) || t.matches(selector) && t;
           const nodepath = container.nodepath + "." + name2;
@@ -319,6 +319,11 @@
             if (target._engaged)
               return errorNode(nodepath, 106, name2);
             target._engaged = true;
+            const c = this.component.styles?.[name2];
+            if (typeof c === "string" && c.trim()) {
+              target.classList.remove(name2);
+              target.classList.add(c);
+            }
             if (container.spot && Object.values(container.spot).includes(target)) {
               errorNode(nodepath, 107, name2);
               continue;
@@ -346,16 +351,16 @@
       const options = this.nodeOptions[key];
       const { create, update, destroy } = directive;
       Object.assign(n.directives, { [key]: {
-        create: () => create ? create.bind(directive)(n.target, options) : {},
-        destroy: () => destroy ? destroy.bind(directive)(n.target, options) : {}
+        create: () => create ? create.bind(directive)(n, options) : {},
+        destroy: () => destroy ? destroy.bind(directive)(n, options) : {}
       } });
       create && n.directives[key].create();
       const handle = (v, k, o) => {
-        const active2 = (value) => update.bind(directive)(n.target, value, k, o);
+        const active2 = (value) => update.bind(directive)(n, value, k, o);
         if (typeof v === "function") {
           this.impress.collect = true;
-          active2(v(n.target));
-          this.reactiveNode(this.impress.define(), () => active2(v(n.target)));
+          active2(v(n, o));
+          this.reactiveNode(this.impress.define(), () => active2(v(n, o)));
         } else
           active2(v);
       };
@@ -440,12 +445,14 @@
   function templateToHTML(template, context) {
     const html = typeof template === "function" ? template.bind(context)() : template;
     const capsule = document.createElement("div");
-    capsule.innerHTML = html.trim();
+    capsule.innerHTML = html.trim().replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, "");
     return capsule.childNodes;
   }
 
   // packages/lesta/lifecycle.js
   async function lifecycle(component2, render, aborted, completed, propsData = {}) {
+    const ctx = component2.context;
+    ctx.container.refresh = ({ cause, data = {} }) => component2.refresh(replicate({ cause, data }));
     const hooks = [
       async () => await component2.loaded(),
       async () => {
@@ -466,15 +473,15 @@
     ];
     try {
       for await (const hook of hooks) {
-        await revocablePromise(hook(), component2.context.abortSignal);
-        component2.context.phase++;
+        await revocablePromise(hook(), ctx.abortSignal);
+        ctx.phase++;
       }
     } catch (e) {
       aborted();
       throw e;
     }
     completed?.();
-    return component2.context.container;
+    return ctx.container;
   }
 
   // packages/lesta/factoryNode.js
@@ -484,7 +491,7 @@
   }
 
   // packages/lesta/mountWidget.js
-  async function mountWidget({ options, target }, app = {}) {
+  async function mountWidget(options, target, app = {}) {
     if (!options)
       return errorComponent(name, 216);
     if (!target)
@@ -500,8 +507,7 @@
       unmount() {
         controller.abort();
         target.innerHTML = "";
-        component2.component.unmounted?.bind(component2.context)();
-        delete container.unmount;
+        component2.unmounted(container);
       }
     };
     const aborted = () => app.aborted?.({ phase: component2.context.phase, reason: controller.signal.reason });

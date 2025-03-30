@@ -1,17 +1,19 @@
-import { isObject } from './isObject.js'
-import { replicate } from './replicate.js'
-import { deliver } from './deliver.js'
-import { mapProps } from './mapProps.js'
-import { debounce } from './debounce.js'
-import { throttle } from './throttle.js'
-import { delayRace } from './delayRace.js'
-import { loadModule } from './loadModule.js'
-import { revocablePromise } from './revocablePromise.js'
-import { deleteReactive } from './deleteReactive.js'
-import { escHtml } from './escHtml.js'
+import { isObject } from './isObject'
+import { deepFreeze } from './deepFreeze'
+import { replicate } from './replicate'
+import { deliver } from './deliver'
+import { mapProps } from './mapProps'
+import { debounce } from './debounce'
+import { throttle } from './throttle'
+import { delayRace } from './delayRace'
+import { loadModule } from './loadModule'
+import { revocablePromise } from './revocablePromise'
+import { deleteReactive } from './deleteReactive'
+import { escHtml } from './escHtml'
 
 export {
   isObject,
+  deepFreeze,
   replicate,
   deliver,
   mapProps,

@@ -13,7 +13,6 @@ async function mount(module, container, propsData = {}, app = {}) {
   const options = await loadModule(module, controller.signal, aborted)
   if (!options) return errorComponent(container.nodepath, 216)
   const component = new InitNodeComponent(mixins(options), container, app, controller, withComponent)
-  component.context.container.change = options.changed?.bind(component.context)
   const render = () => renderComponent(container, component)
   return await lifecycle(component, render, aborted, propsData.completed, propsData)
 }

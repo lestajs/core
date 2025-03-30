@@ -1,16 +1,92 @@
-import InitBasic from './initBasic'
 import diveProxy from './diveProxy'
 import active from './active'
 import { errorNode } from '../utils/errors/node'
+import impress from './impress'
+import * as directives from './directives'
+import { errorComponent } from '../utils/errors/component'
+import { replicate } from '../utils'
 
-class InitNode extends InitBasic {
-  constructor(component, container, app, signal, factory) {
-    super(component, container, app, signal)
+class InitNode {
+  constructor(component, container, app, controller, factory) {
     this.factory = factory
+    this.component = component
+    this.app = app
+    this.impress = impress
+    this.proxiesData = {}
+    this.context = {
+      app,
+      container,
+      options: component,
+      phase: 0,
+      abort: () => controller.abort(),
+      appId: () => {
+        app.id++
+        return app.name + app.id
+      },
+      abortSignal: controller.signal,
+      node: {},
+      param: {},
+      method: {},
+      proxy: {},
+      source: component.sources || {},
+      directives: { ...directives, ...app.directives, ...component.directives }
+    }
+  }
+  async loaded(props) {
+    await this.component.loaded?.bind(this.context)(props)
   }
   async props() {}
+  async rendered() {
+    if (typeof this.component !== 'object') return errorComponent(this.context.container.nodepath,211)
+    await this.component.rendered?.bind(this.context)()
+  }
   async mounted() {
     await this.component.mounted?.bind(this.context)()
+  }
+  async created() {
+    await this.component.created?.bind(this.context)()
+  }
+  unmounted(container) {
+    this.component.unmounted?.bind(this.context)()
+    delete container.unmount
+  }
+  refreshed(v) {
+    this.component.refreshed?.bind(this.context)(v)
+  }
+  methods() {
+    if (this.component.methods) {
+      for (const [key, method] of Object.entries(this.component.methods)) {
+        if (this.context.method.hasOwnProperty(key)) return errorComponent(this.context.container.nodepath, 212, key)
+        this.context.method[key] = method.bind(this.context)
+        if (this.component.actions?.includes(key)) {
+          this.context.container.action[key] = (...args) => {
+            const result = method.bind(this.context)(replicate(...args))
+            return result instanceof Promise ? result.then(data => replicate(data)) : replicate(result)
+          }
+        }
+      }
+    }
+    Object.preventExtensions(this.context.container.action)
+    Object.preventExtensions(this.context.method)
+  }
+  params() {
+    if (this.component.params) {
+      for (const key in this.component.params) {
+        if (this.context.param.hasOwnProperty(key)) return errorComponent(this.context.container.nodepath, 213, key)
+      }
+      Object.assign(this.context.param, this.component.params)
+    }
+    Object.preventExtensions(this.context.param)
+  }
+  proxies() {
+    if (this.component.proxies) {
+      for (const key in this.component.proxies) {
+        if (key in this.proxiesData) return errorComponent(this.context.container.nodepath, 214, key)
+        this.proxiesData[key] = this.component.proxies[key]
+      }
+    }
+    this.context.proxy = this.getProxy()
+    Object.preventExtensions(this.context.proxy)
   }
   actives(nodeElement, ref) {
     active(nodeElement.reactivity?.node, ref)
@@ -43,13 +119,18 @@ class InitNode extends InitBasic {
       const container = this.context.container
       const t = container.target
       for (const name in nodes) {
-        const s = nodes[name].selector || this.context.app.selector || `.${name}`
+        const s = nodes[name].selector || this.context.app.selectors || `.${name}`
         const selector = typeof s === "function" ? s(name) : s;
         const target = t.querySelector(selector) || t.matches(selector) && t
         const nodepath = container.nodepath + '.' + name
         if (target) {
           if (target._engaged) return errorNode(nodepath, 106, name)
           target._engaged = true
+          const c = this.component.styles?.[name]
+          if (typeof c === 'string' && c.trim()) {
+            target.classList.remove(name)
+            target.classList.add(c)
+          }
           if (container.spot && Object.values(container.spot).includes(target)) {
             errorNode(nodepath, 107, name)
             continue
