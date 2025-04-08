@@ -13,8 +13,7 @@ class Store {
       options: module,
       reactivity: new Map(),
       param: {},
-      method: {},
-      source: this.store.sources,
+      method: {}
     }
   }
   async loaded() {

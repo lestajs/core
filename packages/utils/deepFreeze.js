@@ -1,16 +1,16 @@
 function deepFreeze(obj) {
 	if (obj === null || typeof obj !== 'object') return obj
 	const frozenObjects = new WeakSet()
-	function internalDeepFreeze(obj) {
-		if (Object.isFrozen(obj) || !(obj instanceof Object)) return obj
-		if (frozenObjects.has(obj)) return obj
-		frozenObjects.add(obj)
-		Object.freeze(obj)
-		for (const key of Reflect.ownKeys(obj)) {
-			const value = obj[key]
+	function internalDeepFreeze(o) {
+		if (Object.isFrozen(o) || !(o instanceof Object)) return o
+		if (frozenObjects.has(o)) return o
+		frozenObjects.add(o)
+		Object.freeze(o)
+		for (const key of Reflect.ownKeys(o)) {
+			const value = o[key]
 			if (value instanceof Object) internalDeepFreeze(value)
 		}
-		return obj
+		return o
 	}
 	return internalDeepFreeze(obj)
 }

@@ -35,19 +35,19 @@
     if (obj === null || typeof obj !== "object")
       return obj;
     const frozenObjects = /* @__PURE__ */ new WeakSet();
-    function internalDeepFreeze(obj2) {
-      if (Object.isFrozen(obj2) || !(obj2 instanceof Object))
-        return obj2;
-      if (frozenObjects.has(obj2))
-        return obj2;
-      frozenObjects.add(obj2);
-      Object.freeze(obj2);
-      for (const key of Reflect.ownKeys(obj2)) {
-        const value = obj2[key];
+    function internalDeepFreeze(o) {
+      if (Object.isFrozen(o) || !(o instanceof Object))
+        return o;
+      if (frozenObjects.has(o))
+        return o;
+      frozenObjects.add(o);
+      Object.freeze(o);
+      for (const key of Reflect.ownKeys(o)) {
+        const value = o[key];
         if (value instanceof Object)
           internalDeepFreeze(value);
       }
-      return obj2;
+      return o;
     }
     return internalDeepFreeze(obj);
   }
@@ -381,7 +381,7 @@
         options: component2,
         phase: 0,
         abort: () => controller.abort(),
-        id: () => {
+        appId: () => {
           app.id++;
           return app.name + app.id;
         },
@@ -1250,8 +1250,7 @@
         options: module,
         reactivity: /* @__PURE__ */ new Map(),
         param: {},
-        method: {},
-        source: this.store.sources
+        method: {}
       };
     }
     async loaded() {

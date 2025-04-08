@@ -1,7 +1,7 @@
 {
   "name": "lesta",
   "version": "",
-  "description": "Simple and lightweight JavaScript with all the features of a framework.",
+  "description": "A native JavaScript framework for building UI on the web.",
   "keywords": [
     "lesta",
     "lesta.js",
@@ -9,11 +9,10 @@
   ],
   "files": [
     "dist/lesta.esm.js",
-    "dist/lesta.cjs.js",
     "dist/lesta.global.js",
     "dist/lesta.global.prod.js",
-    "dist/lesta.widget.js",
-    "dist/lesta.widget.prod.js"
+    "dist/lesta.widget.global.js",
+    "dist/lesta.widget.global.prod.js"
   ],
   "repository": {
     "type": "git",
@@ -39,6 +38,10 @@
   },
   "scripts": {
     "build": "node scripts/build.js --define:process.env.NODE_ENV='production'",
+    "lint:file": "eslint",
+    "lint": "eslint . --ext .js",
+    "type-check": "tsc --noEmit",
+    "check": "npm run lint && npm run type-check",
     "test": "cypress run"
   },
   "alias": {
@@ -47,11 +50,15 @@
   "author": "Sasha Kosyak",
   "license": "MIT",
   "devDependencies": {
+    "@eslint/js": "^9.23.0",
+    "@typescript-eslint/parser": "^8.28.0",
     "cypress": "^7.0.0",
     "esbuild": "~0.16.17",
-    "eslint": "^9.22.0",
-    "eslint-plugin-jsdoc": "^50.6.3",
-    "path": "^0.12.7",
+    "eslint": "^9.23.0",
+    "eslint-plugin-jsdoc": "^50.6.9",
+    "eslint-plugin-tsc": "^2.0.0",
+    "globals": "^16.0.0",
+    "typescript": "^5.8.2",
     "zlib": "^1.0.5"
   },
   "type": "module"

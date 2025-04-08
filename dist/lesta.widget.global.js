@@ -205,7 +205,7 @@
         options: component2,
         phase: 0,
         abort: () => controller.abort(),
-        id: () => {
+        appId: () => {
           app.id++;
           return app.name + app.id;
         },
