@@ -1,8 +1,8 @@
 (() => {
   var __defProp = Object.defineProperty;
   var __export = (target, all) => {
-    for (var name2 in all)
-      __defProp(target, name2, { get: all[name2], enumerable: true });
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
   };
 
   // packages/utils/replicate.js
@@ -25,6 +25,11 @@
         abortHandler();
       promise.then(resolve).catch(reject);
     });
+  }
+
+  // packages/utils/camelToKebab.js
+  function camelToKebab(str) {
+    return str.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
   }
 
   // packages/utils/errors/index.js
@@ -58,9 +63,9 @@
   };
 
   // packages/utils/errors/component.js
-  var errorComponent = (name2, code, param = "") => {
+  var errorComponent = (name, code, param = "") => {
     if (true) {
-      console.error(`Lesta |${code}| Error creating component "${name2}": ${component[code]}`, param);
+      console.error(`Lesta |${code}| Error creating component "${name}": ${component[code]}`, param);
     }
   };
 
@@ -123,9 +128,9 @@
   }
 
   // packages/utils/errors/node.js
-  var errorNode = (name2, code, param = "") => {
+  var errorNode = (name, code, param = "") => {
     if (true) {
-      console.error(`Lesta |${code}| Error in node "${name2}": ${node[code]}`, param);
+      console.error(`Lesta |${code}| Error in node "${name}": ${node[code]}`, param);
     }
   };
 
@@ -293,8 +298,8 @@
           }
         },
         set: (target, value, ref) => {
-          for (const name2 in this.context.node) {
-            this.actives(this.context.node[name2], ref, value);
+          for (const name in this.context.node) {
+            this.actives(this.context.node[name], ref, value);
           }
           this.component.handlers?.[ref]?.bind(this.context)(value);
         },
@@ -310,31 +315,31 @@
         const nodes = this.component.nodes.bind(this.context)();
         const container = this.context.container;
         const t = container.target;
-        for (const name2 in nodes) {
-          const s = nodes[name2].selector || this.context.app.selectors || `.${name2}`;
-          const selector = typeof s === "function" ? s(name2) : s;
+        for (const name in nodes) {
+          const s = nodes[name].selector || this.context.app.selectors || `.${name}`;
+          const selector = typeof s === "function" ? s(name) : s;
           const target = t.querySelector(selector) || t.matches(selector) && t;
-          const nodepath = container.nodepath + "." + name2;
+          const nodepath = container.nodepath + "." + name;
           if (target) {
             if (target._engaged)
-              return errorNode(nodepath, 106, name2);
+              return errorNode(nodepath, 106, name);
             target._engaged = true;
-            const c = this.component.styles?.[name2];
+            const c = this.component.styles?.[name];
             if (typeof c === "string" && c.trim()) {
-              target.classList.remove(name2);
+              target.classList.remove(name);
               target.classList.add(c);
             }
             if (container.spot && Object.values(container.spot).includes(target)) {
-              errorNode(nodepath, 107, name2);
+              errorNode(nodepath, 107, name);
               continue;
             }
-            Object.assign(this.context.node, { [name2]: { target, nodepath, nodename: name2, action: {}, prop: {}, directives: {} } });
+            Object.assign(this.context.node, { [name]: { target, nodepath, nodename: name, action: {}, prop: {}, directives: {} } });
           } else
             errorNode(nodepath, 105);
         }
         Object.preventExtensions(this.context.node);
-        for await (const [name2, nodeElement] of Object.entries(this.context.node)) {
-          const n = this.factory(nodes[name2], this.context, nodeElement, this.impress, this.app);
+        for await (const [name, nodeElement] of Object.entries(this.context.node)) {
+          const n = this.factory(nodes[name], this.context, nodeElement, this.impress, this.app);
           await n.controller();
         }
       }
@@ -492,12 +497,12 @@
 
   // packages/lesta/mountWidget.js
   async function mountWidget(options, target, app = {}) {
-    if (!options)
-      return errorComponent(name, 216);
-    if (!target)
-      return errorComponent(name, 217);
     app.id = 0;
     app.name ||= "_";
+    if (!options)
+      return errorComponent(app.name, 216);
+    if (!target)
+      return errorComponent(app.name, 217);
     const src = { ...options };
     const controller = new AbortController();
     const container = {
@@ -521,5 +526,5 @@
   }
 
   // scripts/lesta.widget.global.js
-  window.lesta = { mountWidget, replicate, revocablePromise };
+  window.lesta = { mountWidget, replicate, revocablePromise, camelToKebab };
 })();

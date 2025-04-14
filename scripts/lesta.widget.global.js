@@ -1,2 +1,2 @@
-import { mountWidget, replicate, revocablePromise } from './lesta.js'
-window.lesta = { mountWidget, replicate, revocablePromise }
+import { mountWidget, replicate, revocablePromise, camelToKebab } from './lesta.js'
+window.lesta = { mountWidget, replicate, revocablePromise, camelToKebab }

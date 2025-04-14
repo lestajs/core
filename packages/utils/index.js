@@ -10,6 +10,7 @@ import { loadModule } from './loadModule'
 import { revocablePromise } from './revocablePromise'
 import { deleteReactive } from './deleteReactive'
 import { escHtml } from './escHtml'
+import { camelToKebab } from './camelToKebab'
 
 export {
   isObject,
@@ -23,5 +24,6 @@ export {
   loadModule,
   revocablePromise,
   deleteReactive,
-  escHtml
+  escHtml,
+  camelToKebab
 }

@@ -1,16 +1,5 @@
 import { mount } from './mount'
 
-/**
- * @typedef {Object} App
- * @property {string} name
- * @property {Function} mount
- */
-
-/**
- * @param {Partial<App>} [app]
- * @returns {Readonly<App>}
- */
-
 function createApp(app = {}) {
   app.id = 0
   app.name ||= '_'

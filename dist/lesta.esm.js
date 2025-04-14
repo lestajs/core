@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __export = (target, all) => {
-  for (var name2 in all)
-    __defProp(target, name2, { get: all[name2], enumerable: true });
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
 };
 
 // packages/utils/isObject.js
@@ -155,6 +155,11 @@ function escHtml(unsafe) {
   return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;").replace(/`/g, "&#x60;").replace(/=/g, "&#x3D;");
 }
 
+// packages/utils/camelToKebab.js
+function camelToKebab(str) {
+  return str.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
+}
+
 // packages/utils/errors/index.js
 var node = {
   102: 'incorrect directive name "%s", the name must start with the character "_".',
@@ -213,9 +218,9 @@ var router = {
 };
 
 // packages/utils/errors/component.js
-var errorComponent = (name2, code, param = "") => {
+var errorComponent = (name, code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
-    console.error(`Lesta |${code}| Error creating component "${name2}": ${component[code]}`, param);
+    console.error(`Lesta |${code}| Error creating component "${name}": ${component[code]}`, param);
   }
 };
 
@@ -278,9 +283,9 @@ function active(reactivity, ref, value) {
 }
 
 // packages/utils/errors/node.js
-var errorNode = (name2, code, param = "") => {
+var errorNode = (name, code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
-    console.error(`Lesta |${code}| Error in node "${name2}": ${node[code]}`, param);
+    console.error(`Lesta |${code}| Error in node "${name}": ${node[code]}`, param);
   }
 };
 
@@ -448,8 +453,8 @@ var InitNode = class {
         }
       },
       set: (target, value, ref) => {
-        for (const name2 in this.context.node) {
-          this.actives(this.context.node[name2], ref, value);
+        for (const name in this.context.node) {
+          this.actives(this.context.node[name], ref, value);
         }
         this.component.handlers?.[ref]?.bind(this.context)(value);
       },
@@ -465,31 +470,31 @@ var InitNode = class {
       const nodes = this.component.nodes.bind(this.context)();
       const container = this.context.container;
       const t = container.target;
-      for (const name2 in nodes) {
-        const s = nodes[name2].selector || this.context.app.selectors || `.${name2}`;
-        const selector = typeof s === "function" ? s(name2) : s;
+      for (const name in nodes) {
+        const s = nodes[name].selector || this.context.app.selectors || `.${name}`;
+        const selector = typeof s === "function" ? s(name) : s;
         const target = t.querySelector(selector) || t.matches(selector) && t;
-        const nodepath = container.nodepath + "." + name2;
+        const nodepath = container.nodepath + "." + name;
         if (target) {
           if (target._engaged)
-            return errorNode(nodepath, 106, name2);
+            return errorNode(nodepath, 106, name);
           target._engaged = true;
-          const c = this.component.styles?.[name2];
+          const c = this.component.styles?.[name];
           if (typeof c === "string" && c.trim()) {
-            target.classList.remove(name2);
+            target.classList.remove(name);
             target.classList.add(c);
           }
           if (container.spot && Object.values(container.spot).includes(target)) {
-            errorNode(nodepath, 107, name2);
+            errorNode(nodepath, 107, name);
             continue;
           }
-          Object.assign(this.context.node, { [name2]: { target, nodepath, nodename: name2, action: {}, prop: {}, directives: {} } });
+          Object.assign(this.context.node, { [name]: { target, nodepath, nodename: name, action: {}, prop: {}, directives: {} } });
         } else
           errorNode(nodepath, 105);
       }
       Object.preventExtensions(this.context.node);
-      for await (const [name2, nodeElement] of Object.entries(this.context.node)) {
-        const n = this.factory(nodes[name2], this.context, nodeElement, this.impress, this.app);
+      for await (const [name, nodeElement] of Object.entries(this.context.node)) {
+        const n = this.factory(nodes[name], this.context, nodeElement, this.impress, this.app);
         await n.controller();
       }
     }
@@ -497,9 +502,9 @@ var InitNode = class {
 };
 
 // packages/utils/errors/props.js
-var errorProps = (name2, type, prop, code, param = "") => {
+var errorProps = (name, type, prop, code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
-    console.error(`Lesta |${code}| Error in props ${type} "${prop}" in component "${name2}": ${props[code]}`, param);
+    console.error(`Lesta |${code}| Error in props ${type} "${prop}" in component "${name}": ${props[code]}`, param);
   }
 };
 
@@ -524,11 +529,11 @@ var Props = class {
   prop(p) {
     return typeof p === "function" ? p.bind(this.context)() : p;
   }
-  validation(target, prop, key, value, name2) {
+  validation(target, prop, key, value, name) {
     const np = this.container.nodepath;
-    const checkType = (v, t) => v && t && !(typeof v === t || t === "array" && Array.isArray(v)) && errorProps(np, name2, key, 304, t);
-    const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(np, name2, key, 302, v));
-    target[key] = value ?? ((prop.required && errorProps(np, name2, key, 303)) ?? prop.default ?? value);
+    const checkType = (v, t) => v && t && !(typeof v === t || t === "array" && Array.isArray(v)) && errorProps(np, name, key, 304, t);
+    const checkEnum = (v, e) => v && Array.isArray(e) && (!e.includes(v) && errorProps(np, name, key, 302, v));
+    target[key] = value ?? ((prop.required && errorProps(np, name, key, 303)) ?? prop.default ?? value);
     if (typeof prop === "string")
       checkType(target[key], prop);
     if (Array.isArray(prop))
@@ -537,7 +542,7 @@ var Props = class {
       checkType(target[key], prop.type);
       checkEnum(target[key], prop.enum);
       if (prop.validation && !prop.validation.bind(this.context)(target[key]))
-        errorProps(np, name2, key, 308);
+        errorProps(np, name, key, 308);
     }
     return target[key];
   }
@@ -641,9 +646,9 @@ var InitNodeComponent = class extends InitNode {
       active(c.reactivity?.component, ref, value);
     };
     const spotsReactivity = (c) => {
-      for (const name2 in c.spot) {
-        reactivity(c.spot[name2]);
-        spotsReactivity(c.spot[name2]);
+      for (const name in c.spot) {
+        reactivity(c.spot[name]);
+        spotsReactivity(c.spot[name]);
       }
     };
     reactivity(nodeElement);
@@ -1033,13 +1038,13 @@ var component_default = {
     this.nodeElement.created = true;
     if (!spots)
       return;
-    for await (const [name2, options] of Object.entries(spots)) {
-      if (!nodeElement.spot?.hasOwnProperty(name2)) {
-        errorComponent(nodeElement.nodepath, 202, name2);
+    for await (const [name, options] of Object.entries(spots)) {
+      if (!nodeElement.spot?.hasOwnProperty(name)) {
+        errorComponent(nodeElement.nodepath, 202, name);
         continue;
       }
-      const spotElement = nodeElement.spot[name2];
-      Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + "." + name2, nodename: name2, spotname: name2, action: {}, prop: {} });
+      const spotElement = nodeElement.spot[name];
+      Object.assign(spotElement, { parent: nodeElement, nodepath: nodeElement.nodepath + "." + name, nodename: name, spotname: name, action: {}, prop: {} });
       const n = factoryNodeComponent_default(options, this.context, spotElement, this.impress, this.app);
       await n.controller();
     }
@@ -1111,7 +1116,7 @@ function renderComponent(nodeElement, component2) {
   const spots = (node2) => {
     if (options.spots?.length)
       node2.spot = {};
-    options.spots?.forEach((name2) => Object.assign(node2.spot, { [name2]: { target: node2.target.querySelector(`[spot="${name2}"]`) } }));
+    options.spots?.forEach((name) => Object.assign(node2.spot, { [name]: { target: node2.target.querySelector(`[spot="${name}"]`) } }));
   };
   if (nodeElement.iterated) {
     const parent = nodeElement.parent;
@@ -1213,18 +1218,18 @@ function createApp(app = {}) {
 }
 
 // packages/utils/errors/store.js
-var errorStore = (name2, code, param = "") => {
+var errorStore = (name, code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
-    console.error(`Lesta |${code}| Error in store "${name2}": ${store[code]}`, param);
+    console.error(`Lesta |${code}| Error in store "${name}": ${store[code]}`, param);
   }
 };
 
 // packages/store/index.js
 var Store = class {
-  constructor(module, app, name2) {
+  constructor(module, app, name) {
     this.store = module;
     this.context = {
-      name: name2,
+      name,
       app,
       options: module,
       reactivity: /* @__PURE__ */ new Map(),
@@ -1316,9 +1321,9 @@ function createStores(app, storesOptions) {
 }
 
 // packages/utils/errors/router.js
-var errorRouter = (name2 = "", code, param = "") => {
+var errorRouter = (name = "", code, param = "") => {
   if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "local") {
-    console.error(`Lesta |${code}| Error in route "${name2}": ${router[code]}`, param);
+    console.error(`Lesta |${code}| Error in route "${name}": ${router[code]}`, param);
   }
 };
 var warnRouter = (code, param = "") => {
@@ -1704,12 +1709,12 @@ function factoryNode_default(...args) {
 
 // packages/lesta/mountWidget.js
 async function mountWidget(options, target, app = {}) {
-  if (!options)
-    return errorComponent(name, 216);
-  if (!target)
-    return errorComponent(name, 217);
   app.id = 0;
   app.name ||= "_";
+  if (!options)
+    return errorComponent(app.name, 216);
+  if (!target)
+    return errorComponent(app.name, 217);
   const src = { ...options };
   const controller = new AbortController();
   const container = {
@@ -1732,6 +1737,7 @@ async function mountWidget(options, target, app = {}) {
   return await lifecycle(component2, render, aborted, app.completed);
 }
 export {
+  camelToKebab,
   createApp,
   createRouter,
   createStores,

@@ -9,7 +9,8 @@ import {
   delayRace,
   loadModule,
   revocablePromise,
-  escHtml
+  escHtml,
+  camelToKebab
 } from '../packages/utils'
 import { createApp } from '../packages/lesta/createApp'
 import { createStores } from '../packages/store'
@@ -31,5 +32,6 @@ export {
   delayRace,
   loadModule,
   revocablePromise,
-  escHtml
+  escHtml,
+  camelToKebab
 }
