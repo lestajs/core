@@ -467,7 +467,7 @@ var InitNode = class {
   }
   async nodes() {
     if (this.component.nodes) {
-      const nodes = this.component.nodes.bind(this.context)();
+      const nodes = this.component.nodes.bind(this.context)(this.context);
       const container = this.context.container;
       const t = container.target;
       for (const name in nodes) {
