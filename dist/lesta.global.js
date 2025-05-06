@@ -403,7 +403,10 @@
     async loaded(props2) {
       await this.component.loaded?.bind(this.context)(props2);
     }
-    async props() {
+    props() {
+    }
+    refresh(v) {
+      this.component.refreshed?.bind(this.context)(v);
     }
     async rendered() {
       if (typeof this.component !== "object")
@@ -419,9 +422,6 @@
     unmounted(container) {
       this.component.unmounted?.bind(this.context)();
       delete container.unmount;
-    }
-    refreshed(v) {
-      this.component.refreshed?.bind(this.context)(v);
     }
     methods() {
       if (this.component.methods) {
@@ -698,7 +698,7 @@
           node2.refresh(v);
         }
       }
-      super.refreshed(v);
+      super.refresh(v);
     }
     unmount(container) {
       if (this.context.node) {

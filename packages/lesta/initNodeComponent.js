@@ -43,7 +43,7 @@ class InitNodeComponent extends InitNode {
         node.refresh(v)
       }
     }
-    super.refreshed(v)
+    super.refresh(v)
   }
   unmount(container) {
     if (this.context.node) {
