@@ -1,4 +1,4 @@
-function escHtml(unsafe) {
+function escHtml(unsafe = '') {
 	return unsafe
 	.replace(/&/g, '&amp;')
 	.replace(/</g, '&lt;')

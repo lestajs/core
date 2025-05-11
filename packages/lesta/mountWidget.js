@@ -5,15 +5,15 @@ import { errorComponent } from '../utils/errors/component'
 import templateToHTML from './templateToHTML'
 
 async function mountWidget(options, target, app = {}) {
-  app.id = 0
-  app.name ||= '_'
-  if (!options) return errorComponent(app.name, 216)
-  if (!target) return errorComponent(app.name, 217)
+  app.id ||= 0
+  const name = options.name || '_'
+  if (!options) return errorComponent(name, 216)
+  if (!target) return errorComponent(name, 217)
   const src = { ...options }
   const controller = new AbortController()
   const container = {
     target,
-    nodepath: app.name,
+    nodepath: name,
     action: {},
     unmount() {
       controller.abort()

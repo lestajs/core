@@ -21,7 +21,7 @@ class InitNode {
       abort: () => controller.abort(),
       appId: () => {
         app.id++
-        return app.name + app.id
+        return '_' + app.id
       },
       abortSignal: controller.signal,
       node: {},
