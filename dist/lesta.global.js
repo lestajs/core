@@ -173,12 +173,12 @@
   }
 
   // packages/utils/escHtml.js
-  function escHtml(unsafe) {
+  function escHtml(unsafe = "") {
     return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;").replace(/`/g, "&#x60;").replace(/=/g, "&#x3D;");
   }
 
   // packages/utils/camelToKebab.js
-  function camelToKebab(str) {
+  function camelToKebab(str = "") {
     return str.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
   }
 
@@ -389,7 +389,7 @@
         abort: () => controller.abort(),
         appId: () => {
           app.id++;
-          return app.name + app.id;
+          return "_" + app.id;
         },
         abortSignal: controller.signal,
         node: {},
@@ -1730,18 +1730,17 @@
   }
 
   // packages/lesta/mountWidget.js
-  async function mountWidget(options, target, app = {}) {
-    app.id = 0;
-    app.name ||= "_";
+  async function mountWidget(options, target, app = {}, name = "_") {
+    app.id ||= 0;
     if (!options)
-      return errorComponent(app.name, 216);
+      return errorComponent(name, 216);
     if (!target)
-      return errorComponent(app.name, 217);
+      return errorComponent(name, 217);
     const src = { ...options };
     const controller = new AbortController();
     const container = {
       target,
-      nodepath: app.name,
+      nodepath: name,
       action: {},
       unmount() {
         controller.abort();

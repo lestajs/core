@@ -4,9 +4,8 @@ import withoutComponent from './factoryNode'
 import { errorComponent } from '../utils/errors/component'
 import templateToHTML from './templateToHTML'
 
-async function mountWidget(options, target, app = {}) {
+async function mountWidget(options, target, app = {}, name = '_') {
   app.id ||= 0
-  const name = options.name || '_'
   if (!options) return errorComponent(name, 216)
   if (!target) return errorComponent(name, 217)
   const src = { ...options }
