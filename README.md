@@ -15,17 +15,20 @@
 - [Utils](https://lesta.dev/utils)
 - [UI Components]()
 
-## Install the LestaJS:
+## Setting Up a Project
 
-Install the LestaJS:
+Installation:
 ```bash
 npm install lestajs
 ```
 
-CDN (for quick prototyping):
+Via CDN (for quick prototyping):
 ```html
 <script src="https://cdn.jsdelivr.net/npm/lestajs@latest/dist/lesta.min.js"></script>
 ```
+Examples:
+
+Explore ready-to-use code in our [examples repository](https://github.com/lestajs/exapmles)!
 
 ## Ecosystem
 
@@ -33,18 +36,18 @@ CDN (for quick prototyping):
 - [papakha.lesta.dev](papakha.lesta.dev)
 
 ## Changelog
-
-Learn about the latest improvements [CHANGELOG.md](CHANGELOG.md)
+Stay updated with the latest changes: [CHANGELOG.md](CHANGELOG.md)
 
 ## Contributing
-We welcome contributions! Please follow:
+We welcome all contributions – from code to documentation!  
 
-- [Contributing Guidelines](CONTRIBUTING.md)
-- [Issue Tracker](https://github.com/lestajs/core/issues)
+For detailed guidelines, please see: [CONTRIBUTING.md](CONTRIBUTING.md)  
+
+Quick highlights:  
+- **Found a bug?** [Report it](https://github.com/lestajs/core/issues) with details
+- **Docs fix?** PRs go to [translates](https://github.com/lestajs/translation)
+- **Ideas?** Start a [Discussion](https://github.com/lestajs/core/discussions)
 
 ## Community
-
-Join the conversation and help the community.
-
 - [Telegramm](@lestajs)
 
