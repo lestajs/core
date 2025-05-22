@@ -35,8 +35,8 @@ Explore ready-to-use code in our [examples repository](https://github.com/lestaj
 - [gists.lesta.dev](gists.lesta.dev)
 - [papakha.lesta.dev](papakha.lesta.dev)
 
-## Changelog
-Stay updated with the latest changes: [CHANGELOG.md](CHANGELOG.md)
+## Changelog  
+Stay updated with the latest improvements and fixes: [Releases](https://github.com/lestajs/core/releases)
 
 ## Contributing
 We welcome all contributions – from code to documentation!  
