@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="/assets/logo.svg" alt="lesta-logo" width="120px" height="120px"/>
+  <img src="https://github.com/user-attachments/assets/dbaf4072-5d6d-4fc6-973b-3e92198665f2" alt="lesta-logo" width="80px" height="80px"/>
 </p>
 <p align="center">
    LestaJS - A native JavaScript framework for building UI on the web.
