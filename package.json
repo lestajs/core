@@ -7,14 +7,7 @@
     "lesta.js",
     "lestajs"
   ],
-  "files": [
-    "dist/lesta.esm.js",
-    "dist/lesta.global.js",
-    "dist/lesta.global.prod.js",
-    "dist/lesta.widget.global.js",
-    "dist/lesta.widget.global.prod.js",
-    "CHANGELOG.md"
-  ],
+  "files": ["dist", "CHANGELOG.md"],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lestajs/core.git"
