@@ -12,7 +12,8 @@
     "dist/lesta.global.js",
     "dist/lesta.global.prod.js",
     "dist/lesta.widget.global.js",
-    "dist/lesta.widget.global.prod.js"
+    "dist/lesta.widget.global.prod.js",
+    "CHANGELOG.md"
   ],
   "repository": {
     "type": "git",
