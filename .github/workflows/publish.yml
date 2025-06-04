@@ -32,6 +32,9 @@ jobs:
           
       - name: Publish to npm
         run: |
+          git config --global user.email "sashakosyak@yahoo.com"
+          git config --global user.name "kossyak"
+          
           git checkout -b release/v${{ github.event.inputs.version }}
           npm version "${{ github.event.inputs.version }}" --no-git-tag-version
           
