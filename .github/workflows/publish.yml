@@ -29,7 +29,12 @@ jobs:
             --types "feat,fix,BREAKING CHANGE"
           echo "Generated Changelog:"
           cat CHANGELOG.md
-          
+      - name: Debug npm access
+        run: |
+          echo "//registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN" > .npmrc
+          npm whoami
+          npm config get registry  # Должен показать https://registry.npmjs.org/
+    
       - name: Publish to npm
         run: |
           git config --global user.email "sashakosyak@yahoo.com"
@@ -45,7 +50,7 @@ jobs:
           git tag "v${{ github.event.inputs.version }}" --force
           git push origin "v${{ github.event.inputs.version }}" --force
           
-          npm publish
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_LESTA }}
       - name: Create Pull Request
