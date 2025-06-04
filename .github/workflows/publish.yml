@@ -35,15 +35,15 @@ jobs:
           git config --global user.email "sashakosyak@yahoo.com"
           git config --global user.name "kossyak"
           
-          git checkout -b release/v${{ github.event.inputs.version }}
+          git checkout -B release/v${{ github.event.inputs.version }}
           npm version "${{ github.event.inputs.version }}" --no-git-tag-version
           
           git add package.json package-lock.json CHANGELOG.md
           git commit -m "chore: release v${{ github.event.inputs.version }}"
-          git push origin release/v${{ github.event.inputs.version }}
+          git push origin release/v${{ github.event.inputs.version }} --force
           
-          git tag "v${{ github.event.inputs.version }}"
-          git push origin "v${{ github.event.inputs.version }}"
+          git tag "v${{ github.event.inputs.version }}" --force
+          git push origin "v${{ github.event.inputs.version }}" --force
           
           npm publish
         env:
