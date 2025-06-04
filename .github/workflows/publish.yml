@@ -4,26 +4,48 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        requuired: true
+        required: true
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
       - uses: actions/setup-node@v3
         with:
           node-version: 18
           registry-url: https://registry.npmjs.org/
       - run: npm install
       - run: npm run build
-      - run: |
-          git config --global user.email sashakosyak@yahoo.com
-          git config --global user.name kossyak
-          git checkout -- package-lock.json
-          npm version ${{ github.event.inputs.version }}
+
+      - name: Generate Minimal Changelog
+        run: |
+          npm install conventional-changelog-cli -g
+          conventional-changelog -p angular -i CHANGELOG.md -s -n ./changelog-config.js
+          echo "Generated Changelog:"
+          cat CHANGELOG.md
+          
+      - name: Publish to npm
+        run: |
+          git config --global user.email "sashakosyak@yahoo.com"
+          git config --global user.name "kossyak"
+          npm version "${{ github.event.inputs.version }}" --no-git-tag-version
+          git add package.json package-lock.json
+          git commit -m "chore: release v${{ github.event.inputs.version }}"
+          git tag "v${{ github.event.inputs.version }}"
           git push origin main
-          git push origin v${{ github.event.inputs.version }}
-      - run: npm publish
-    env:
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_LESTA }}
+          git push origin "v${{ github.event.inputs.version }}"
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_LESTA }}
+          
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: "v${{ github.event.inputs.version }}"
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
