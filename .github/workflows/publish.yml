@@ -29,12 +29,7 @@ jobs:
             --types "feat,fix,BREAKING CHANGE"
           echo "Generated Changelog:"
           cat CHANGELOG.md
-      - name: Debug npm access
-        run: |
-          echo "//registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN" > .npmrc
-          npm whoami
-          npm config get registry  # Должен показать https://registry.npmjs.org/
-    
+       
       - name: Publish to npm
         run: |
           git config --global user.email "sashakosyak@yahoo.com"
