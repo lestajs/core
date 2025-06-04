@@ -13,7 +13,8 @@
 - [Store](https://lesta.dev/store)
 - [Router](https://lesta.dev/router)
 - [Utils](https://lesta.dev/utils)
-- [UI Components]()
+- [Tutorial](https://lesta.dev/tutorial)
+- [UI Components](https://github.com/lestajs/components)
 
 ## Setting Up a Project
 
@@ -32,8 +33,8 @@ Explore ready-to-use code in our [examples repository](https://github.com/lestaj
 
 ## Ecosystem
 
-- [gists.lesta.dev](gists.lesta.dev)
-- [papakha.lesta.dev](papakha.lesta.dev)
+- [gists.lesta.dev](https://gists.lesta.dev)
+- [papakha.lesta.dev](https://papakha.lesta.dev)
 
 ## Changelog
 Stay updated with the latest improvements and fixes: [Releases](https://github.com/lestajs/core/releases)
