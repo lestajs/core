@@ -19,7 +19,7 @@
 
 Installation:
 ```bash
-npm install lestajs
+npm install lesta
 ```
 
 Via CDN (for quick prototyping):
