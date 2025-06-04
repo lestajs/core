@@ -16,15 +16,17 @@ jobs:
           
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
           registry-url: https://registry.npmjs.org/
       - run: npm install
       - run: npm run build
 
       - name: Generate Minimal Changelog
         run: |
-          npm install conventional-changelog-cli -g
-          conventional-changelog -p angular -i CHANGELOG.md -s -n ./changelog-config.js
+          npm install -D conventional-changelog-conventionalcommits
+          npx conventional-changelog -p angular -i CHANGELOG.md -s \
+            --commit-path "" \
+            --types "feat,fix,BREAKING CHANGE"
           echo "Generated Changelog:"
           cat CHANGELOG.md
           
