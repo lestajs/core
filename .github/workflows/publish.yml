@@ -3,8 +3,15 @@ name: Publish
 on:
   workflow_dispatch:
     inputs:
-      version:
+      version-type:
+        description: 'Version type (major/minor/patch)'
         required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
 
 jobs:
   publish:
@@ -18,6 +25,35 @@ jobs:
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
+      
+      - name: Get current version and calculate new version
+        id: version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Split version into parts
+          IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          
+          # Calculate new version based on input
+          case "${{ github.event.inputs.version-type }}" in
+            major)
+              NEW_VERSION="$((MAJOR + 1)).0.0"
+              ;;
+            minor)
+              NEW_VERSION="$MAJOR.$((MINOR + 1)).0"
+              ;;
+            patch)
+              NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+              ;;
+          esac
+          
+          echo "New version: $NEW_VERSION"
+          echo "new-version=$NEW_VERSION" >> $GITHUB_OUTPUT
+      
       - run: npm install
       - run: npm run build
 
@@ -35,30 +71,32 @@ jobs:
           git config --global user.email "sashakosyak@yahoo.com"
           git config --global user.name "kossyak"
           
-          git checkout -B release/v${{ github.event.inputs.version }}
-          npm version "${{ github.event.inputs.version }}" --no-git-tag-version
+          git checkout -B release/v${{ steps.version.outputs.new-version }}
+          npm version "${{ steps.version.outputs.new-version }}" --no-git-tag-version
           
           git add package.json package-lock.json CHANGELOG.md
-          git commit -m "chore: release v${{ github.event.inputs.version }}"
-          git push origin release/v${{ github.event.inputs.version }} --force
+          git commit -m "chore: release v${{ steps.version.outputs.new-version }}"
+          git push origin release/v${{ steps.version.outputs.new-version }} --force
           
-          git tag "v${{ github.event.inputs.version }}" --force
-          git push origin "v${{ github.event.inputs.version }}" --force
+          git tag "v${{ steps.version.outputs.new-version }}" --force
+          git push origin "v${{ steps.version.outputs.new-version }}" --force
           
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_LESTA }}
+      
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
         with:
-          title: "Release v${{ github.event.inputs.version }}"
+          title: "Release v${{ steps.version.outputs.new-version }}"
           body: "Automatic release PR"
-          branch: "release/v${{ github.event.inputs.version }}"
+          branch: "release/v${{ steps.version.outputs.new-version }}"
           base: main    
+      
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: "v${{ github.event.inputs.version }}"
+          tag_name: "v${{ steps.version.outputs.new-version }}"
           body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
