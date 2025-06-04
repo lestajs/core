@@ -19,8 +19,7 @@
   "module": "dist/lesta.esm.js",
   "exports": {
     ".": {
-      "import": "./dist/lesta.esm.js",
-      "require": "./dist/lesta.cjs.js"
+      "import": "./dist/lesta.esm.js"
     }
   },
   "targets": {
@@ -39,9 +38,6 @@
     "test": "cypress run",
     "prepare": "husky"
   },
-  "alias": {
-    "lesta": "scripts/lesta.js"
-  },
   "author": "Sasha Kosyak",
   "license": "MIT",
   "devDependencies": {
@@ -58,6 +54,5 @@
     "husky": "^9.1.7",
     "typescript": "^5.8.2",
     "zlib": "^1.0.5"
-  },
-  "type": "module"
+  }
 }
