@@ -22,13 +22,6 @@
       "import": "./dist/lesta.esm.js"
     }
   },
-  "targets": {
-    "global": {
-      "context": "browser",
-      "outputFormat": "global",
-      "source": "formGenerator/index.js"
-    }
-  },
   "scripts": {
     "build": "node scripts/build.js --define:process.env.NODE_ENV='production'",
     "lint:file": "eslint",
