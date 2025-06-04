@@ -1,6 +1,6 @@
 {
   "name": "lesta",
-  "version": "0.0.0-alpha",
+  "version": "0.1.0-rc.1",
   "description": "A native JavaScript framework for building UI on the web.",
   "keywords": [
     "lesta",
